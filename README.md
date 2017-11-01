@@ -5,7 +5,9 @@ DNN, in various physics and computing related projects. The popularity of
 TensorFlow Google framework make it excellent choice to apply ML algorithms for
 using in CMS workflow pipeline. The project intends to build end-to-end
 data-service to serve TF trained model for CMSSW framework. The overall
-architecture is shown [here](https://github.com/vkuznet/TFaaS/blob/master/images/TFaaS_architecture.png).
+architecture is shown below:
+
+![TFaaS Architecture](https://github.com/vkuznet/TFaaS/blob/master/images/TFaaS_architecture.png).
 
 The projects will explore and implement the following topics
 - build data-service which will read ROOT file(s) to train ML model
