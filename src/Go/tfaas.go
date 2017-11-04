@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	logs "github.com/sirupsen/logrus"
-	"github.com/vkuznet/transfer2go/core"
 	"github.com/vkuznet/x509proxy"
 )
 
@@ -24,10 +24,6 @@ var _client = HttpClient()
 
 // global client's x509 certificates
 var _certs []tls.Certificate
-
-func init() {
-	_userDNs = userDNs()
-}
 
 // client X509 certificates
 func tlsCerts() ([]tls.Certificate, error) {
@@ -170,6 +166,9 @@ func UserDN(r *http.Request) string {
 // custom logic for CMS authentication, users may implement their own logic here
 func auth(r *http.Request) bool {
 
+	if len(_userDNs) == 0 {
+		_userDNs = userDNs()
+	}
 	userDN := UserDN(r)
 	match := InList(userDN, _userDNs)
 	if !match {
@@ -200,7 +199,6 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 			http.ServeContent(w, r, fname, time.Now(), fin)
 			return
 		}
-		core.AgentStager.Stage(files[0])
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -234,7 +232,11 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.Handle("/models/", http.StripPrefix("/models/", http.FileServer(http.Dir("models"))))
+	var dir string
+	flag.StringVar(&dir, "dir", "models", "local directory to serve by this server")
+	flag.Parse()
+
+	http.Handle("/models/", http.StripPrefix("/models/", http.FileServer(http.Dir(dir))))
 	http.HandleFunc("/", AuthHandler)
 	server := &http.Server{
 		Addr: ":8083",
