@@ -54,3 +54,8 @@ And here is an example of readying Electron branches into pandas DataFrame:
 3         0.014889      0.193848     8.102822
 ...
 ```
+
+More examples about using uproot may be found
+[here](https://github.com/jpivarski/jupyter-talks/blob/master/2017-10-13-lpc-testdrive/uproot-introduction-evaluated.ipynb)
+and
+[here](https://github.com/jpivarski/jupyter-talks/blob/master/2017-10-13-lpc-testdrive/nested-structures-evaluated.ipynb)
