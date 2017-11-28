@@ -48,11 +48,12 @@ def listBranches(fin):
     "Executor function"
     try:
         with uproot.open(fin) as tree:
-            for key in tree.contents:
+            print(tree)
+            for key in tree.keys():
                 branch = key.split(';')[0]
                 eTree = tree[branch]
                 print("### Branch {}".format(branch))
-                for name in eTree.allbranchnames:
+                for name in eTree.fBranches:
                     print(name)
     except:
         traceback.print_exc()
@@ -62,9 +63,15 @@ def run(fin, fout, branch, branches, verbose=False):
     try:
         with uproot.open(fin) as tree:
             eTree = tree[branch]
-            df = eTree.pandas.df(lambda b: b.dtype if b.name in branches else None)
-            print(df)
-            print(type(df))
+            print("Reading from branch: %s" % branch)
+            for key, val in eTree.allitems():
+                if key in branches:
+                    print("Branch: %s" % key)
+                    data = val.array()
+                    print(data)
+#             df = eTree.pandas.df(lambda b: b.dtype if b.name in branches else None)
+#             print(df)
+#             print(type(df))
     except:
         traceback.print_exc()
 
