@@ -1,0 +1,11 @@
+syntax = "proto3";
+package tfaas;
+
+message Data {
+    string name = 1;
+    repeated float array = 2;
+}
+
+message PhysicsObjects {
+    repeated Data data = 1;
+}
