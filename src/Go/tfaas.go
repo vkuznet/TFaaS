@@ -10,8 +10,10 @@ import (
 	"os"
 	"os/user"
 	"strings"
+	"tfaaspb"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	logs "github.com/sirupsen/logrus"
 	"github.com/vkuznet/x509proxy"
 )
@@ -205,6 +207,27 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusBadRequest)
 }
 
+// PredictHandler send prediction from TF ML model
+func PredictHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: need example how to read input request of data and pass it around to ML
+	// example how to use tfaaspb protobuffer to ship back prediction data
+	data := []float32{1, 1, 1}                         // data would be array of floats
+	var objects []*tfaaspb.Data                        // objects is an array of data
+	record := &tfaaspb.Data{Name: "det1", Array: data} // a record is detector data array
+	objects = append(objects, record)
+	pobj := &tfaaspb.PhysicsObjects{Data: objects}
+	out, err := proto.Marshal(pobj)
+	if err != nil {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+		}).Error("unable to marshal the data")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
+}
+
 // DefaultHandler authenticate incoming requests and route them to appropriate handler
 func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
@@ -226,6 +249,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	switch path {
 	case "data":
 		DataHandler(w, r)
+	case "predict":
+		PredictHandler(w, r)
 	default:
 		DefaultHandler(w, r)
 	}
@@ -234,15 +259,31 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var dir string
 	flag.StringVar(&dir, "dir", "models", "local directory to serve by this server")
+	var port string
+	flag.StringVar(&port, "port", "8083", "server port")
+	var serverKey string
+	flag.StringVar(&serverKey, "serverKey", "server.key", "server Key")
+	var serverCert string
+	flag.StringVar(&serverCert, "serverCert", "server.crt", "server Cert")
 	flag.Parse()
 
 	http.Handle("/models/", http.StripPrefix("/models/", http.FileServer(http.Dir(dir))))
 	http.HandleFunc("/", AuthHandler)
 	server := &http.Server{
-		Addr: ":8083",
+		Addr: fmt.Sprintf(":%s", port),
 		TLSConfig: &tls.Config{
 			ClientAuth: tls.RequestClientCert,
 		},
 	}
-	server.ListenAndServeTLS("server.crt", "server.key")
+	if _, err := os.Open(serverKey); err != nil {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+		}).Error("unable to open server key file")
+	}
+	if _, err := os.Open(serverCert); err != nil {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+		}).Error("unable to open server cert file")
+	}
+	server.ListenAndServeTLS(serverCert, serverKey)
 }
