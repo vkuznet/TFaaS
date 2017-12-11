@@ -28,8 +28,8 @@ process.source = cms.Source("PoolSource",
 
 process.dump=cms.EDAnalyzer('EventContentAnalyzer')
 process.demo = cms.EDAnalyzer('TFModelAnalyzer',
-geomFile = cms.untracked.string('/afs/cern.ch/user/v/valya/workspace/CMSSW/CMSSW_8_0_21/src/geom.root'),
-url = cms.untracked.string('http://localhost:8083')
+    geomFile = cms.untracked.string('/afs/cern.ch/user/v/valya/workspace/CMSSW/CMSSW_8_0_21/src/geom.root'),
+    tfaasUrl = cms.untracked.string('http://localhost:8083')
 )
 
 #process.p = cms.Path(process.demo)
