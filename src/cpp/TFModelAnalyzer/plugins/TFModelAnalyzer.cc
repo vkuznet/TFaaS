@@ -63,51 +63,50 @@
 using namespace std;
 
 // example from libcurl
-
-struct MemoryStruct {
-  char *memory;
-  size_t size;
-};
- 
-static size_t
-WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
-{
-  size_t realsize = size * nmemb;
-  struct MemoryStruct *mem = (struct MemoryStruct *)userp;
- 
-  mem->memory = (char*)realloc(mem->memory, mem->size + realsize + 1);
-  if(mem->memory == NULL) {
-    /* out of memory! */ 
-    std::cout << "not enough memory (realloc returned NULL)" << std::endl;
-    return 0;
-  }
- 
-  memcpy(&(mem->memory[mem->size]), contents, realsize);
-  mem->size += realsize;
-  mem->memory[mem->size] = 0;
- 
-  return realsize;
+// https://curl.haxx.se/libcurl/c/htmltitle.html
+//
+// helper function to read message from buffer
+void readMessage(const std::string& buffer);
+void readMessage(const std::string& buffer) {
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+    tfaas::PhysicsObjects pobj;
+    if(!pobj.ParseFromString(buffer)) {
+        std::cerr << "failed to parse input buffer" << std::endl;
+        return;
+    }
+    for (int i = 0; i < pobj.data_size(); i++) {
+        const tfaas::Data& data = pobj.data(i);
+        std::cout << data.name() << std::endl;
+    }
+    google::protobuf::ShutdownProtobufLibrary();
 }
 // helper function
-void ReadData(std::string url);
-void ReadData(std::string url) {
+static int writer(char *data, size_t size, size_t nmemb,
+                          std::string *writerData)
+{
+    if(writerData == NULL) return 0;
+    writerData->append(data, size*nmemb);
+    return size * nmemb;
+}
+
+void ReadData(const std::string& url);
+void ReadData(const std::string& url) {
     // read some URL
     CURL *curl = NULL;
     CURLcode res;
-    struct MemoryStruct chunk;
-    chunk.memory = (char*)malloc(1);  /* will be grown as needed by the realloc above */ 
-    chunk.size = 0;    /* no data at this point */ 
 
     curl_global_init(CURL_GLOBAL_ALL);
     curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 
+    std::string buffer;
+
     // send all data to this function
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writer);
      
     // we pass our 'chunk' struct to the callback function
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
      
     // some servers don't like requests that are made without user-agent field, so we provide one
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "TFModelAnalyzer-libcurl-agent");
@@ -116,11 +115,10 @@ void ReadData(std::string url) {
     if(res != CURLE_OK) {
         std::cout << "Failed to get: " << url << ", error " << curl_easy_strerror(res) << std::endl;
     } else {
-        std::cout << chunk.size << " bytes retrieved" << endl;
+        readMessage(buffer);
     }
     // clean-up after we done with curl calls
     curl_easy_cleanup(curl);
-    free(chunk.memory);
     curl_global_cleanup();
 }
 
@@ -414,7 +412,7 @@ class TFModelAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  
 TFModelAnalyzer::TFModelAnalyzer(const edm::ParameterSet& iConfig)
 {
 
-   auto url = std::string("www.google.com");
+   auto url = iConfig.retrieveUntracked("tfaasUrl")->getString();
    ReadData(url);
 
    //now do what ever initialization is needed
@@ -422,9 +420,9 @@ TFModelAnalyzer::TFModelAnalyzer(const edm::ParameterSet& iConfig)
    //
    // load geometry
    geom = new FWGeometry();
-   const char* geomFile="/afs/cern.ch/user/v/valya/workspace/CMSSW/CMSSW_8_0_21/src/geom.root";
+   auto geomFile = iConfig.retrieveUntracked("geomFile")->getString();
    cout << "Read geometry from " << geomFile << endl;
-   geom->loadMap(geomFile);
+   geom->loadMap(geomFile.c_str());
 
    // c2numpy
    c2numpy_init(&writer, "output/trackparams", 1000);
