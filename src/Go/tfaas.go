@@ -228,11 +228,11 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	recs := &tfaaspb.PhysicsObjects{}
+	recs := &tfaaspb.Hits{}
 	if err := proto.Unmarshal(body, recs); err != nil {
 		logs.WithFields(logs.Fields{
 			"Error": err,
-		}).Error("unable to unmarshal PhysicsObject")
+		}).Error("unable to unmarshal Hits")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -243,11 +243,10 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// example how to use tfaaspb protobuffer to ship back prediction data
-	data := []float32{1, 1, 1}                         // data would be array of floats
-	var objects []*tfaaspb.Data                        // objects is an array of data
-	record := &tfaaspb.Data{Name: "det1", Array: data} // a record is detector data array
-	objects = append(objects, record)
-	pobj := &tfaaspb.PhysicsObjects{Data: objects}
+	var objects []*tfaaspb.Class
+	objects = append(objects, &tfaaspb.Class{Name: "higgs", P: float32(0.2)})
+	objects = append(objects, &tfaaspb.Class{Name: "qcd", P: float32(0.8)})
+	pobj := &tfaaspb.Predictions{Data: objects}
 	out, err := proto.Marshal(pobj)
 	if err != nil {
 		logs.WithFields(logs.Fields{
