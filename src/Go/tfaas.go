@@ -18,6 +18,9 @@ import (
 	"github.com/vkuznet/x509proxy"
 )
 
+// VERBOSE controls verbosity of the server
+var VERBOSE int
+
 // global variable which we initialize once
 var _userDNs []string
 
@@ -209,7 +212,36 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 
 // PredictHandler send prediction from TF ML model
 func PredictHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: need example how to read input request of data and pass it around to ML
+	if !(r.Method == "POST") {
+		logs.WithFields(logs.Fields{
+			"Method": r.Method,
+		}).Error("call PredictHandler with")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+		}).Error("unable to read incoming data")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	recs := &tfaaspb.PhysicsObjects{}
+	if err := proto.Unmarshal(body, recs); err != nil {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+		}).Error("unable to unmarshal PhysicsObject")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if VERBOSE > 0 {
+		logs.WithFields(logs.Fields{
+			"Data": recs,
+		}).Info("received")
+	}
+
 	// example how to use tfaaspb protobuffer to ship back prediction data
 	data := []float32{1, 1, 1}                         // data would be array of floats
 	var objects []*tfaaspb.Data                        // objects is an array of data
@@ -226,6 +258,30 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(out)
+}
+
+// helper data structure to change verbosity level of the running server
+type level struct {
+	Level int `json:"level"`
+}
+
+// VerboseHandler sets verbosity level for the server
+func VerboseHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		logs.Warn("Unable to parse request body: ", err)
+	}
+	var v level
+	err = json.Unmarshal(body, &v)
+	if err == nil {
+		logs.Info("Switch to verbose level: ", v.Level)
+		VERBOSE = v.Level
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 // DefaultHandler authenticate incoming requests and route them to appropriate handler
@@ -251,6 +307,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 		DataHandler(w, r)
 	case "predict":
 		PredictHandler(w, r)
+	case "verbose":
+		VerboseHandler(w, r)
 	default:
 		DefaultHandler(w, r)
 	}
