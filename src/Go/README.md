@@ -1,9 +1,14 @@
 ### Go server
 
 This folder contains simple Go-based server which provides authentication
-against CMS SiteDB and serve static files via HTTPs. To run it just do
+against CMS SiteDB and serve static files via HTTPs. To build the server
+just use make
 ```
-go run tfaas.go
+make
+```
+Here is an example how to run the server
+```
+./tfaas -dir $PWD/modles -serverKey server.key -serverCert server.crt
 ```
 To access please use the following APIs:
 ```
@@ -15,4 +20,7 @@ scurl https://localhost:8083/models/
 
 # to fetch concrete model file
 scurl https://localhost:8083/models/tf.model1
+
+# to get protobuffer message
+scurl https://localhost:8083/predict
 ```
