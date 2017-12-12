@@ -30,16 +30,22 @@
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
 #include <google/protobuf/unknown_field_set.h>
 // @@protoc_insertion_point(includes)
-namespace tfaas {
-class Data;
-class DataDefaultTypeInternal;
-extern DataDefaultTypeInternal _Data_default_instance_;
-class PhysicsObjects;
-class PhysicsObjectsDefaultTypeInternal;
-extern PhysicsObjectsDefaultTypeInternal _PhysicsObjects_default_instance_;
-}  // namespace tfaas
+namespace tfaaspb {
+class Class;
+class ClassDefaultTypeInternal;
+extern ClassDefaultTypeInternal _Class_default_instance_;
+class Detector;
+class DetectorDefaultTypeInternal;
+extern DetectorDefaultTypeInternal _Detector_default_instance_;
+class Hits;
+class HitsDefaultTypeInternal;
+extern HitsDefaultTypeInternal _Hits_default_instance_;
+class Predictions;
+class PredictionsDefaultTypeInternal;
+extern PredictionsDefaultTypeInternal _Predictions_default_instance_;
+}  // namespace tfaaspb
 
-namespace tfaas {
+namespace tfaaspb {
 
 namespace protobuf_tfaas_2eproto {
 // Internal implementation detail -- do not call these.
@@ -58,24 +64,24 @@ void InitDefaults();
 
 // ===================================================================
 
-class Data : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:tfaas.Data) */ {
+class Detector : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:tfaaspb.Detector) */ {
  public:
-  Data();
-  virtual ~Data();
+  Detector();
+  virtual ~Detector();
 
-  Data(const Data& from);
+  Detector(const Detector& from);
 
-  inline Data& operator=(const Data& from) {
+  inline Detector& operator=(const Detector& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  Data(Data&& from) noexcept
-    : Data() {
+  Detector(Detector&& from) noexcept
+    : Detector() {
     *this = ::std::move(from);
   }
 
-  inline Data& operator=(Data&& from) noexcept {
+  inline Detector& operator=(Detector&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -85,29 +91,29 @@ class Data : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   }
   #endif
   static const ::google::protobuf::Descriptor* descriptor();
-  static const Data& default_instance();
+  static const Detector& default_instance();
 
-  static inline const Data* internal_default_instance() {
-    return reinterpret_cast<const Data*>(
-               &_Data_default_instance_);
+  static inline const Detector* internal_default_instance() {
+    return reinterpret_cast<const Detector*>(
+               &_Detector_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
     0;
 
-  void Swap(Data* other);
-  friend void swap(Data& a, Data& b) {
+  void Swap(Detector* other);
+  friend void swap(Detector& a, Detector& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline Data* New() const PROTOBUF_FINAL { return New(NULL); }
+  inline Detector* New() const PROTOBUF_FINAL { return New(NULL); }
 
-  Data* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  Detector* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
   void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
   void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const Data& from);
-  void MergeFrom(const Data& from);
+  void CopyFrom(const Detector& from);
+  void MergeFrom(const Detector& from);
   void Clear() PROTOBUF_FINAL;
   bool IsInitialized() const PROTOBUF_FINAL;
 
@@ -123,7 +129,7 @@ class Data : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(Data* other);
+  void InternalSwap(Detector* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -139,17 +145,41 @@ class Data : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
 
   // accessors -------------------------------------------------------
 
-  // repeated float array = 2;
-  int array_size() const;
-  void clear_array();
-  static const int kArrayFieldNumber = 2;
-  float array(int index) const;
-  void set_array(int index, float value);
-  void add_array(float value);
+  // repeated float x = 2;
+  int x_size() const;
+  void clear_x();
+  static const int kXFieldNumber = 2;
+  float x(int index) const;
+  void set_x(int index, float value);
+  void add_x(float value);
   const ::google::protobuf::RepeatedField< float >&
-      array() const;
+      x() const;
   ::google::protobuf::RepeatedField< float >*
-      mutable_array();
+      mutable_x();
+
+  // repeated float y = 3;
+  int y_size() const;
+  void clear_y();
+  static const int kYFieldNumber = 3;
+  float y(int index) const;
+  void set_y(int index, float value);
+  void add_y(float value);
+  const ::google::protobuf::RepeatedField< float >&
+      y() const;
+  ::google::protobuf::RepeatedField< float >*
+      mutable_y();
+
+  // repeated float z = 4;
+  int z_size() const;
+  void clear_z();
+  static const int kZFieldNumber = 4;
+  float z(int index) const;
+  void set_z(int index, float value);
+  void add_z(float value);
+  const ::google::protobuf::RepeatedField< float >&
+      z() const;
+  ::google::protobuf::RepeatedField< float >*
+      mutable_z();
 
   // string name = 1;
   void clear_name();
@@ -165,36 +195,40 @@ class Data : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
   ::std::string* release_name();
   void set_allocated_name(::std::string* name);
 
-  // @@protoc_insertion_point(class_scope:tfaas.Data)
+  // @@protoc_insertion_point(class_scope:tfaaspb.Detector)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedField< float > array_;
-  mutable int _array_cached_byte_size_;
+  ::google::protobuf::RepeatedField< float > x_;
+  mutable int _x_cached_byte_size_;
+  ::google::protobuf::RepeatedField< float > y_;
+  mutable int _y_cached_byte_size_;
+  ::google::protobuf::RepeatedField< float > z_;
+  mutable int _z_cached_byte_size_;
   ::google::protobuf::internal::ArenaStringPtr name_;
   mutable int _cached_size_;
   friend struct protobuf_tfaas_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
-class PhysicsObjects : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:tfaas.PhysicsObjects) */ {
+class Hits : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:tfaaspb.Hits) */ {
  public:
-  PhysicsObjects();
-  virtual ~PhysicsObjects();
+  Hits();
+  virtual ~Hits();
 
-  PhysicsObjects(const PhysicsObjects& from);
+  Hits(const Hits& from);
 
-  inline PhysicsObjects& operator=(const PhysicsObjects& from) {
+  inline Hits& operator=(const Hits& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  PhysicsObjects(PhysicsObjects&& from) noexcept
-    : PhysicsObjects() {
+  Hits(Hits&& from) noexcept
+    : Hits() {
     *this = ::std::move(from);
   }
 
-  inline PhysicsObjects& operator=(PhysicsObjects&& from) noexcept {
+  inline Hits& operator=(Hits&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -204,29 +238,29 @@ class PhysicsObjects : public ::google::protobuf::Message /* @@protoc_insertion_
   }
   #endif
   static const ::google::protobuf::Descriptor* descriptor();
-  static const PhysicsObjects& default_instance();
+  static const Hits& default_instance();
 
-  static inline const PhysicsObjects* internal_default_instance() {
-    return reinterpret_cast<const PhysicsObjects*>(
-               &_PhysicsObjects_default_instance_);
+  static inline const Hits* internal_default_instance() {
+    return reinterpret_cast<const Hits*>(
+               &_Hits_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
     1;
 
-  void Swap(PhysicsObjects* other);
-  friend void swap(PhysicsObjects& a, PhysicsObjects& b) {
+  void Swap(Hits* other);
+  friend void swap(Hits& a, Hits& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline PhysicsObjects* New() const PROTOBUF_FINAL { return New(NULL); }
+  inline Hits* New() const PROTOBUF_FINAL { return New(NULL); }
 
-  PhysicsObjects* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  Hits* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
   void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
   void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const PhysicsObjects& from);
-  void MergeFrom(const PhysicsObjects& from);
+  void CopyFrom(const Hits& from);
+  void MergeFrom(const Hits& from);
   void Clear() PROTOBUF_FINAL;
   bool IsInitialized() const PROTOBUF_FINAL;
 
@@ -242,7 +276,7 @@ class PhysicsObjects : public ::google::protobuf::Message /* @@protoc_insertion_
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(PhysicsObjects* other);
+  void InternalSwap(Hits* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return NULL;
@@ -258,23 +292,238 @@ class PhysicsObjects : public ::google::protobuf::Message /* @@protoc_insertion_
 
   // accessors -------------------------------------------------------
 
-  // repeated .tfaas.Data data = 1;
-  int data_size() const;
-  void clear_data();
-  static const int kDataFieldNumber = 1;
-  const ::tfaas::Data& data(int index) const;
-  ::tfaas::Data* mutable_data(int index);
-  ::tfaas::Data* add_data();
-  ::google::protobuf::RepeatedPtrField< ::tfaas::Data >*
-      mutable_data();
-  const ::google::protobuf::RepeatedPtrField< ::tfaas::Data >&
-      data() const;
+  // repeated .tfaaspb.Detector det = 1;
+  int det_size() const;
+  void clear_det();
+  static const int kDetFieldNumber = 1;
+  const ::tfaaspb::Detector& det(int index) const;
+  ::tfaaspb::Detector* mutable_det(int index);
+  ::tfaaspb::Detector* add_det();
+  ::google::protobuf::RepeatedPtrField< ::tfaaspb::Detector >*
+      mutable_det();
+  const ::google::protobuf::RepeatedPtrField< ::tfaaspb::Detector >&
+      det() const;
 
-  // @@protoc_insertion_point(class_scope:tfaas.PhysicsObjects)
+  // @@protoc_insertion_point(class_scope:tfaaspb.Hits)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::tfaas::Data > data_;
+  ::google::protobuf::RepeatedPtrField< ::tfaaspb::Detector > det_;
+  mutable int _cached_size_;
+  friend struct protobuf_tfaas_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class Class : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:tfaaspb.Class) */ {
+ public:
+  Class();
+  virtual ~Class();
+
+  Class(const Class& from);
+
+  inline Class& operator=(const Class& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  Class(Class&& from) noexcept
+    : Class() {
+    *this = ::std::move(from);
+  }
+
+  inline Class& operator=(Class&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Class& default_instance();
+
+  static inline const Class* internal_default_instance() {
+    return reinterpret_cast<const Class*>(
+               &_Class_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    2;
+
+  void Swap(Class* other);
+  friend void swap(Class& a, Class& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline Class* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  Class* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const Class& from);
+  void MergeFrom(const Class& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(Class* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string name = 1;
+  void clear_name();
+  static const int kNameFieldNumber = 1;
+  const ::std::string& name() const;
+  void set_name(const ::std::string& value);
+  #if LANG_CXX11
+  void set_name(::std::string&& value);
+  #endif
+  void set_name(const char* value);
+  void set_name(const char* value, size_t size);
+  ::std::string* mutable_name();
+  ::std::string* release_name();
+  void set_allocated_name(::std::string* name);
+
+  // float p = 2;
+  void clear_p();
+  static const int kPFieldNumber = 2;
+  float p() const;
+  void set_p(float value);
+
+  // @@protoc_insertion_point(class_scope:tfaaspb.Class)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr name_;
+  float p_;
+  mutable int _cached_size_;
+  friend struct protobuf_tfaas_2eproto::TableStruct;
+};
+// -------------------------------------------------------------------
+
+class Predictions : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:tfaaspb.Predictions) */ {
+ public:
+  Predictions();
+  virtual ~Predictions();
+
+  Predictions(const Predictions& from);
+
+  inline Predictions& operator=(const Predictions& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  Predictions(Predictions&& from) noexcept
+    : Predictions() {
+    *this = ::std::move(from);
+  }
+
+  inline Predictions& operator=(Predictions&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const Predictions& default_instance();
+
+  static inline const Predictions* internal_default_instance() {
+    return reinterpret_cast<const Predictions*>(
+               &_Predictions_default_instance_);
+  }
+  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
+    3;
+
+  void Swap(Predictions* other);
+  friend void swap(Predictions& a, Predictions& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline Predictions* New() const PROTOBUF_FINAL { return New(NULL); }
+
+  Predictions* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
+  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
+  void CopyFrom(const Predictions& from);
+  void MergeFrom(const Predictions& from);
+  void Clear() PROTOBUF_FINAL;
+  bool IsInitialized() const PROTOBUF_FINAL;
+
+  size_t ByteSizeLong() const PROTOBUF_FINAL;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
+  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const PROTOBUF_FINAL;
+  void InternalSwap(Predictions* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .tfaaspb.Class data = 1;
+  int data_size() const;
+  void clear_data();
+  static const int kDataFieldNumber = 1;
+  const ::tfaaspb::Class& data(int index) const;
+  ::tfaaspb::Class* mutable_data(int index);
+  ::tfaaspb::Class* add_data();
+  ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class >*
+      mutable_data();
+  const ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class >&
+      data() const;
+
+  // @@protoc_insertion_point(class_scope:tfaaspb.Predictions)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class > data_;
   mutable int _cached_size_;
   friend struct protobuf_tfaas_2eproto::TableStruct;
 };
@@ -288,122 +537,287 @@ class PhysicsObjects : public ::google::protobuf::Message /* @@protoc_insertion_
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
 #endif  // __GNUC__
-// Data
+// Detector
 
 // string name = 1;
-inline void Data::clear_name() {
+inline void Detector::clear_name() {
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Data::name() const {
-  // @@protoc_insertion_point(field_get:tfaas.Data.name)
+inline const ::std::string& Detector::name() const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Detector.name)
   return name_.GetNoArena();
 }
-inline void Data::set_name(const ::std::string& value) {
+inline void Detector::set_name(const ::std::string& value) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:tfaas.Data.name)
+  // @@protoc_insertion_point(field_set:tfaaspb.Detector.name)
 }
 #if LANG_CXX11
-inline void Data::set_name(::std::string&& value) {
+inline void Detector::set_name(::std::string&& value) {
   
   name_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:tfaas.Data.name)
+  // @@protoc_insertion_point(field_set_rvalue:tfaaspb.Detector.name)
 }
 #endif
-inline void Data::set_name(const char* value) {
+inline void Detector::set_name(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:tfaas.Data.name)
+  // @@protoc_insertion_point(field_set_char:tfaaspb.Detector.name)
 }
-inline void Data::set_name(const char* value, size_t size) {
+inline void Detector::set_name(const char* value, size_t size) {
   
   name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:tfaas.Data.name)
+  // @@protoc_insertion_point(field_set_pointer:tfaaspb.Detector.name)
 }
-inline ::std::string* Data::mutable_name() {
+inline ::std::string* Detector::mutable_name() {
   
-  // @@protoc_insertion_point(field_mutable:tfaas.Data.name)
+  // @@protoc_insertion_point(field_mutable:tfaaspb.Detector.name)
   return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Data::release_name() {
-  // @@protoc_insertion_point(field_release:tfaas.Data.name)
+inline ::std::string* Detector::release_name() {
+  // @@protoc_insertion_point(field_release:tfaaspb.Detector.name)
   
   return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Data::set_allocated_name(::std::string* name) {
+inline void Detector::set_allocated_name(::std::string* name) {
   if (name != NULL) {
     
   } else {
     
   }
   name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
-  // @@protoc_insertion_point(field_set_allocated:tfaas.Data.name)
+  // @@protoc_insertion_point(field_set_allocated:tfaaspb.Detector.name)
 }
 
-// repeated float array = 2;
-inline int Data::array_size() const {
-  return array_.size();
+// repeated float x = 2;
+inline int Detector::x_size() const {
+  return x_.size();
 }
-inline void Data::clear_array() {
-  array_.Clear();
+inline void Detector::clear_x() {
+  x_.Clear();
 }
-inline float Data::array(int index) const {
-  // @@protoc_insertion_point(field_get:tfaas.Data.array)
-  return array_.Get(index);
+inline float Detector::x(int index) const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Detector.x)
+  return x_.Get(index);
 }
-inline void Data::set_array(int index, float value) {
-  array_.Set(index, value);
-  // @@protoc_insertion_point(field_set:tfaas.Data.array)
+inline void Detector::set_x(int index, float value) {
+  x_.Set(index, value);
+  // @@protoc_insertion_point(field_set:tfaaspb.Detector.x)
 }
-inline void Data::add_array(float value) {
-  array_.Add(value);
-  // @@protoc_insertion_point(field_add:tfaas.Data.array)
+inline void Detector::add_x(float value) {
+  x_.Add(value);
+  // @@protoc_insertion_point(field_add:tfaaspb.Detector.x)
 }
 inline const ::google::protobuf::RepeatedField< float >&
-Data::array() const {
-  // @@protoc_insertion_point(field_list:tfaas.Data.array)
-  return array_;
+Detector::x() const {
+  // @@protoc_insertion_point(field_list:tfaaspb.Detector.x)
+  return x_;
 }
 inline ::google::protobuf::RepeatedField< float >*
-Data::mutable_array() {
-  // @@protoc_insertion_point(field_mutable_list:tfaas.Data.array)
-  return &array_;
+Detector::mutable_x() {
+  // @@protoc_insertion_point(field_mutable_list:tfaaspb.Detector.x)
+  return &x_;
+}
+
+// repeated float y = 3;
+inline int Detector::y_size() const {
+  return y_.size();
+}
+inline void Detector::clear_y() {
+  y_.Clear();
+}
+inline float Detector::y(int index) const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Detector.y)
+  return y_.Get(index);
+}
+inline void Detector::set_y(int index, float value) {
+  y_.Set(index, value);
+  // @@protoc_insertion_point(field_set:tfaaspb.Detector.y)
+}
+inline void Detector::add_y(float value) {
+  y_.Add(value);
+  // @@protoc_insertion_point(field_add:tfaaspb.Detector.y)
+}
+inline const ::google::protobuf::RepeatedField< float >&
+Detector::y() const {
+  // @@protoc_insertion_point(field_list:tfaaspb.Detector.y)
+  return y_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+Detector::mutable_y() {
+  // @@protoc_insertion_point(field_mutable_list:tfaaspb.Detector.y)
+  return &y_;
+}
+
+// repeated float z = 4;
+inline int Detector::z_size() const {
+  return z_.size();
+}
+inline void Detector::clear_z() {
+  z_.Clear();
+}
+inline float Detector::z(int index) const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Detector.z)
+  return z_.Get(index);
+}
+inline void Detector::set_z(int index, float value) {
+  z_.Set(index, value);
+  // @@protoc_insertion_point(field_set:tfaaspb.Detector.z)
+}
+inline void Detector::add_z(float value) {
+  z_.Add(value);
+  // @@protoc_insertion_point(field_add:tfaaspb.Detector.z)
+}
+inline const ::google::protobuf::RepeatedField< float >&
+Detector::z() const {
+  // @@protoc_insertion_point(field_list:tfaaspb.Detector.z)
+  return z_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+Detector::mutable_z() {
+  // @@protoc_insertion_point(field_mutable_list:tfaaspb.Detector.z)
+  return &z_;
 }
 
 // -------------------------------------------------------------------
 
-// PhysicsObjects
+// Hits
 
-// repeated .tfaas.Data data = 1;
-inline int PhysicsObjects::data_size() const {
+// repeated .tfaaspb.Detector det = 1;
+inline int Hits::det_size() const {
+  return det_.size();
+}
+inline void Hits::clear_det() {
+  det_.Clear();
+}
+inline const ::tfaaspb::Detector& Hits::det(int index) const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Hits.det)
+  return det_.Get(index);
+}
+inline ::tfaaspb::Detector* Hits::mutable_det(int index) {
+  // @@protoc_insertion_point(field_mutable:tfaaspb.Hits.det)
+  return det_.Mutable(index);
+}
+inline ::tfaaspb::Detector* Hits::add_det() {
+  // @@protoc_insertion_point(field_add:tfaaspb.Hits.det)
+  return det_.Add();
+}
+inline ::google::protobuf::RepeatedPtrField< ::tfaaspb::Detector >*
+Hits::mutable_det() {
+  // @@protoc_insertion_point(field_mutable_list:tfaaspb.Hits.det)
+  return &det_;
+}
+inline const ::google::protobuf::RepeatedPtrField< ::tfaaspb::Detector >&
+Hits::det() const {
+  // @@protoc_insertion_point(field_list:tfaaspb.Hits.det)
+  return det_;
+}
+
+// -------------------------------------------------------------------
+
+// Class
+
+// string name = 1;
+inline void Class::clear_name() {
+  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& Class::name() const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Class.name)
+  return name_.GetNoArena();
+}
+inline void Class::set_name(const ::std::string& value) {
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:tfaaspb.Class.name)
+}
+#if LANG_CXX11
+inline void Class::set_name(::std::string&& value) {
+  
+  name_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:tfaaspb.Class.name)
+}
+#endif
+inline void Class::set_name(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:tfaaspb.Class.name)
+}
+inline void Class::set_name(const char* value, size_t size) {
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:tfaaspb.Class.name)
+}
+inline ::std::string* Class::mutable_name() {
+  
+  // @@protoc_insertion_point(field_mutable:tfaaspb.Class.name)
+  return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* Class::release_name() {
+  // @@protoc_insertion_point(field_release:tfaaspb.Class.name)
+  
+  return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void Class::set_allocated_name(::std::string* name) {
+  if (name != NULL) {
+    
+  } else {
+    
+  }
+  name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
+  // @@protoc_insertion_point(field_set_allocated:tfaaspb.Class.name)
+}
+
+// float p = 2;
+inline void Class::clear_p() {
+  p_ = 0;
+}
+inline float Class::p() const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Class.p)
+  return p_;
+}
+inline void Class::set_p(float value) {
+  
+  p_ = value;
+  // @@protoc_insertion_point(field_set:tfaaspb.Class.p)
+}
+
+// -------------------------------------------------------------------
+
+// Predictions
+
+// repeated .tfaaspb.Class data = 1;
+inline int Predictions::data_size() const {
   return data_.size();
 }
-inline void PhysicsObjects::clear_data() {
+inline void Predictions::clear_data() {
   data_.Clear();
 }
-inline const ::tfaas::Data& PhysicsObjects::data(int index) const {
-  // @@protoc_insertion_point(field_get:tfaas.PhysicsObjects.data)
+inline const ::tfaaspb::Class& Predictions::data(int index) const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Predictions.data)
   return data_.Get(index);
 }
-inline ::tfaas::Data* PhysicsObjects::mutable_data(int index) {
-  // @@protoc_insertion_point(field_mutable:tfaas.PhysicsObjects.data)
+inline ::tfaaspb::Class* Predictions::mutable_data(int index) {
+  // @@protoc_insertion_point(field_mutable:tfaaspb.Predictions.data)
   return data_.Mutable(index);
 }
-inline ::tfaas::Data* PhysicsObjects::add_data() {
-  // @@protoc_insertion_point(field_add:tfaas.PhysicsObjects.data)
+inline ::tfaaspb::Class* Predictions::add_data() {
+  // @@protoc_insertion_point(field_add:tfaaspb.Predictions.data)
   return data_.Add();
 }
-inline ::google::protobuf::RepeatedPtrField< ::tfaas::Data >*
-PhysicsObjects::mutable_data() {
-  // @@protoc_insertion_point(field_mutable_list:tfaas.PhysicsObjects.data)
+inline ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class >*
+Predictions::mutable_data() {
+  // @@protoc_insertion_point(field_mutable_list:tfaaspb.Predictions.data)
   return &data_;
 }
-inline const ::google::protobuf::RepeatedPtrField< ::tfaas::Data >&
-PhysicsObjects::data() const {
-  // @@protoc_insertion_point(field_list:tfaas.PhysicsObjects.data)
+inline const ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class >&
+Predictions::data() const {
+  // @@protoc_insertion_point(field_list:tfaaspb.Predictions.data)
   return data_;
 }
 
@@ -413,11 +827,15 @@ PhysicsObjects::data() const {
 #endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
 
-}  // namespace tfaas
+}  // namespace tfaaspb
 
 // @@protoc_insertion_point(global_scope)
 
