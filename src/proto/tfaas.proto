@@ -1,11 +1,22 @@
 syntax = "proto3";
-package tfaas;
+package tfaaspb;
 
-message Data {
+message Detector {
     string name = 1;
-    repeated float array = 2;
+    repeated float x = 2;
+    repeated float y = 3;
+    repeated float z = 4;
 }
 
-message PhysicsObjects {
-    repeated Data data = 1;
+message Hits {
+    repeated Detector det = 1;
+}
+
+message Class {
+    string name = 1;
+    float p = 2;
+}
+
+message Predictions {
+    repeated Class data = 1;
 }
