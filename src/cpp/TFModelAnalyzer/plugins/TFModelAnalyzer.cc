@@ -68,18 +68,14 @@ void readMessage(const string& buffer) {
     // see examples on https://github.com/google/protobuf
     // https://developers.google.com/protocol-buffers/docs/cpptutorial
     GOOGLE_PROTOBUF_VERIFY_VERSION;
-    tfaas::PhysicsObjects pobj;
-    if(!pobj.ParseFromString(buffer)) {
+    tfaaspb::Predictions preds;
+    if(!preds.ParseFromString(buffer)) {
         cerr << "failed to parse input buffer" << endl;
         return;
     }
-    for (int i = 0; i < pobj.data_size(); i++) {
-        const tfaas::Data& data = pobj.data(i);
-        cout << "proto-data name: " << data.name() << endl;
-        for (int j = 0; j < data.array_size(); j++) {
-            auto val = data.array(j);
-            cout << "array value: " << val << endl;
-        }
+    for (int i = 0; i < preds.data_size(); i++) {
+        const tfaaspb::Class& cls = preds.data(i);
+        cout << "prediction name: " << cls.name() << " probability: " << cls.p() << endl;
     }
     google::protobuf::ShutdownProtobufLibrary();
 }
@@ -433,14 +429,19 @@ class TFModelAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  
 TFModelAnalyzer::TFModelAnalyzer(const edm::ParameterSet& iConfig)
 {
    // prepare data to send to TFaaS service
-   tfaas::PhysicsObjects pobj; // make physics object
-   auto data = pobj.add_data(); // initialize its data array
+   tfaaspb::Hits hits; // make hits object
+   auto data = hits.add_det(); // initialize its data array
    data->set_name("silicon"); // set name of our data array
-   data->add_array(0); // add new value to our data array
-   data->add_array(1);
-   data->add_array(2);
+   // add hit triplet
+   data->add_x(1.0);
+   data->add_y(2.0);
+   data->add_z(3.0);
+   // add hit triplet
+   data->add_x(1.1);
+   data->add_y(2.1);
+   data->add_z(3.2);
    string input;
-   if(!pobj.SerializeToString(&input)) {
+   if(!hits.SerializeToString(&input)) {
        std::cerr << "unable to serialize data" << std::endl;
    } else {
        // fetch url of the TFaaS service
