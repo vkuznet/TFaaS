@@ -62,41 +62,48 @@
 #include <iostream>
 using namespace std;
 
-// example from libcurl
-// https://curl.haxx.se/libcurl/c/htmltitle.html
-//
 // helper function to read message from buffer
-void readMessage(const std::string& buffer);
-void readMessage(const std::string& buffer) {
-    std::cout << "input buffer '" << buffer << "'" << std::endl;
+void readMessage(const string& buffer);
+void readMessage(const string& buffer) {
+    // see examples on https://github.com/google/protobuf
+    // https://developers.google.com/protocol-buffers/docs/cpptutorial
     GOOGLE_PROTOBUF_VERIFY_VERSION;
     tfaas::PhysicsObjects pobj;
     if(!pobj.ParseFromString(buffer)) {
-        std::cerr << "failed to parse input buffer" << std::endl;
+        cerr << "failed to parse input buffer" << endl;
         return;
     }
     for (int i = 0; i < pobj.data_size(); i++) {
         const tfaas::Data& data = pobj.data(i);
-        std::cout << "proto-data name: " << data.name() << std::endl;
+        cout << "proto-data name: " << data.name() << endl;
+        for (int j = 0; j < data.array_size(); j++) {
+            auto val = data.array(j);
+            cout << "array value: " << val << endl;
+        }
     }
     google::protobuf::ShutdownProtobufLibrary();
 }
-// helper function
-static int writer(char *data, size_t size, size_t nmemb,
-                          std::string *writerData)
+// helper function to read incoming stream of data, used as callback function
+// in curl application below (see GetPrediction)
+static int writer(char *data, size_t size, size_t nmemb, string *writerData)
 {
     if(writerData == NULL) return 0;
     writerData->append(data, size*nmemb);
     return size * nmemb;
 }
 
-void ReadData(std::string const& url);
-void ReadData(std::string const& url) {
+// example from libcurl
+// https://curl.haxx.se/libcurl/c/example.html
+// https://curl.haxx.se/libcurl/c/htmltitle.html
+// https://curl.haxx.se/libcurl/c/simplepost.html
+// helper function to communicate with external data-service, in our case TFaaS
+void GetPrediction(string const& url, string const& input);
+void GetPrediction(string const& url, string const& input) {
     // read key/cert from environment
-    auto ckey = std::getenv("X509_USER_PROXY");
-    auto cert = std::getenv("X509_USER_PROXY");
-    if (ckey == std::string("") || cert == std::string("") ) {
-        std::cerr << "Unable to read X509_USER_PROXY environment" << std::endl;
+    auto ckey = getenv("X509_USER_PROXY");
+    auto cert = getenv("X509_USER_PROXY");
+    if (ckey == NULL || ckey == string("") || cert == NULL || cert == string("") ) {
+        cerr << "Unable to read X509_USER_PROXY environment" << endl;
     }
     CURL *curl = NULL;
     CURLcode res;
@@ -108,16 +115,13 @@ void ReadData(std::string const& url) {
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     curl_easy_setopt(curl, CURLOPT_SSLKEY, ckey);
     curl_easy_setopt(curl, CURLOPT_SSLCERT, cert);
-    auto capath = std::getenv("CAPATH");
-    if (capath != std::string("")) {
-        curl_easy_setopt(curl, CURLOPT_CAPATH, capath);
-    }
-    auto cainfo = std::getenv("CAINFO");
-    if (cainfo != std::string("")) {
-        curl_easy_setopt(curl, CURLOPT_CAINFO, cainfo);
-    }
 
-    std::string buffer;
+    // Now specify the POST data
+    curl_easy_setopt(curl, CURLOPT_POST, 1L);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, input.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, input.length());
+
+    string buffer;
 
     // send all data to this function
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writer);
@@ -130,7 +134,7 @@ void ReadData(std::string const& url) {
 
     res = curl_easy_perform(curl);
     if(res != CURLE_OK) {
-        std::cout << "Failed to get: " << url << ", error " << curl_easy_strerror(res) << std::endl;
+        cout << "Failed to get: " << url << ", error " << curl_easy_strerror(res) << endl;
     } else {
         readMessage(buffer);
     }
@@ -428,10 +432,23 @@ class TFModelAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  
 //
 TFModelAnalyzer::TFModelAnalyzer(const edm::ParameterSet& iConfig)
 {
-
-   // fetch url of the TFaaS service
-   auto url = iConfig.retrieveUntracked("tfaasUrl")->getString();
-   ReadData(url);
+   // prepare data to send to TFaaS service
+   tfaas::PhysicsObjects pobj; // make physics object
+   auto data = pobj.add_data(); // initialize its data array
+   data->set_name("silicon"); // set name of our data array
+   data->add_array(0); // add new value to our data array
+   data->add_array(1);
+   data->add_array(2);
+   string input;
+   if(!pobj.SerializeToString(&input)) {
+       std::cerr << "unable to serialize data" << std::endl;
+   } else {
+       // fetch url of the TFaaS service
+       auto url = iConfig.retrieveUntracked("tfaasUrl")->getString();
+       // send data to TFaaS and get back predictions for our data
+       cout << "sending to TFaaS: " << input << endl;
+       GetPrediction(url, input);
+   }
 
    //now do what ever initialization is needed
    // usesResource("TFileService");
