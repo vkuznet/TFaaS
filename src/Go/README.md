@@ -8,7 +8,10 @@ make
 ```
 Here is an example how to run the server
 ```
-./tfaas -dir $PWD/modles -serverKey server.key -serverCert server.crt
+nohup ./tfaas -dir $PWD/models 
+   -serverCert /data/certs/hostcert.pem -serverKey /data/certs/hostkey.pem
+   2>&1 1>& tfaas.log < /dev/null &
+
 ```
 To access please use the following APIs:
 ```
@@ -21,6 +24,9 @@ scurl https://localhost:8083/models/
 # to fetch concrete model file
 scurl https://localhost:8083/models/tf.model1
 
-# to get protobuffer message
-scurl https://localhost:8083/predict
+# to increase verbosity level of the server
+scurl -XPOST -d '{"level":1}' https://localhost:8083/verbose
+
+# to get protobuffer message, here we need to change PROTOBUGMSG to appropriate data
+scurl -XPOST -d PROTOBUFMSG https://localhost:8083/predict
 ```
