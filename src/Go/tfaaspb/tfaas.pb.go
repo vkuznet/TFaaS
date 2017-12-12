@@ -2,14 +2,16 @@
 // source: tfaas.proto
 
 /*
-Package tfaas is a generated protocol buffer package.
+Package tfaaspb is a generated protocol buffer package.
 
 It is generated from these files:
 	tfaas.proto
 
 It has these top-level messages:
-	Data
-	PhysicsObjects
+	Detector
+	Hits
+	Class
+	Predictions
 */
 package tfaaspb
 
@@ -28,40 +30,96 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type Data struct {
-	Name  string    `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	Array []float32 `protobuf:"fixed32,2,rep,packed,name=array" json:"array,omitempty"`
+type Detector struct {
+	Name string    `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	X    []float32 `protobuf:"fixed32,2,rep,packed,name=x" json:"x,omitempty"`
+	Y    []float32 `protobuf:"fixed32,3,rep,packed,name=y" json:"y,omitempty"`
+	Z    []float32 `protobuf:"fixed32,4,rep,packed,name=z" json:"z,omitempty"`
 }
 
-func (m *Data) Reset()                    { *m = Data{} }
-func (m *Data) String() string            { return proto.CompactTextString(m) }
-func (*Data) ProtoMessage()               {}
-func (*Data) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (m *Detector) Reset()                    { *m = Detector{} }
+func (m *Detector) String() string            { return proto.CompactTextString(m) }
+func (*Detector) ProtoMessage()               {}
+func (*Detector) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
-func (m *Data) GetName() string {
+func (m *Detector) GetName() string {
 	if m != nil {
 		return m.Name
 	}
 	return ""
 }
 
-func (m *Data) GetArray() []float32 {
+func (m *Detector) GetX() []float32 {
 	if m != nil {
-		return m.Array
+		return m.X
 	}
 	return nil
 }
 
-type PhysicsObjects struct {
-	Data []*Data `protobuf:"bytes,1,rep,name=data" json:"data,omitempty"`
+func (m *Detector) GetY() []float32 {
+	if m != nil {
+		return m.Y
+	}
+	return nil
 }
 
-func (m *PhysicsObjects) Reset()                    { *m = PhysicsObjects{} }
-func (m *PhysicsObjects) String() string            { return proto.CompactTextString(m) }
-func (*PhysicsObjects) ProtoMessage()               {}
-func (*PhysicsObjects) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (m *Detector) GetZ() []float32 {
+	if m != nil {
+		return m.Z
+	}
+	return nil
+}
 
-func (m *PhysicsObjects) GetData() []*Data {
+type Hits struct {
+	Det []*Detector `protobuf:"bytes,1,rep,name=det" json:"det,omitempty"`
+}
+
+func (m *Hits) Reset()                    { *m = Hits{} }
+func (m *Hits) String() string            { return proto.CompactTextString(m) }
+func (*Hits) ProtoMessage()               {}
+func (*Hits) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *Hits) GetDet() []*Detector {
+	if m != nil {
+		return m.Det
+	}
+	return nil
+}
+
+type Class struct {
+	Name string  `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
+	P    float32 `protobuf:"fixed32,2,opt,name=p" json:"p,omitempty"`
+}
+
+func (m *Class) Reset()                    { *m = Class{} }
+func (m *Class) String() string            { return proto.CompactTextString(m) }
+func (*Class) ProtoMessage()               {}
+func (*Class) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *Class) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *Class) GetP() float32 {
+	if m != nil {
+		return m.P
+	}
+	return 0
+}
+
+type Predictions struct {
+	Data []*Class `protobuf:"bytes,1,rep,name=data" json:"data,omitempty"`
+}
+
+func (m *Predictions) Reset()                    { *m = Predictions{} }
+func (m *Predictions) String() string            { return proto.CompactTextString(m) }
+func (*Predictions) ProtoMessage()               {}
+func (*Predictions) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *Predictions) GetData() []*Class {
 	if m != nil {
 		return m.Data
 	}
@@ -69,21 +127,26 @@ func (m *PhysicsObjects) GetData() []*Data {
 }
 
 func init() {
-	proto.RegisterType((*Data)(nil), "tfaas.Data")
-	proto.RegisterType((*PhysicsObjects)(nil), "tfaas.PhysicsObjects")
+	proto.RegisterType((*Detector)(nil), "tfaaspb.Detector")
+	proto.RegisterType((*Hits)(nil), "tfaaspb.Hits")
+	proto.RegisterType((*Class)(nil), "tfaaspb.Class")
+	proto.RegisterType((*Predictions)(nil), "tfaaspb.Predictions")
 }
 
 func init() { proto.RegisterFile("tfaas.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 131 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2e, 0x49, 0x4b, 0x4c,
-	0x2c, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x05, 0x73, 0x94, 0x0c, 0xb8, 0x58, 0x5c,
-	0x12, 0x4b, 0x12, 0x85, 0x84, 0xb8, 0x58, 0xf2, 0x12, 0x73, 0x53, 0x25, 0x18, 0x15, 0x18, 0x35,
-	0x38, 0x83, 0xc0, 0x6c, 0x21, 0x11, 0x2e, 0xd6, 0xc4, 0xa2, 0xa2, 0xc4, 0x4a, 0x09, 0x26, 0x05,
-	0x66, 0x0d, 0xa6, 0x20, 0x08, 0x47, 0xc9, 0x90, 0x8b, 0x2f, 0x20, 0xa3, 0xb2, 0x38, 0x33, 0xb9,
-	0xd8, 0x3f, 0x29, 0x2b, 0x35, 0xb9, 0xa4, 0x58, 0x48, 0x9e, 0x8b, 0x25, 0x25, 0xb1, 0x24, 0x51,
-	0x82, 0x51, 0x81, 0x59, 0x83, 0xdb, 0x88, 0x5b, 0x0f, 0x62, 0x0d, 0xc8, 0xd8, 0x20, 0xb0, 0x44,
-	0x12, 0x1b, 0xd8, 0x4a, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0x48, 0x50, 0xd9, 0xe5, 0x81,
-	0x00, 0x00, 0x00,
+	// 189 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x8f, 0xcd, 0x8a, 0xc2, 0x30,
+	0x14, 0x46, 0x49, 0x93, 0xf9, 0xbb, 0x1d, 0x06, 0x26, 0xab, 0x2c, 0x43, 0xdc, 0x54, 0x84, 0x82,
+	0xfa, 0x08, 0xba, 0xe8, 0x52, 0xf2, 0x06, 0x69, 0x1b, 0xa1, 0xa0, 0x4d, 0x68, 0xee, 0xa2, 0xed,
+	0xd3, 0x4b, 0xd2, 0xea, 0xce, 0xdd, 0x3d, 0x7c, 0x70, 0x0e, 0x17, 0x72, 0xbc, 0x1a, 0x13, 0x4a,
+	0x3f, 0x38, 0x74, 0xfc, 0x2b, 0x81, 0xaf, 0x55, 0x05, 0xdf, 0x67, 0x8b, 0xb6, 0x41, 0x37, 0x70,
+	0x0e, 0xac, 0x37, 0x77, 0x2b, 0x88, 0x24, 0xc5, 0x8f, 0x4e, 0x37, 0xff, 0x05, 0x32, 0x8a, 0x4c,
+	0xd2, 0x22, 0xd3, 0x64, 0x8c, 0x34, 0x09, 0xba, 0xd0, 0x14, 0x69, 0x16, 0x6c, 0xa1, 0x59, 0xed,
+	0x80, 0x55, 0x1d, 0x06, 0xbe, 0x01, 0xda, 0x5a, 0x14, 0x44, 0xd2, 0x22, 0x3f, 0xfc, 0x97, 0x6b,
+	0xa8, 0x7c, 0x56, 0x74, 0x5c, 0xd5, 0x16, 0x3e, 0x4e, 0x37, 0x13, 0xc2, 0xbb, 0xa6, 0x17, 0x99,
+	0x24, 0xd1, 0xeb, 0xd5, 0x1e, 0xf2, 0xcb, 0x60, 0xdb, 0xae, 0xc1, 0xce, 0xf5, 0x81, 0x2b, 0x60,
+	0xad, 0x41, 0xb3, 0xfa, 0xff, 0x5e, 0xfe, 0xa4, 0xd3, 0x69, 0xab, 0x3f, 0xd3, 0x93, 0xc7, 0x47,
+	0x00, 0x00, 0x00, 0xff, 0xff, 0xfb, 0xcd, 0x97, 0xb5, 0xf3, 0x00, 0x00, 0x00,
 }
