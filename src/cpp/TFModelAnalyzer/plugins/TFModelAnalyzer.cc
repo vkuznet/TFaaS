@@ -68,6 +68,7 @@ using namespace std;
 // helper function to read message from buffer
 void readMessage(const std::string& buffer);
 void readMessage(const std::string& buffer) {
+    std::cout << "input buffer '" << buffer << "'" << std::endl;
     GOOGLE_PROTOBUF_VERIFY_VERSION;
     tfaas::PhysicsObjects pobj;
     if(!pobj.ParseFromString(buffer)) {
@@ -76,7 +77,7 @@ void readMessage(const std::string& buffer) {
     }
     for (int i = 0; i < pobj.data_size(); i++) {
         const tfaas::Data& data = pobj.data(i);
-        std::cout << data.name() << std::endl;
+        std::cout << "proto-data name: " << data.name() << std::endl;
     }
     google::protobuf::ShutdownProtobufLibrary();
 }
@@ -89,9 +90,14 @@ static int writer(char *data, size_t size, size_t nmemb,
     return size * nmemb;
 }
 
-void ReadData(const std::string& url);
-void ReadData(const std::string& url) {
-    // read some URL
+void ReadData(std::string const& url);
+void ReadData(std::string const& url) {
+    // read key/cert from environment
+    auto ckey = std::getenv("X509_USER_PROXY");
+    auto cert = std::getenv("X509_USER_PROXY");
+    if (ckey == std::string("") || cert == std::string("") ) {
+        std::cerr << "Unable to read X509_USER_PROXY environment" << std::endl;
+    }
     CURL *curl = NULL;
     CURLcode res;
 
@@ -99,6 +105,17 @@ void ReadData(const std::string& url) {
     curl = curl_easy_init();
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    curl_easy_setopt(curl, CURLOPT_SSLKEY, ckey);
+    curl_easy_setopt(curl, CURLOPT_SSLCERT, cert);
+    auto capath = std::getenv("CAPATH");
+    if (capath != std::string("")) {
+        curl_easy_setopt(curl, CURLOPT_CAPATH, capath);
+    }
+    auto cainfo = std::getenv("CAINFO");
+    if (cainfo != std::string("")) {
+        curl_easy_setopt(curl, CURLOPT_CAINFO, cainfo);
+    }
 
     std::string buffer;
 
@@ -412,6 +429,7 @@ class TFModelAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources>  
 TFModelAnalyzer::TFModelAnalyzer(const edm::ParameterSet& iConfig)
 {
 
+   // fetch url of the TFaaS service
    auto url = iConfig.retrieveUntracked("tfaasUrl")->getString();
    ReadData(url);
 
