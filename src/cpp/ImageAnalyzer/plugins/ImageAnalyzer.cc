@@ -470,11 +470,10 @@ ImageAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    std::vector<TVector3> hits;
    for (auto track = tracks->cbegin();  track != tracks->end();  ++track, ++tidx) {
        // extract Pixel hits
-       int npxhits = 0;
        std::vector<TVector3> pxpoints;
        pixelHits( pxpoints, geom, *track );
        cout << "pixel hits" << endl;
-       for( auto it = pxpoints.begin(), itEnd = pxpoints.end(); it != itEnd; ++it, ++npxhits) {
+       for( auto it = pxpoints.begin(), itEnd = pxpoints.end(); it != itEnd; ++it) {
            cout << it->x() << "," << it->y() << "," << it->z() << endl;
        }
        red = 1.0;
@@ -483,11 +482,10 @@ ImageAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
        makePNG(png, width, height, fname, pxpoints, red, green, blue);
 
        // extract SiStripClusters
-       int nsihits = 0;
        std::vector<TVector3> sipoints;
        SiStripClusters(sipoints, geom, *track);
        cout << "SiStrip clusters" << endl;
-       for( auto it = sipoints.begin(), itEnd = sipoints.end(); it != itEnd; ++it, ++nsihits) {
+       for( auto it = sipoints.begin(), itEnd = sipoints.end(); it != itEnd; ++it) {
            cout << it->x() << "," << it->y() << "," << it->z() << endl;
        }
        red = 0.0;
