@@ -14,8 +14,10 @@ import (
 	"os/user"
 	"sort"
 	"strings"
+	"tfaaspb"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	tf "github.com/tensorflow/tensorflow/tensorflow/go"
 	"github.com/tensorflow/tensorflow/tensorflow/go/op"
 
@@ -421,6 +423,48 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// PredictProtobufHandler send prediction from TF ML model
+func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
+	if !(r.Method == "POST") {
+		logs.WithFields(logs.Fields{
+			"Method": r.Method,
+		}).Error("call PredictHandler with")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		responseError(w, fmt.Sprintf("wrong method: %v", r.Method), nil, http.StatusMethodNotAllowed)
+		return
+	}
+	defer r.Body.Close()
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		responseError(w, "unable to read incoming data", err, http.StatusInternalServerError)
+		return
+	}
+	// example how to unmarshal Row message
+	recs := &tfaaspb.Row{}
+	if err := proto.Unmarshal(body, recs); err != nil {
+		responseError(w, "unable to unmarshal Row", err, http.StatusInternalServerError)
+		return
+	}
+	if VERBOSE > 0 {
+		logs.WithFields(logs.Fields{
+			"Data": recs,
+		}).Info("received")
+	}
+
+	// example how to use tfaaspb protobuffer to ship back prediction data
+	var objects []*tfaaspb.Class
+	objects = append(objects, &tfaaspb.Class{Name: "higgs", P: float32(0.2)})
+	objects = append(objects, &tfaaspb.Class{Name: "qcd", P: float32(0.8)})
+	pobj := &tfaaspb.Predictions{Data: objects}
+	out, err := proto.Marshal(pobj)
+	if err != nil {
+		responseError(w, "unable to marshal data", err, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
+}
+
 // PredictHandler send prediction from TF ML model
 func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "POST") {
@@ -523,6 +567,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 		DataHandler(w, r)
 	case "predict":
 		PredictHandler(w, r)
+	case "predictproto":
+		PredictProtobufHandler(w, r)
 	case "image":
 		ImageHandler(w, r)
 	case "verbose":
