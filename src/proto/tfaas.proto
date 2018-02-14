@@ -1,6 +1,7 @@
 syntax = "proto3";
 package tfaaspb;
 
+// Detector represents a CMS detector with name and x,y,z coordinates
 message Detector {
     string name = 1;
     repeated float x = 2;
@@ -8,24 +9,34 @@ message Detector {
     repeated float z = 4;
 }
 
+// Hits is a collection of detector elements
 message Hits {
     repeated Detector det = 1;
 }
 
-message Row {
-    repeated string k = 1;
-    repeated float v = 2;
+// Pair is simplest key:value pair (dict) representing a value
+message Pair {
+    string key = 1;
+    float value = 2;
 }
 
+// Row is a collection of key:value pairs
+message Row {
+    repeated Pair pair = 1;
+}
+
+// DataFrame is a collection of rows
 message DataFrame {
     repeated Row row = 1;
 }
 
+// Class represents response from the server, it contains name and probability
 message Class {
     string name = 1;
     float p = 2;
 }
 
+// Predictions is collection of class probabilities
 message Predictions {
     repeated Class data = 1;
 }
