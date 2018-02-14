@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ $# -eq 0 ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "--help" ] || [ $# -ne 2 ]; then
+    echo "Usage: request proto.msg url"
+    exit 0
+fi
+
+pdir=/Users/vk/CMS/DMWM/GIT/TFaaS/src/proto
+MSG=$1
+URL=$2
+PROTO=tfaas.proto
+REQUEST=tfaaspb.Row # our protobuf package name dot message name
+RESPONSE=tfaaspb.Predictions
+scurl="curl -L -k --key $HOME/.globus/userkey.pem --cert $HOME/.globus/usercert.pem"
+cat $MSG | protoc -I$pdir --encode $REQUEST $PROTO | \
+    $scurl -sS -X POST --data-binary @- $URL | \
+    protoc -I$pdir --decode $RESPONSE $PROTO
+
