@@ -14,13 +14,11 @@ import (
 	"os/user"
 	"sort"
 	"strings"
-	"tfaaspb"
 	"time"
 
 	tf "github.com/tensorflow/tensorflow/tensorflow/go"
 	"github.com/tensorflow/tensorflow/tensorflow/go/op"
 
-	"github.com/golang/protobuf/proto"
 	logs "github.com/sirupsen/logrus"
 	"github.com/vkuznet/x509proxy"
 )
@@ -38,6 +36,12 @@ type ClassifyResult struct {
 type LabelResult struct {
 	Label       string  `json:"label"`
 	Probability float32 `json:"probability"`
+}
+
+// Row structure represents input set of attributes client will send to the server
+type Row struct {
+	Keys   []string  `json:"keys"`
+	Values []float32 `json:"values"`
 }
 
 // global variables to hold TF graph and labels
@@ -433,9 +437,17 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		responseError(w, "unable to read incoming data", err, http.StatusInternalServerError)
 		return
 	}
-	recs := &tfaaspb.Hits{}
-	if err := proto.Unmarshal(body, recs); err != nil {
-		responseError(w, "unable to unmarshal Hits", err, http.StatusInternalServerError)
+	// example how to unmarshal Hits message
+	/*
+		recs := &tfaaspb.Hits{}
+		if err := proto.Unmarshal(body, recs); err != nil {
+			responseError(w, "unable to unmarshal Hits", err, http.StatusInternalServerError)
+			return
+		}
+	*/
+	recs := &Row{}
+	if err := json.Unmarshal(body, recs); err != nil {
+		responseError(w, "unable to unmarshal Row", err, http.StatusInternalServerError)
 		return
 	}
 	if VERBOSE > 0 {
@@ -445,17 +457,23 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// example how to use tfaaspb protobuffer to ship back prediction data
-	var objects []*tfaaspb.Class
-	objects = append(objects, &tfaaspb.Class{Name: "higgs", P: float32(0.2)})
-	objects = append(objects, &tfaaspb.Class{Name: "qcd", P: float32(0.8)})
-	pobj := &tfaaspb.Predictions{Data: objects}
-	out, err := proto.Marshal(pobj)
-	if err != nil {
-		responseError(w, "unable to marshal data", err, http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(out)
+	/*
+		var objects []*tfaaspb.Class
+		objects = append(objects, &tfaaspb.Class{Name: "higgs", P: float32(0.2)})
+		objects = append(objects, &tfaaspb.Class{Name: "qcd", P: float32(0.8)})
+		pobj := &tfaaspb.Predictions{Data: objects}
+		out, err := proto.Marshal(pobj)
+		if err != nil {
+			responseError(w, "unable to marshal data", err, http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(out)
+	*/
+	var labels []LabelResult
+	labels = append(labels, LabelResult{Label: "higgs", Probability: 0.8})
+	labels = append(labels, LabelResult{Label: "qcd", Probability: 0.2})
+	responseJSON(w, labels)
 }
 
 // helper data structure to change verbosity level of the running server
