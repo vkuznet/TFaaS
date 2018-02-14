@@ -49,4 +49,6 @@ Generate protobuffer code to (de)-serialize our proto file
 protoc/bin/protoc -I=$PWD/src/proto --go_out=$PWD/src/Go/tfaaspb $PWD/src/proto/tfaas.proto
 # generate C++ code
 protoc/bin/protoc -I=$PWD/src/proto --cpp_out=$PWD/src/cpp $PWD/src/proto/tfaas.proto
+# generate Python code
+protoc/bin/protoc -I=$PWD/src/proto --python_out=$PWD/src/python $PWD/src/proto/tfaas.proto
 ```
