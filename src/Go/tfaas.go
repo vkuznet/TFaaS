@@ -1,17 +1,24 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/user"
+	"sort"
 	"strings"
 	"tfaaspb"
 	"time"
+
+	tf "github.com/tensorflow/tensorflow/tensorflow/go"
+	"github.com/tensorflow/tensorflow/tensorflow/go/op"
 
 	"github.com/golang/protobuf/proto"
 	logs "github.com/sirupsen/logrus"
@@ -20,6 +27,24 @@ import (
 
 // VERBOSE controls verbosity of the server
 var VERBOSE int
+
+// ClassifyResult structure represents result of our TF model classification
+type ClassifyResult struct {
+	Filename string        `json:"filename"`
+	Labels   []LabelResult `json:"labels"`
+}
+
+// LabelResult structure represents single result of TF model classification
+type LabelResult struct {
+	Label       string  `json:"label"`
+	Probability float32 `json:"probability"`
+}
+
+// global variables to hold TF graph and labels
+var (
+	graph  *tf.Graph
+	labels []string
+)
 
 // global variable which we initialize once
 var _userDNs []string
@@ -184,6 +209,134 @@ func auth(r *http.Request) bool {
 	return match
 }
 
+// helper function to load TF model
+func loadModel(fname, flabels string) error {
+	// Load inception model
+	model, err := ioutil.ReadFile(fname)
+	if err != nil {
+		return err
+	}
+	graph = tf.NewGraph()
+	if err := graph.Import(model, ""); err != nil {
+		return err
+	}
+	// Load labels
+	labelsFile, err := os.Open(flabels)
+	if err != nil {
+		return err
+	}
+	defer labelsFile.Close()
+	scanner := bufio.NewScanner(labelsFile)
+	// Labels are separated by newlines
+	for scanner.Scan() {
+		labels = append(labels, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+	return nil
+}
+
+// helper function to create Tensor image repreresentation
+func makeTensorFromImage(imageBuffer *bytes.Buffer, imageFormat string) (*tf.Tensor, error) {
+	tensor, err := tf.NewTensor(imageBuffer.String())
+	if err != nil {
+		return nil, err
+	}
+	graph, input, output, err := makeTransformImageGraph(imageFormat)
+	if err != nil {
+		return nil, err
+	}
+	session, err := tf.NewSession(graph, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer session.Close()
+	normalized, err := session.Run(
+		map[tf.Output]*tf.Tensor{input: tensor},
+		[]tf.Output{output},
+		nil)
+	if err != nil {
+		return nil, err
+	}
+	return normalized[0], nil
+}
+
+// Creates a graph to decode, rezise and normalize an image
+func makeTransformImageGraph(imageFormat string) (graph *tf.Graph, input, output tf.Output, err error) {
+	const (
+		H, W  = 224, 224
+		Mean  = float32(117)
+		Scale = float32(1)
+	)
+	s := op.NewScope()
+	input = op.Placeholder(s, tf.String)
+	// Decode PNG or JPEG
+	var decode tf.Output
+	if imageFormat == "png" {
+		decode = op.DecodePng(s, input, op.DecodePngChannels(3))
+	} else {
+		decode = op.DecodeJpeg(s, input, op.DecodeJpegChannels(3))
+	}
+	// Div and Sub perform (value-Mean)/Scale for each pixel
+	output = op.Div(s,
+		op.Sub(s,
+			// Resize to 224x224 with bilinear interpolation
+			op.ResizeBilinear(s,
+				// Create a batch containing a single image
+				op.ExpandDims(s,
+					// Use decoded pixel values
+					op.Cast(s, decode, tf.Float),
+					op.Const(s.SubScope("make_batch"), int32(0))),
+				op.Const(s.SubScope("size"), []int32{H, W})),
+			op.Const(s.SubScope("mean"), Mean)),
+		op.Const(s.SubScope("scale"), Scale))
+	graph, err = s.Finalize()
+	return graph, input, output, err
+}
+
+// helper function to provide response
+func responseError(w http.ResponseWriter, msg string, err error, code int) {
+	logs.WithFields(logs.Fields{
+		"Message": msg,
+		"Error":   err,
+	}).Error(msg)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
+}
+
+// helper function to provide response in JSON data format
+func responseJSON(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(data)
+}
+
+type ByProbability []LabelResult
+
+func (a ByProbability) Len() int           { return len(a) }
+func (a ByProbability) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByProbability) Less(i, j int) bool { return a[i].Probability > a[j].Probability }
+
+func findBestLabels(probabilities []float32, topN int) []LabelResult {
+	// Make a list of label/probability pairs
+	var resultLabels []LabelResult
+	for i, p := range probabilities {
+		if i >= len(labels) {
+			break
+		}
+		resultLabels = append(resultLabels, LabelResult{Label: labels[i], Probability: p})
+	}
+	// Sort by probability
+	sort.Sort(ByProbability(resultLabels))
+	// Return top N labels
+	return resultLabels[:topN]
+}
+
+//
+// HTTP handlers
+//
+
 // DataHandler authenticate incoming requests and route them to appropriate handler
 func DataHandler(w http.ResponseWriter, r *http.Request) {
 	args := r.URL.Query()
@@ -193,11 +346,7 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 			var fin *os.File
 			fin, err := os.Open(fname)
 			if err != nil {
-				logs.WithFields(logs.Fields{
-					"Error": err,
-					"File":  fname,
-				}).Error("unable to open model file")
-				w.WriteHeader(http.StatusInternalServerError)
+				responseError(w, fmt.Sprintf("unable to open file: %s", fname), err, http.StatusInternalServerError)
 				return
 			}
 			// we don't need to WriteHeader here since it is handled by http.ServeContent
@@ -210,6 +359,64 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusBadRequest)
 }
 
+// ImageHandler send prediction from TF ML model
+func ImageHandler(w http.ResponseWriter, r *http.Request) {
+	if !(r.Method == "POST") {
+		responseError(w, fmt.Sprintf("wrong method: %v", r.Method), nil, http.StatusMethodNotAllowed)
+		return
+	}
+	// Read image
+	imageFile, header, err := r.FormFile("image")
+	imageName := strings.Split(header.Filename, ".")
+	if err != nil {
+		responseError(w, "unable to read image", err, http.StatusInternalServerError)
+		return
+	}
+	defer imageFile.Close()
+	var imageBuffer bytes.Buffer
+	// Copy image data to a buffer
+	io.Copy(&imageBuffer, imageFile)
+
+	// Make tensor
+	tensor, err := makeTensorFromImage(&imageBuffer, imageName[:1][0])
+	if err != nil {
+		responseError(w, "Invalid image", err, http.StatusBadRequest)
+		return
+	}
+
+	// Run inference
+	session, err := tf.NewSession(graph, nil)
+	if err != nil {
+		responseError(w, "Unable to create new session", err, http.StatusInternalServerError)
+		return
+	}
+	defer session.Close()
+	output, err := session.Run(
+		map[tf.Output]*tf.Tensor{
+			graph.Operation("input").Output(0): tensor,
+		},
+		[]tf.Output{
+			graph.Operation("output").Output(0),
+		},
+		nil)
+	if err != nil {
+		responseError(w, "Could not run inference", err, http.StatusInternalServerError)
+		return
+	}
+	// our model probabilities
+	probs := output[0].Value().([][]float32)[0]
+
+	// make prediction response
+	topN := 5
+	if len(labels) < topN {
+		topN = len(labels)
+	}
+	responseJSON(w, ClassifyResult{
+		Filename: header.Filename,
+		Labels:   findBestLabels(probs, topN),
+	})
+}
+
 // PredictHandler send prediction from TF ML model
 func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "POST") {
@@ -217,23 +424,18 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 			"Method": r.Method,
 		}).Error("call PredictHandler with")
 		w.WriteHeader(http.StatusMethodNotAllowed)
+		responseError(w, fmt.Sprintf("wrong method: %v", r.Method), nil, http.StatusMethodNotAllowed)
 		return
 	}
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-		}).Error("unable to read incoming data")
-		w.WriteHeader(http.StatusInternalServerError)
+		responseError(w, "unable to read incoming data", err, http.StatusInternalServerError)
 		return
 	}
 	recs := &tfaaspb.Hits{}
 	if err := proto.Unmarshal(body, recs); err != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-		}).Error("unable to unmarshal Hits")
-		w.WriteHeader(http.StatusInternalServerError)
+		responseError(w, "unable to unmarshal Hits", err, http.StatusInternalServerError)
 		return
 	}
 	if VERBOSE > 0 {
@@ -249,10 +451,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	pobj := &tfaaspb.Predictions{Data: objects}
 	out, err := proto.Marshal(pobj)
 	if err != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-		}).Error("unable to marshal the data")
-		w.WriteHeader(http.StatusInternalServerError)
+		responseError(w, "unable to marshal data", err, http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -306,6 +505,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 		DataHandler(w, r)
 	case "predict":
 		PredictHandler(w, r)
+	case "image":
+		ImageHandler(w, r)
 	case "verbose":
 		VerboseHandler(w, r)
 	default:
@@ -322,7 +523,18 @@ func main() {
 	flag.StringVar(&serverKey, "serverKey", "server.key", "server Key")
 	var serverCert string
 	flag.StringVar(&serverCert, "serverCert", "server.crt", "server Cert")
+	var modelName string
+	flag.StringVar(&modelName, "modelName", "model/model.pb", "model protobuf file name")
+	var modelLabels string
+	flag.StringVar(&modelLabels, "modelLabels", "model/labels.csv", "model labels")
 	flag.Parse()
+
+	err := loadModel(modelName, modelLabels)
+	if err != nil {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+		}).Error("unable to open TF model")
+	}
 
 	http.Handle("/models/", http.StripPrefix("/models/", http.FileServer(http.Dir(dir))))
 	http.HandleFunc("/", AuthHandler)
