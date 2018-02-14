@@ -47,4 +47,4 @@ https://stackoverflow.com/questions/46427606/reload-tensorflow-model-in-golang-a
 ### References
 another nice post:
 https://outcrawl.com/image-recognition-api-go-tensorflow/
-
+https://www.snip2code.com/Snippet/663162/Golang-HTTP-Handler-to-Upload-Image----R/
