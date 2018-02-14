@@ -43,16 +43,26 @@ Please note that we use full namespace `tfaaspb.DataFrame` as defined in our sch
 Then we can extend this example to send our message to our server using script/request:
 ```
 scripts/request proto.msg https://localhost:8083/predictproto
+
+# our scripts/request does the following:
+# pdir=/path # points to path where we keep our proto file
+# PROTO=tfaas.proto # our proto file name
+# REQUEST=tfaaspb.Row # our protobuf package name (tfaaspb) dot message name (Row)
+# RESPONSE=tfaaspb.Predictions
+# scurl="curl -L -k --key $HOME/.globus/userkey.pem --cert $HOME/.globus/usercert.pem"
+# cat $MSG | protoc -I$pdir --encode $REQUEST $PROTO | \
+#    $scurl -sS -X POST --data-binary @- $URL | \
+#    protoc -I$pdir --decode $RESPONSE $PROTO
 ```
 
 ### References
 
 Protobuf documentation:
-https://developers.google.com/protocol-buffers/
+- https://developers.google.com/protocol-buffers/
 
 How to encode/decode messages:
-https://stackoverflow.com/questions/18873924/what-does-the-protobuf-text-format-look-like
+- https://stackoverflow.com/questions/18873924/what-does-the-protobuf-text-format-look-like
 
 How to send messages with curl:
-http://xmeblog.blogspot.com/2013/12/sending-protobuf-serialized-data-using.html
-http://xmeblog.blogspot.com/2013/12/sending-protobuf-serialized-data-using.html
+- http://xmeblog.blogspot.com/2013/12/sending-protobuf-serialized-data-using.html
+- https://gist.github.com/alexeypegov/7887216
