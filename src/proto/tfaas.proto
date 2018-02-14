@@ -12,6 +12,15 @@ message Hits {
     repeated Detector det = 1;
 }
 
+message Row {
+    repeated string k = 1;
+    repeated float v = 2;
+}
+
+message DataFrame {
+    repeated Row row = 1;
+}
+
 message Class {
     string name = 1;
     float p = 2;
