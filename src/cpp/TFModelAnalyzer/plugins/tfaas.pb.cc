@@ -250,14 +250,14 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tfaaspb::Class, name_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tfaaspb::Class, p_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tfaaspb::Class, label_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tfaaspb::Class, probability_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tfaaspb::Predictions, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tfaaspb::Predictions, data_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tfaaspb::Predictions, prediction_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::tfaaspb::Detector)},
@@ -306,12 +306,13 @@ void AddDescriptorsImpl() {
       "\002\"&\n\004Hits\022\036\n\003det\030\001 \003(\0132\021.tfaaspb.Detecto"
       "r\"\"\n\004Pair\022\013\n\003key\030\001 \001(\t\022\r\n\005value\030\002 \001(\002\"\"\n"
       "\003Row\022\033\n\004pair\030\001 \003(\0132\r.tfaaspb.Pair\"&\n\tDat"
-      "aFrame\022\031\n\003row\030\001 \003(\0132\014.tfaaspb.Row\" \n\005Cla"
-      "ss\022\014\n\004name\030\001 \001(\t\022\t\n\001p\030\002 \001(\002\"+\n\013Predictio"
-      "ns\022\034\n\004data\030\001 \003(\0132\016.tfaaspb.Classb\006proto3"
+      "aFrame\022\031\n\003row\030\001 \003(\0132\014.tfaaspb.Row\"+\n\005Cla"
+      "ss\022\r\n\005label\030\001 \001(\t\022\023\n\013probability\030\002 \001(\002\"1"
+      "\n\013Predictions\022\"\n\nprediction\030\001 \003(\0132\016.tfaa"
+      "spb.Classb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 320);
+      descriptor, 337);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "tfaas.proto", &protobuf_RegisterTypes);
 }
@@ -1792,8 +1793,8 @@ void DataFrame::InternalSwap(DataFrame* other) {
 void Class::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Class::kNameFieldNumber;
-const int Class::kPFieldNumber;
+const int Class::kLabelFieldNumber;
+const int Class::kProbabilityFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Class::Class()
@@ -1809,17 +1810,17 @@ Class::Class(const Class& from)
       _internal_metadata_(NULL),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.name().size() > 0) {
-    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  label_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.label().size() > 0) {
+    label_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.label_);
   }
-  p_ = from.p_;
+  probability_ = from.probability_;
   // @@protoc_insertion_point(copy_constructor:tfaaspb.Class)
 }
 
 void Class::SharedCtor() {
-  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  p_ = 0;
+  label_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  probability_ = 0;
   _cached_size_ = 0;
 }
 
@@ -1829,7 +1830,7 @@ Class::~Class() {
 }
 
 void Class::SharedDtor() {
-  name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  label_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void Class::SetCachedSize(int size) const {
@@ -1861,8 +1862,8 @@ void Class::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  p_ = 0;
+  label_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  probability_ = 0;
   _internal_metadata_.Clear();
 }
 
@@ -1876,30 +1877,30 @@ bool Class::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // string name = 1;
+      // string label = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_name()));
+                input, this->mutable_label()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->name().data(), static_cast<int>(this->name().length()),
+            this->label().data(), static_cast<int>(this->label().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "tfaaspb.Class.name"));
+            "tfaaspb.Class.label"));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // float p = 2;
+      // float probability = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(21u /* 21 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &p_)));
+                 input, &probability_)));
         } else {
           goto handle_unusual;
         }
@@ -1932,19 +1933,19 @@ void Class::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string name = 1;
-  if (this->name().size() > 0) {
+  // string label = 1;
+  if (this->label().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->name().data(), static_cast<int>(this->name().length()),
+      this->label().data(), static_cast<int>(this->label().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tfaaspb.Class.name");
+      "tfaaspb.Class.label");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      1, this->name(), output);
+      1, this->label(), output);
   }
 
-  // float p = 2;
-  if (this->p() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->p(), output);
+  // float probability = 2;
+  if (this->probability() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(2, this->probability(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1961,20 +1962,20 @@ void Class::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string name = 1;
-  if (this->name().size() > 0) {
+  // string label = 1;
+  if (this->label().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->name().data(), static_cast<int>(this->name().length()),
+      this->label().data(), static_cast<int>(this->label().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tfaaspb.Class.name");
+      "tfaaspb.Class.label");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->name(), target);
+        1, this->label(), target);
   }
 
-  // float p = 2;
-  if (this->p() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->p(), target);
+  // float probability = 2;
+  if (this->probability() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(2, this->probability(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -1994,15 +1995,15 @@ size_t Class::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // string name = 1;
-  if (this->name().size() > 0) {
+  // string label = 1;
+  if (this->label().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->name());
+        this->label());
   }
 
-  // float p = 2;
-  if (this->p() != 0) {
+  // float probability = 2;
+  if (this->probability() != 0) {
     total_size += 1 + 4;
   }
 
@@ -2035,12 +2036,12 @@ void Class::MergeFrom(const Class& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.name().size() > 0) {
+  if (from.label().size() > 0) {
 
-    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+    label_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.label_);
   }
-  if (from.p() != 0) {
-    set_p(from.p());
+  if (from.probability() != 0) {
+    set_probability(from.probability());
   }
 }
 
@@ -2068,8 +2069,8 @@ void Class::Swap(Class* other) {
 }
 void Class::InternalSwap(Class* other) {
   using std::swap;
-  name_.Swap(&other->name_);
-  swap(p_, other->p_);
+  label_.Swap(&other->label_);
+  swap(probability_, other->probability_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
@@ -2085,7 +2086,7 @@ void Class::InternalSwap(Class* other) {
 void Predictions::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Predictions::kDataFieldNumber;
+const int Predictions::kPredictionFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 Predictions::Predictions()
@@ -2099,7 +2100,7 @@ Predictions::Predictions()
 Predictions::Predictions(const Predictions& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
-      data_(from.data_),
+      prediction_(from.prediction_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   // @@protoc_insertion_point(copy_constructor:tfaaspb.Predictions)
@@ -2146,7 +2147,7 @@ void Predictions::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  data_.Clear();
+  prediction_.Clear();
   _internal_metadata_.Clear();
 }
 
@@ -2160,11 +2161,11 @@ bool Predictions::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // repeated .tfaaspb.Class data = 1;
+      // repeated .tfaaspb.Class prediction = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(input, add_data()));
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(input, add_prediction()));
         } else {
           goto handle_unusual;
         }
@@ -2197,11 +2198,11 @@ void Predictions::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // repeated .tfaaspb.Class data = 1;
+  // repeated .tfaaspb.Class prediction = 1;
   for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->data_size()); i < n; i++) {
+      n = static_cast<unsigned int>(this->prediction_size()); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      1, this->data(static_cast<int>(i)), output);
+      1, this->prediction(static_cast<int>(i)), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -2218,12 +2219,12 @@ void Predictions::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // repeated .tfaaspb.Class data = 1;
+  // repeated .tfaaspb.Class prediction = 1;
   for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->data_size()); i < n; i++) {
+      n = static_cast<unsigned int>(this->prediction_size()); i < n; i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageToArray(
-        1, this->data(static_cast<int>(i)), deterministic, target);
+        1, this->prediction(static_cast<int>(i)), deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -2243,14 +2244,14 @@ size_t Predictions::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // repeated .tfaaspb.Class data = 1;
+  // repeated .tfaaspb.Class prediction = 1;
   {
-    unsigned int count = static_cast<unsigned int>(this->data_size());
+    unsigned int count = static_cast<unsigned int>(this->prediction_size());
     total_size += 1UL * count;
     for (unsigned int i = 0; i < count; i++) {
       total_size +=
         ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->data(static_cast<int>(i)));
+          this->prediction(static_cast<int>(i)));
     }
   }
 
@@ -2283,7 +2284,7 @@ void Predictions::MergeFrom(const Predictions& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  data_.MergeFrom(from.data_);
+  prediction_.MergeFrom(from.prediction_);
 }
 
 void Predictions::CopyFrom(const ::google::protobuf::Message& from) {
@@ -2310,7 +2311,7 @@ void Predictions::Swap(Predictions* other) {
 }
 void Predictions::InternalSwap(Predictions* other) {
   using std::swap;
-  data_.InternalSwap(&other->data_);
+  prediction_.InternalSwap(&other->prediction_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }

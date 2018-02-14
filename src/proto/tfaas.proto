@@ -30,13 +30,13 @@ message DataFrame {
     repeated Row row = 1;
 }
 
-// Class represents response from the server, it contains name and probability
+// Class represents response from the server, it contains class label name and probability
 message Class {
-    string name = 1;
-    float p = 2;
+    string label = 1;
+    float probability = 2;
 }
 
 // Predictions is collection of class probabilities
 message Predictions {
-    repeated Class data = 1;
+    repeated Class prediction = 1;
 }

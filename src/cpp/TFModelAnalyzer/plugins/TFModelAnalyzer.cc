@@ -74,8 +74,8 @@ void readMessage(const string& buffer) {
         return;
     }
     for (int i = 0; i < preds.data_size(); i++) {
-        const tfaaspb::Class& cls = preds.data(i);
-        cout << "prediction name: " << cls.name() << " probability: " << cls.p() << endl;
+        const tfaaspb::Class& cls = preds.prediction(i);
+        cout << "prediction name: " << cls.label() << " probability: " << cls.probability() << endl;
     }
     google::protobuf::ShutdownProtobufLibrary();
 }

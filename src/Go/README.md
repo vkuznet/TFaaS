@@ -27,6 +27,10 @@ scurl https://localhost:8083/models/tf.model1
 # to increase verbosity level of the server
 scurl -XPOST -d '{"level":1}' https://localhost:8083/verbose
 
-# to get protobuffer message, here we need to change PROTOBUGMSG to appropriate data
-scurl -XPOST -d PROTOBUFMSG https://localhost:8083/predict
+# use JSON API to get prediction for our input data
+scurl -XPOST -d '{"keys":["a","b"],"values":[1.1,2.0]}' https://localhost:8083/json
+
+# use Protobuf API to get prediction for out input message (proto.msg)
+# see scripts/README.md area for more details
+scripts/request proto.msg https://localhost:8083/proto
 ```

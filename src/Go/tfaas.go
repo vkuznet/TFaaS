@@ -453,9 +453,9 @@ func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
 
 	// example how to use tfaaspb protobuffer to ship back prediction data
 	var objects []*tfaaspb.Class
-	objects = append(objects, &tfaaspb.Class{Name: "higgs", P: float32(0.2)})
-	objects = append(objects, &tfaaspb.Class{Name: "qcd", P: float32(0.8)})
-	pobj := &tfaaspb.Predictions{Data: objects}
+	objects = append(objects, &tfaaspb.Class{Label: "higgs", Probability: float32(0.2)})
+	objects = append(objects, &tfaaspb.Class{Label: "qcd", Probability: float32(0.8)})
+	pobj := &tfaaspb.Predictions{Prediction: objects}
 	out, err := proto.Marshal(pobj)
 	if err != nil {
 		responseError(w, "unable to marshal data", err, http.StatusInternalServerError)
@@ -481,14 +481,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		responseError(w, "unable to read incoming data", err, http.StatusInternalServerError)
 		return
 	}
-	// example how to unmarshal Hits message
-	/*
-		recs := &tfaaspb.Hits{}
-		if err := proto.Unmarshal(body, recs); err != nil {
-			responseError(w, "unable to unmarshal Hits", err, http.StatusInternalServerError)
-			return
-		}
-	*/
+	// unmarshal incoming JSON message into Row data structure
 	recs := &Row{}
 	if err := json.Unmarshal(body, recs); err != nil {
 		responseError(w, "unable to unmarshal Row", err, http.StatusInternalServerError)
@@ -500,20 +493,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		}).Info("received")
 	}
 
-	// example how to use tfaaspb protobuffer to ship back prediction data
-	/*
-		var objects []*tfaaspb.Class
-		objects = append(objects, &tfaaspb.Class{Name: "higgs", P: float32(0.2)})
-		objects = append(objects, &tfaaspb.Class{Name: "qcd", P: float32(0.8)})
-		pobj := &tfaaspb.Predictions{Data: objects}
-		out, err := proto.Marshal(pobj)
-		if err != nil {
-			responseError(w, "unable to marshal data", err, http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		w.Write(out)
-	*/
+	// prepare our response
 	var labels []LabelResult
 	labels = append(labels, LabelResult{Label: "higgs", Probability: 0.8})
 	labels = append(labels, LabelResult{Label: "qcd", Probability: 0.2})
@@ -565,9 +545,9 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	switch path {
 	case "data":
 		DataHandler(w, r)
-	case "predict":
+	case "json":
 		PredictHandler(w, r)
-	case "predictproto":
+	case "proto":
 		PredictProtobufHandler(w, r)
 	case "image":
 		ImageHandler(w, r)

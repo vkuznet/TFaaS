@@ -753,32 +753,32 @@ class Class : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
 
   // accessors -------------------------------------------------------
 
-  // string name = 1;
-  void clear_name();
-  static const int kNameFieldNumber = 1;
-  const ::std::string& name() const;
-  void set_name(const ::std::string& value);
+  // string label = 1;
+  void clear_label();
+  static const int kLabelFieldNumber = 1;
+  const ::std::string& label() const;
+  void set_label(const ::std::string& value);
   #if LANG_CXX11
-  void set_name(::std::string&& value);
+  void set_label(::std::string&& value);
   #endif
-  void set_name(const char* value);
-  void set_name(const char* value, size_t size);
-  ::std::string* mutable_name();
-  ::std::string* release_name();
-  void set_allocated_name(::std::string* name);
+  void set_label(const char* value);
+  void set_label(const char* value, size_t size);
+  ::std::string* mutable_label();
+  ::std::string* release_label();
+  void set_allocated_label(::std::string* label);
 
-  // float p = 2;
-  void clear_p();
-  static const int kPFieldNumber = 2;
-  float p() const;
-  void set_p(float value);
+  // float probability = 2;
+  void clear_probability();
+  static const int kProbabilityFieldNumber = 2;
+  float probability() const;
+  void set_probability(float value);
 
   // @@protoc_insertion_point(class_scope:tfaaspb.Class)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr name_;
-  float p_;
+  ::google::protobuf::internal::ArenaStringPtr label_;
+  float probability_;
   mutable int _cached_size_;
   friend struct ::protobuf_tfaas_2eproto::TableStruct;
   friend void ::protobuf_tfaas_2eproto::InitDefaultsClassImpl();
@@ -867,23 +867,23 @@ class Predictions : public ::google::protobuf::Message /* @@protoc_insertion_poi
 
   // accessors -------------------------------------------------------
 
-  // repeated .tfaaspb.Class data = 1;
-  int data_size() const;
-  void clear_data();
-  static const int kDataFieldNumber = 1;
-  const ::tfaaspb::Class& data(int index) const;
-  ::tfaaspb::Class* mutable_data(int index);
-  ::tfaaspb::Class* add_data();
+  // repeated .tfaaspb.Class prediction = 1;
+  int prediction_size() const;
+  void clear_prediction();
+  static const int kPredictionFieldNumber = 1;
+  const ::tfaaspb::Class& prediction(int index) const;
+  ::tfaaspb::Class* mutable_prediction(int index);
+  ::tfaaspb::Class* add_prediction();
   ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class >*
-      mutable_data();
+      mutable_prediction();
   const ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class >&
-      data() const;
+      prediction() const;
 
   // @@protoc_insertion_point(class_scope:tfaaspb.Predictions)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class > data_;
+  ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class > prediction_;
   mutable int _cached_size_;
   friend struct ::protobuf_tfaas_2eproto::TableStruct;
   friend void ::protobuf_tfaas_2eproto::InitDefaultsPredictionsImpl();
@@ -1219,105 +1219,105 @@ DataFrame::row() const {
 
 // Class
 
-// string name = 1;
-inline void Class::clear_name() {
-  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// string label = 1;
+inline void Class::clear_label() {
+  label_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Class::name() const {
-  // @@protoc_insertion_point(field_get:tfaaspb.Class.name)
-  return name_.GetNoArena();
+inline const ::std::string& Class::label() const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Class.label)
+  return label_.GetNoArena();
 }
-inline void Class::set_name(const ::std::string& value) {
+inline void Class::set_label(const ::std::string& value) {
   
-  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:tfaaspb.Class.name)
+  label_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:tfaaspb.Class.label)
 }
 #if LANG_CXX11
-inline void Class::set_name(::std::string&& value) {
+inline void Class::set_label(::std::string&& value) {
   
-  name_.SetNoArena(
+  label_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:tfaaspb.Class.name)
+  // @@protoc_insertion_point(field_set_rvalue:tfaaspb.Class.label)
 }
 #endif
-inline void Class::set_name(const char* value) {
+inline void Class::set_label(const char* value) {
   GOOGLE_DCHECK(value != NULL);
   
-  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:tfaaspb.Class.name)
+  label_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:tfaaspb.Class.label)
 }
-inline void Class::set_name(const char* value, size_t size) {
+inline void Class::set_label(const char* value, size_t size) {
   
-  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+  label_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:tfaaspb.Class.name)
+  // @@protoc_insertion_point(field_set_pointer:tfaaspb.Class.label)
 }
-inline ::std::string* Class::mutable_name() {
+inline ::std::string* Class::mutable_label() {
   
-  // @@protoc_insertion_point(field_mutable:tfaaspb.Class.name)
-  return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  // @@protoc_insertion_point(field_mutable:tfaaspb.Class.label)
+  return label_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Class::release_name() {
-  // @@protoc_insertion_point(field_release:tfaaspb.Class.name)
+inline ::std::string* Class::release_label() {
+  // @@protoc_insertion_point(field_release:tfaaspb.Class.label)
   
-  return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  return label_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Class::set_allocated_name(::std::string* name) {
-  if (name != NULL) {
+inline void Class::set_allocated_label(::std::string* label) {
+  if (label != NULL) {
     
   } else {
     
   }
-  name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
-  // @@protoc_insertion_point(field_set_allocated:tfaaspb.Class.name)
+  label_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), label);
+  // @@protoc_insertion_point(field_set_allocated:tfaaspb.Class.label)
 }
 
-// float p = 2;
-inline void Class::clear_p() {
-  p_ = 0;
+// float probability = 2;
+inline void Class::clear_probability() {
+  probability_ = 0;
 }
-inline float Class::p() const {
-  // @@protoc_insertion_point(field_get:tfaaspb.Class.p)
-  return p_;
+inline float Class::probability() const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Class.probability)
+  return probability_;
 }
-inline void Class::set_p(float value) {
+inline void Class::set_probability(float value) {
   
-  p_ = value;
-  // @@protoc_insertion_point(field_set:tfaaspb.Class.p)
+  probability_ = value;
+  // @@protoc_insertion_point(field_set:tfaaspb.Class.probability)
 }
 
 // -------------------------------------------------------------------
 
 // Predictions
 
-// repeated .tfaaspb.Class data = 1;
-inline int Predictions::data_size() const {
-  return data_.size();
+// repeated .tfaaspb.Class prediction = 1;
+inline int Predictions::prediction_size() const {
+  return prediction_.size();
 }
-inline void Predictions::clear_data() {
-  data_.Clear();
+inline void Predictions::clear_prediction() {
+  prediction_.Clear();
 }
-inline const ::tfaaspb::Class& Predictions::data(int index) const {
-  // @@protoc_insertion_point(field_get:tfaaspb.Predictions.data)
-  return data_.Get(index);
+inline const ::tfaaspb::Class& Predictions::prediction(int index) const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Predictions.prediction)
+  return prediction_.Get(index);
 }
-inline ::tfaaspb::Class* Predictions::mutable_data(int index) {
-  // @@protoc_insertion_point(field_mutable:tfaaspb.Predictions.data)
-  return data_.Mutable(index);
+inline ::tfaaspb::Class* Predictions::mutable_prediction(int index) {
+  // @@protoc_insertion_point(field_mutable:tfaaspb.Predictions.prediction)
+  return prediction_.Mutable(index);
 }
-inline ::tfaaspb::Class* Predictions::add_data() {
-  // @@protoc_insertion_point(field_add:tfaaspb.Predictions.data)
-  return data_.Add();
+inline ::tfaaspb::Class* Predictions::add_prediction() {
+  // @@protoc_insertion_point(field_add:tfaaspb.Predictions.prediction)
+  return prediction_.Add();
 }
 inline ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class >*
-Predictions::mutable_data() {
-  // @@protoc_insertion_point(field_mutable_list:tfaaspb.Predictions.data)
-  return &data_;
+Predictions::mutable_prediction() {
+  // @@protoc_insertion_point(field_mutable_list:tfaaspb.Predictions.prediction)
+  return &prediction_;
 }
 inline const ::google::protobuf::RepeatedPtrField< ::tfaaspb::Class >&
-Predictions::data() const {
-  // @@protoc_insertion_point(field_list:tfaaspb.Predictions.data)
-  return data_;
+Predictions::prediction() const {
+  // @@protoc_insertion_point(field_list:tfaaspb.Predictions.prediction)
+  return prediction_;
 }
 
 #ifdef __GNUC__
