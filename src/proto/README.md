@@ -15,6 +15,15 @@ message Hits {
     repeated Detector det = 1;
 }
 
+message Row {
+    repeated string k = 1;
+    repeated float v = 2;
+}
+
+message DataFrame {
+    repeated Row row = 1;
+}
+
 message Class {
     string name = 1;
     repeated float p = 2;
@@ -24,7 +33,8 @@ message Predictions {
     repeated Class cls = 1;
 }
 ```
-Here input file represents hits from various detectors, while output provides
+Here input file represents hits from various detectors or rows (key-value
+pair) of some dataframe, while output provides
 description of out model output, i.e. class name and probability.
 For format description see [protobuf](https://developers.google.com/protocol-buffers)
 web site.
