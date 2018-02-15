@@ -4,6 +4,7 @@ create proto file describing our input data, e.g.
 syntax = "proto3";
 package tfaaspb;
 
+// Detector represents a CMS detector with name and x,y,z coordinates
 message Detector {
     string name = 1;
     repeated float x = 2;
@@ -11,26 +12,31 @@ message Detector {
     repeated float z = 4;
 }
 
+// Hits is a collection of detector elements
 message Hits {
     repeated Detector det = 1;
 }
 
+// Row is a collection of keys and values
 message Row {
-    repeated string k = 1;
-    repeated float v = 2;
+    repeated string key = 1;
+    repeated float value = 2;
 }
 
+// DataFrame is a collection of rows
 message DataFrame {
     repeated Row row = 1;
 }
 
+// Class represents response from the server, it contains class label name and probability
 message Class {
-    string name = 1;
-    repeated float p = 2;
+    string label = 1;
+    float probability = 2;
 }
 
+// Predictions is collection of class probabilities
 message Predictions {
-    repeated Class cls = 1;
+    repeated Class prediction = 1;
 }
 ```
 Here input file represents hits from various detectors or rows (key-value

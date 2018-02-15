@@ -14,15 +14,10 @@ message Hits {
     repeated Detector det = 1;
 }
 
-// Pair is simplest key:value pair (dict) representing a value
-message Pair {
-    string key = 1;
-    float value = 2;
-}
-
-// Row is a collection of key:value pairs
+// Row is a collection of keys and values
 message Row {
-    repeated Pair pair = 1;
+    repeated string key = 1;
+    repeated float value = 2;
 }
 
 // DataFrame is a collection of rows

@@ -36,7 +36,7 @@ namespace protobuf_tfaas_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[7];
+  static const ::google::protobuf::internal::ParseTable schema[6];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -46,8 +46,6 @@ void InitDefaultsDetectorImpl();
 void InitDefaultsDetector();
 void InitDefaultsHitsImpl();
 void InitDefaultsHits();
-void InitDefaultsPairImpl();
-void InitDefaultsPair();
 void InitDefaultsRowImpl();
 void InitDefaultsRow();
 void InitDefaultsDataFrameImpl();
@@ -59,7 +57,6 @@ void InitDefaultsPredictions();
 inline void InitDefaults() {
   InitDefaultsDetector();
   InitDefaultsHits();
-  InitDefaultsPair();
   InitDefaultsRow();
   InitDefaultsDataFrame();
   InitDefaultsClass();
@@ -79,9 +76,6 @@ extern DetectorDefaultTypeInternal _Detector_default_instance_;
 class Hits;
 class HitsDefaultTypeInternal;
 extern HitsDefaultTypeInternal _Hits_default_instance_;
-class Pair;
-class PairDefaultTypeInternal;
-extern PairDefaultTypeInternal _Pair_default_instance_;
 class Predictions;
 class PredictionsDefaultTypeInternal;
 extern PredictionsDefaultTypeInternal _Predictions_default_instance_;
@@ -347,120 +341,6 @@ class Hits : public ::google::protobuf::Message /* @@protoc_insertion_point(clas
 };
 // -------------------------------------------------------------------
 
-class Pair : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:tfaaspb.Pair) */ {
- public:
-  Pair();
-  virtual ~Pair();
-
-  Pair(const Pair& from);
-
-  inline Pair& operator=(const Pair& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  Pair(Pair&& from) noexcept
-    : Pair() {
-    *this = ::std::move(from);
-  }
-
-  inline Pair& operator=(Pair&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const Pair& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const Pair* internal_default_instance() {
-    return reinterpret_cast<const Pair*>(
-               &_Pair_default_instance_);
-  }
-  static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    2;
-
-  void Swap(Pair* other);
-  friend void swap(Pair& a, Pair& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline Pair* New() const PROTOBUF_FINAL { return New(NULL); }
-
-  Pair* New(::google::protobuf::Arena* arena) const PROTOBUF_FINAL;
-  void CopyFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void MergeFrom(const ::google::protobuf::Message& from) PROTOBUF_FINAL;
-  void CopyFrom(const Pair& from);
-  void MergeFrom(const Pair& from);
-  void Clear() PROTOBUF_FINAL;
-  bool IsInitialized() const PROTOBUF_FINAL;
-
-  size_t ByteSizeLong() const PROTOBUF_FINAL;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) PROTOBUF_FINAL;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const PROTOBUF_FINAL;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const PROTOBUF_FINAL;
-  int GetCachedSize() const PROTOBUF_FINAL { return _cached_size_; }
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const PROTOBUF_FINAL;
-  void InternalSwap(Pair* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const PROTOBUF_FINAL;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // string key = 1;
-  void clear_key();
-  static const int kKeyFieldNumber = 1;
-  const ::std::string& key() const;
-  void set_key(const ::std::string& value);
-  #if LANG_CXX11
-  void set_key(::std::string&& value);
-  #endif
-  void set_key(const char* value);
-  void set_key(const char* value, size_t size);
-  ::std::string* mutable_key();
-  ::std::string* release_key();
-  void set_allocated_key(::std::string* key);
-
-  // float value = 2;
-  void clear_value();
-  static const int kValueFieldNumber = 2;
-  float value() const;
-  void set_value(float value);
-
-  // @@protoc_insertion_point(class_scope:tfaaspb.Pair)
- private:
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr key_;
-  float value_;
-  mutable int _cached_size_;
-  friend struct ::protobuf_tfaas_2eproto::TableStruct;
-  friend void ::protobuf_tfaas_2eproto::InitDefaultsPairImpl();
-};
-// -------------------------------------------------------------------
-
 class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:tfaaspb.Row) */ {
  public:
   Row();
@@ -496,7 +376,7 @@ class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class
                &_Row_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    3;
+    2;
 
   void Swap(Row* other);
   friend void swap(Row& a, Row& b) {
@@ -543,23 +423,47 @@ class Row : public ::google::protobuf::Message /* @@protoc_insertion_point(class
 
   // accessors -------------------------------------------------------
 
-  // repeated .tfaaspb.Pair pair = 1;
-  int pair_size() const;
-  void clear_pair();
-  static const int kPairFieldNumber = 1;
-  const ::tfaaspb::Pair& pair(int index) const;
-  ::tfaaspb::Pair* mutable_pair(int index);
-  ::tfaaspb::Pair* add_pair();
-  ::google::protobuf::RepeatedPtrField< ::tfaaspb::Pair >*
-      mutable_pair();
-  const ::google::protobuf::RepeatedPtrField< ::tfaaspb::Pair >&
-      pair() const;
+  // repeated string key = 1;
+  int key_size() const;
+  void clear_key();
+  static const int kKeyFieldNumber = 1;
+  const ::std::string& key(int index) const;
+  ::std::string* mutable_key(int index);
+  void set_key(int index, const ::std::string& value);
+  #if LANG_CXX11
+  void set_key(int index, ::std::string&& value);
+  #endif
+  void set_key(int index, const char* value);
+  void set_key(int index, const char* value, size_t size);
+  ::std::string* add_key();
+  void add_key(const ::std::string& value);
+  #if LANG_CXX11
+  void add_key(::std::string&& value);
+  #endif
+  void add_key(const char* value);
+  void add_key(const char* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField< ::std::string>& key() const;
+  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_key();
+
+  // repeated float value = 2;
+  int value_size() const;
+  void clear_value();
+  static const int kValueFieldNumber = 2;
+  float value(int index) const;
+  void set_value(int index, float value);
+  void add_value(float value);
+  const ::google::protobuf::RepeatedField< float >&
+      value() const;
+  ::google::protobuf::RepeatedField< float >*
+      mutable_value();
 
   // @@protoc_insertion_point(class_scope:tfaaspb.Row)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::tfaaspb::Pair > pair_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> key_;
+  ::google::protobuf::RepeatedField< float > value_;
+  mutable int _value_cached_byte_size_;
   mutable int _cached_size_;
   friend struct ::protobuf_tfaas_2eproto::TableStruct;
   friend void ::protobuf_tfaas_2eproto::InitDefaultsRowImpl();
@@ -601,7 +505,7 @@ class DataFrame : public ::google::protobuf::Message /* @@protoc_insertion_point
                &_DataFrame_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    4;
+    3;
 
   void Swap(DataFrame* other);
   friend void swap(DataFrame& a, DataFrame& b) {
@@ -706,7 +610,7 @@ class Class : public ::google::protobuf::Message /* @@protoc_insertion_point(cla
                &_Class_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    5;
+    4;
 
   void Swap(Class* other);
   friend void swap(Class& a, Class& b) {
@@ -820,7 +724,7 @@ class Predictions : public ::google::protobuf::Message /* @@protoc_insertion_poi
                &_Predictions_default_instance_);
   }
   static PROTOBUF_CONSTEXPR int const kIndexInFileMessages =
-    6;
+    5;
 
   void Swap(Predictions* other);
   friend void swap(Predictions& a, Predictions& b) {
@@ -1078,107 +982,105 @@ Hits::det() const {
 
 // -------------------------------------------------------------------
 
-// Pair
-
-// string key = 1;
-inline void Pair::clear_key() {
-  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& Pair::key() const {
-  // @@protoc_insertion_point(field_get:tfaaspb.Pair.key)
-  return key_.GetNoArena();
-}
-inline void Pair::set_key(const ::std::string& value) {
-  
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:tfaaspb.Pair.key)
-}
-#if LANG_CXX11
-inline void Pair::set_key(::std::string&& value) {
-  
-  key_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:tfaaspb.Pair.key)
-}
-#endif
-inline void Pair::set_key(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:tfaaspb.Pair.key)
-}
-inline void Pair::set_key(const char* value, size_t size) {
-  
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:tfaaspb.Pair.key)
-}
-inline ::std::string* Pair::mutable_key() {
-  
-  // @@protoc_insertion_point(field_mutable:tfaaspb.Pair.key)
-  return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* Pair::release_key() {
-  // @@protoc_insertion_point(field_release:tfaaspb.Pair.key)
-  
-  return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void Pair::set_allocated_key(::std::string* key) {
-  if (key != NULL) {
-    
-  } else {
-    
-  }
-  key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:tfaaspb.Pair.key)
-}
-
-// float value = 2;
-inline void Pair::clear_value() {
-  value_ = 0;
-}
-inline float Pair::value() const {
-  // @@protoc_insertion_point(field_get:tfaaspb.Pair.value)
-  return value_;
-}
-inline void Pair::set_value(float value) {
-  
-  value_ = value;
-  // @@protoc_insertion_point(field_set:tfaaspb.Pair.value)
-}
-
-// -------------------------------------------------------------------
-
 // Row
 
-// repeated .tfaaspb.Pair pair = 1;
-inline int Row::pair_size() const {
-  return pair_.size();
+// repeated string key = 1;
+inline int Row::key_size() const {
+  return key_.size();
 }
-inline void Row::clear_pair() {
-  pair_.Clear();
+inline void Row::clear_key() {
+  key_.Clear();
 }
-inline const ::tfaaspb::Pair& Row::pair(int index) const {
-  // @@protoc_insertion_point(field_get:tfaaspb.Row.pair)
-  return pair_.Get(index);
+inline const ::std::string& Row::key(int index) const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Row.key)
+  return key_.Get(index);
 }
-inline ::tfaaspb::Pair* Row::mutable_pair(int index) {
-  // @@protoc_insertion_point(field_mutable:tfaaspb.Row.pair)
-  return pair_.Mutable(index);
+inline ::std::string* Row::mutable_key(int index) {
+  // @@protoc_insertion_point(field_mutable:tfaaspb.Row.key)
+  return key_.Mutable(index);
 }
-inline ::tfaaspb::Pair* Row::add_pair() {
-  // @@protoc_insertion_point(field_add:tfaaspb.Row.pair)
-  return pair_.Add();
+inline void Row::set_key(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:tfaaspb.Row.key)
+  key_.Mutable(index)->assign(value);
 }
-inline ::google::protobuf::RepeatedPtrField< ::tfaaspb::Pair >*
-Row::mutable_pair() {
-  // @@protoc_insertion_point(field_mutable_list:tfaaspb.Row.pair)
-  return &pair_;
+#if LANG_CXX11
+inline void Row::set_key(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:tfaaspb.Row.key)
+  key_.Mutable(index)->assign(std::move(value));
 }
-inline const ::google::protobuf::RepeatedPtrField< ::tfaaspb::Pair >&
-Row::pair() const {
-  // @@protoc_insertion_point(field_list:tfaaspb.Row.pair)
-  return pair_;
+#endif
+inline void Row::set_key(int index, const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  key_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:tfaaspb.Row.key)
+}
+inline void Row::set_key(int index, const char* value, size_t size) {
+  key_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:tfaaspb.Row.key)
+}
+inline ::std::string* Row::add_key() {
+  // @@protoc_insertion_point(field_add_mutable:tfaaspb.Row.key)
+  return key_.Add();
+}
+inline void Row::add_key(const ::std::string& value) {
+  key_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:tfaaspb.Row.key)
+}
+#if LANG_CXX11
+inline void Row::add_key(::std::string&& value) {
+  key_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:tfaaspb.Row.key)
+}
+#endif
+inline void Row::add_key(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  key_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:tfaaspb.Row.key)
+}
+inline void Row::add_key(const char* value, size_t size) {
+  key_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:tfaaspb.Row.key)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+Row::key() const {
+  // @@protoc_insertion_point(field_list:tfaaspb.Row.key)
+  return key_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+Row::mutable_key() {
+  // @@protoc_insertion_point(field_mutable_list:tfaaspb.Row.key)
+  return &key_;
+}
+
+// repeated float value = 2;
+inline int Row::value_size() const {
+  return value_.size();
+}
+inline void Row::clear_value() {
+  value_.Clear();
+}
+inline float Row::value(int index) const {
+  // @@protoc_insertion_point(field_get:tfaaspb.Row.value)
+  return value_.Get(index);
+}
+inline void Row::set_value(int index, float value) {
+  value_.Set(index, value);
+  // @@protoc_insertion_point(field_set:tfaaspb.Row.value)
+}
+inline void Row::add_value(float value) {
+  value_.Add(value);
+  // @@protoc_insertion_point(field_add:tfaaspb.Row.value)
+}
+inline const ::google::protobuf::RepeatedField< float >&
+Row::value() const {
+  // @@protoc_insertion_point(field_list:tfaaspb.Row.value)
+  return value_;
+}
+inline ::google::protobuf::RepeatedField< float >*
+Row::mutable_value() {
+  // @@protoc_insertion_point(field_mutable_list:tfaaspb.Row.value)
+  return &value_;
 }
 
 // -------------------------------------------------------------------
@@ -1323,8 +1225,6 @@ Predictions::prediction() const {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

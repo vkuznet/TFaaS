@@ -4,27 +4,23 @@ before passing them to curl
 
 First, let's create our message in text format (call it proto.msg):
 ```
-pair {
-    key: "attribute1"
-    value: 1.1
-}
-pair {
-    key: "attribute2"
-    value: 2.2
-}
+key: "attribute1"
+value: 1.1
+key: "attribute2"
+value: 2.2
 ```
 which correspond our scheme defined in tfaas.proto file
 ```
 syntax = "proto3";
 package tfaaspb;
 
-message Pair {
-    string key = 1;
-    float value = 2;
+message Row {
+    repeated string key = 1;
+    repeated float value = 2;
 }
 
 message DataFrame {
-    repeated Pair pair = 1;
+    repeated Row row = 1;
 }
 ```
 
