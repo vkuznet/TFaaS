@@ -568,7 +568,7 @@ func main() {
 	var serverCert string
 	flag.StringVar(&serverCert, "serverCert", "server.crt", "server Cert")
 	var modelName string
-	flag.StringVar(&modelName, "modelName", "model/model.pb", "model protobuf file name")
+	flag.StringVar(&modelName, "modelName", "model.pb", "model protobuf file name")
 	var modelLabels string
 	flag.StringVar(&modelLabels, "modelLabels", "model/labels.csv", "model labels")
 	flag.Parse()
@@ -576,7 +576,9 @@ func main() {
 	err := loadModel(modelName, modelLabels)
 	if err != nil {
 		logs.WithFields(logs.Fields{
-			"Error": err,
+			"Error":  err,
+			"Model":  modelName,
+			"Labels": modelLabels,
 		}).Error("unable to open TF model")
 	}
 
