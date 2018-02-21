@@ -577,10 +577,8 @@ func main() {
 	flag.StringVar(&modelName, "modelName", "model.pb", "model protobuf file name")
 	var modelLabels string
 	flag.StringVar(&modelLabels, "modelLabels", "labels.csv", "model labels")
-	var inputNode string
-	flag.StringVar(&inputNode, "inputNode", "input_1", "TF input node name")
-	var outputNode string
-	flag.StringVar(&outputNode, "outputNode", "output_node0", "TF output node name")
+	flag.StringVar(&InputNode, "inputNode", "input_1", "TF input node name")
+	flag.StringVar(&OutputNode, "outputNode", "output_node0", "TF output node name")
 	flag.Parse()
 
 	err := loadModel(modelName, modelLabels)
