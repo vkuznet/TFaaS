@@ -6,7 +6,10 @@ OS := $(shell uname)
 ifeq ($(OS),Darwin)
 flags=-ldflags="-s -w"
 else
-flags=-ldflags="-s -w -extldflags -static"
+# On Linux we still need TF shared libraries, therefore it's better to ask for
+# static executable
+# flags=-ldflags="-s -w -extldflags -static"
+flags=-ldflags="-s -w"
 endif
 
 all: prepare build cleanup
