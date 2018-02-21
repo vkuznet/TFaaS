@@ -274,13 +274,8 @@ func makeTensorFromImage(imageBuffer *bytes.Buffer, imageFormat string) (*tf.Ten
 	return normalized[0], nil
 }
 
-// Creates a graph to decode, rezise and normalize an image
+// Creates a graph to decode an image
 func makeTransformImageGraph(imageFormat string) (graph *tf.Graph, input, output tf.Output, err error) {
-	const (
-		H, W  = 224, 224
-		Mean  = float32(117)
-		Scale = float32(1)
-	)
 	s := op.NewScope()
 	input = op.Placeholder(s, tf.String)
 	// Decode PNG or JPEG
@@ -290,19 +285,7 @@ func makeTransformImageGraph(imageFormat string) (graph *tf.Graph, input, output
 	} else {
 		decode = op.DecodeJpeg(s, input, op.DecodeJpegChannels(3))
 	}
-	// Div and Sub perform (value-Mean)/Scale for each pixel
-	output = op.Div(s,
-		op.Sub(s,
-			// Resize to 224x224 with bilinear interpolation
-			op.ResizeBilinear(s,
-				// Create a batch containing a single image
-				op.ExpandDims(s,
-					// Use decoded pixel values
-					op.Cast(s, decode, tf.Float),
-					op.Const(s.SubScope("make_batch"), int32(0))),
-				op.Const(s.SubScope("size"), []int32{H, W})),
-			op.Const(s.SubScope("mean"), Mean)),
-		op.Const(s.SubScope("scale"), Scale))
+	output = op.ExpandDims(s, op.Cast(s, decode, tf.Float), op.Const(s.SubScope("make_batch"), int32(0)))
 	graph, err = s.Finalize()
 	return graph, input, output, err
 }
