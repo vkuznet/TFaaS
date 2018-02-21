@@ -28,6 +28,12 @@ import (
 // VERBOSE controls verbosity of the server
 var VERBOSE int
 
+// InputNode represents input node name in TF graph
+var InputNode string
+
+// OutputNode represents input node name in TF graph
+var OutputNode string
+
 // ClassifyResult structure represents result of our TF model classification
 type ClassifyResult struct {
 	Filename string        `json:"filename"`
@@ -399,10 +405,10 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 	output, err := session.Run(
 		map[tf.Output]*tf.Tensor{
-			graph.Operation("input").Output(0): tensor,
+			graph.Operation(InputNode).Output(0): tensor,
 		},
 		[]tf.Output{
-			graph.Operation("output").Output(0),
+			graph.Operation(OutputNode).Output(0),
 		},
 		nil)
 	if err != nil {
@@ -570,7 +576,11 @@ func main() {
 	var modelName string
 	flag.StringVar(&modelName, "modelName", "model.pb", "model protobuf file name")
 	var modelLabels string
-	flag.StringVar(&modelLabels, "modelLabels", "model/labels.csv", "model labels")
+	flag.StringVar(&modelLabels, "modelLabels", "labels.csv", "model labels")
+	var inputNode string
+	flag.StringVar(&inputNode, "inputNode", "input_1", "TF input node name")
+	var outputNode string
+	flag.StringVar(&outputNode, "outputNode", "output_node0", "TF output node name")
 	flag.Parse()
 
 	err := loadModel(modelName, modelLabels)
