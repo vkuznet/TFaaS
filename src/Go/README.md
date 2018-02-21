@@ -10,9 +10,17 @@ Here is an example how to run the server
 ```
 nohup ./tfaas -dir $PWD/models 
    -serverCert /data/certs/hostcert.pem -serverKey /data/certs/hostkey.pem
+   -modelLabels labels.csv -modelName models/model.pb
+   -inputNode input_1_1 -outputNode output_node0
    2>&1 1>& tfaas.log < /dev/null &
 
 ```
+Here we supply the following list of parameters:
+- server cert/key files to start-up HTTPs server
+- modelLabels file which contains list of labels used by our TF model
+- modelName file which contains full dump (including weights) of our TF model
+- input/outputNode names used in our TF model
+
 To access please use the following APIs:
 ```
 # here we define scurl as a shortcut to
@@ -26,6 +34,9 @@ scurl https://localhost:8083/models/tf.model1
 
 # to increase verbosity level of the server
 scurl -XPOST -d '{"level":1}' https://localhost:8083/verbose
+
+# query prediction for our image (if we run TFaaS as image classifier)
+scurl https://localhost:8083/image -F 'image=@/path/file.png'
 
 # use JSON API to get prediction for our input data
 scurl -XPOST -d '{"keys":["a","b"],"values":[1.1,2.0]}' https://localhost:8083/json

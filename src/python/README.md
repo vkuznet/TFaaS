@@ -1,3 +1,15 @@
+### HEP resnet
+We provided full code called `hep_resnet.py` as a basic model based on
+[ResNet](https://github.com/raghakot/keras-resnet) implementation.
+It can classify images from HEP events, e.g.
+```
+hep_resnet.py --fdir=/path/hep_images --flabels=labels.csv --epochs=200 --mdir=models
+```
+Here we supply input directory `/path/hep_images` which contains HEP images
+in `train` folder along with `labels.csv` file which provides labels.
+The model runs for 200 epochs and save Keras/TF model into `models` output
+directory.
+
 ### Reading ROOT files
 This code allows to read ROOT file content directly into NumPy/Pandas dataframe.
 It is based on [uproot](https://github.com/scikit-hep/uproot) framework.
