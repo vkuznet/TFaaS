@@ -51,6 +51,26 @@ scripts/request proto.msg https://localhost:8083/predictproto
 #    protoc -I$pdir --decode $RESPONSE $PROTO
 ```
 
+### How to generate TF proto config binary message
+Here is an example of gpu_proto.msg file with consists of two assignments: to
+allow soft placement and logging device placements
+```
+allow_soft_placement:true
+log_device_placement:true
+```
+Now we need to generate a binary protobuf message which we can use in our code.
+To do that we use the following command:
+```
+cat gpu_proto.msg | protoc -I$PWD/tensorflow:$PWD/tensorflow/tensorflow/core/protobuf --encode=tensorflow.ConfigProto config.proto > gpu_proto.bin
+```
+which defines path to TF protobuf `config.proto` file, declare which
+configuration definition we should use `tenslorflow.ConfigProto` and
+redirect output to binary file.
+To decode this message we can use:
+```
+protoc -I$PWD/tensorflow:$PWD/tensorflow/tensorflow/core/protobuf --decode=tensorflow.ConfigProto config.proto < gpu_proto.bin
+```
+
 ### References
 
 Protobuf documentation:

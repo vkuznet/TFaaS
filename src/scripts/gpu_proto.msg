@@ -1,0 +1,2 @@
+allow_soft_placement:true
+log_device_placement:true
