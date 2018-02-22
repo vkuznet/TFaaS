@@ -1,5 +1,6 @@
 ### Installation
 https://www.tensorflow.org/versions/master/install/install_go
+https://www.tensorflow.org/programmers_guide/using_gpu
 
 go get github.com/tensorflow/tensorflow/tensorflow/go
 go get github.com/tensorflow/tensorflow/tensorflow/go/op
