@@ -225,13 +225,15 @@ func auth(r *http.Request) bool {
 // helper function to read TF config proto message provided in input file
 func readConfigProto(fname string) *tf.SessionOptions {
 	session := tf.SessionOptions{}
-	body, err := ioutil.ReadFile(fname)
-	if err == nil {
-		session = tf.SessionOptions{Config: body}
-	} else {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-		}).Error("Unable to read TF config proto file")
+	if fname != "" {
+		body, err := ioutil.ReadFile(fname)
+		if err == nil {
+			session = tf.SessionOptions{Config: body}
+		} else {
+			logs.WithFields(logs.Fields{
+				"Error": err,
+			}).Error("Unable to read TF config proto file")
+		}
 	}
 	return &session
 }
