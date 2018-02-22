@@ -58,3 +58,14 @@ protoc/bin/protoc -I=$PWD/src/proto --cpp_out=$PWD/src/cpp $PWD/src/proto/tfaas.
 # generate Python code
 protoc/bin/protoc -I=$PWD/src/proto --python_out=$PWD/src/python $PWD/src/proto/tfaas.proto
 ```
+
+### How to generate TensorFlow proto config APIs
+To generate TensorFlow proto config API we need to use the following commands:
+```
+# create local area to store TF APIs
+mkdir tfconfig
+# link to tensorflow source code
+ln -s /path_to_tf/tensorflow tensorflow
+# use protoc to generate TF proto config Go APIs
+protoc -I=$PWD/tensorflow:$PWD/tensorflow/tensorflow/core/protobuf --go_out=$PWD/tfconfig $PWD/tensorflow/tensorflow/core/protobuf/config.proto
+```
