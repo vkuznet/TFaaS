@@ -54,8 +54,9 @@ type Row struct {
 
 // global variables to hold TF graph and labels
 var (
-	graph  *tf.Graph
-	labels []string
+	graph          *tf.Graph
+	labels         []string
+	sessionOptions *tf.SessionOptions
 )
 
 // global variable which we initialize once
@@ -221,6 +222,20 @@ func auth(r *http.Request) bool {
 	return match
 }
 
+// helper function to read TF config proto message provided in input file
+func readConfigProto(fname string) *tf.SessionOptions {
+	session := tf.SessionOptions{}
+	body, err := ioutil.ReadFile(fname)
+	if err == nil {
+		session = tf.SessionOptions{Config: body}
+	} else {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+		}).Error("Unable to read TF config proto file")
+	}
+	return &session
+}
+
 // helper function to load TF model
 func loadModel(fname, flabels string) error {
 	// Load inception model
@@ -259,7 +274,7 @@ func makeTensorFromImage(imageBuffer *bytes.Buffer, imageFormat string) (*tf.Ten
 	if err != nil {
 		return nil, err
 	}
-	session, err := tf.NewSession(graph, nil)
+	session, err := tf.NewSession(graph, sessionOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -380,12 +395,24 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Run inference
-	session, err := tf.NewSession(graph, nil)
+	session, err := tf.NewSession(graph, sessionOptions)
 	if err != nil {
 		responseError(w, "Unable to create new session", err, http.StatusInternalServerError)
 		return
 	}
 	defer session.Close()
+	if VERBOSE > 0 {
+		devices, err := session.ListDevices()
+		if err == nil {
+			logs.WithFields(logs.Fields{
+				"Devices": devices,
+			}).Info("node availbility")
+		} else {
+			logs.WithFields(logs.Fields{
+				"Error": err,
+			}).Info("node availbility")
+		}
+	}
 	output, err := session.Run(
 		map[tf.Output]*tf.Tensor{
 			graph.Operation(InputNode).Output(0): tensor,
@@ -562,7 +589,12 @@ func main() {
 	flag.StringVar(&modelLabels, "modelLabels", "labels.csv", "model labels")
 	flag.StringVar(&InputNode, "inputNode", "input_1", "TF input node name")
 	flag.StringVar(&OutputNode, "outputNode", "output_node0", "TF output node name")
+	var configProto string
+	flag.StringVar(&configProto, "configProto", "", "TF proto config file")
 	flag.Parse()
+
+	// create session options from given config TF proto file
+	sessionOptions = readConfigProto(configProto)
 
 	err := loadModel(modelName, modelLabels)
 	if err != nil {
