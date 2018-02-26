@@ -272,7 +272,7 @@ func loadModel(fname, flabels string) error {
 
 // helper function to create Tensor from given input
 func makeTensorFromData(row *Row) (*tf.Tensor, error) {
-	tensor, err := tf.NewTensor(row.String())
+	tensor, err := tf.NewTensor(row.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -298,8 +298,8 @@ func makeTensorFromData(row *Row) (*tf.Tensor, error) {
 // Creates a graph to decode our row
 func makeRowGraph(row *Row) (graph *tf.Graph, input, output tf.Output, err error) {
 	s := op.NewScope()
-	input = op.Placeholder(s, tf.String)
-	output = op.Placeholder(s, tf.Float)
+	input = op.Placeholder(s, tf.Float)
+	output = op.Placeholder(s, tf.Int32)
 	graph, err = s.Finalize()
 	return graph, input, output, err
 }
