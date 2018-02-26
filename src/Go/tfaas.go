@@ -271,37 +271,44 @@ func loadModel(fname, flabels string) error {
 }
 
 // helper function to create Tensor from given input
+// for more info see https://pgaleone.eu/tensorflow/go/2017/05/29/understanding-tensorflow-using-go/
 func makeTensorFromData(row *Row) (*tf.Tensor, error) {
-	tensor, err := tf.NewTensor(row.Values)
+	var err error
+
+	// Create the first node of the graph: an empty node, the root of our graph
+	root := op.NewScope()
+
+	// placeholders for our input and output
+	input := op.Placeholder(root, tf.Float)
+	output := op.Placeholder(root, tf.Int32)
+
+	// create a TF graph which will perform the computations
+	// TODO: investigate if we need global or local variable for graph (so far we use global one)
+	graph, err = root.Finalize()
 	if err != nil {
 		return nil, err
 	}
-	graph, input, output, err := makeRowGraph(row)
-	if err != nil {
-		return nil, err
-	}
+
+	// setup session with our graph
 	session, err := tf.NewSession(graph, sessionOptions)
 	if err != nil {
 		return nil, err
 	}
 	defer session.Close()
-	normalized, err := session.Run(
+
+	// create tensor vector for our computations
+	tensor, err := tf.NewTensor(row.Values)
+	if err != nil {
+		return nil, err
+	}
+	results, err := session.Run(
 		map[tf.Output]*tf.Tensor{input: tensor},
 		[]tf.Output{output},
 		nil)
 	if err != nil {
 		return nil, err
 	}
-	return normalized[0], nil
-}
-
-// Creates a graph to decode our row
-func makeRowGraph(row *Row) (graph *tf.Graph, input, output tf.Output, err error) {
-	s := op.NewScope()
-	input = op.Placeholder(s, tf.Float)
-	output = op.Placeholder(s, tf.Int32)
-	graph, err = s.Finalize()
-	return graph, input, output, err
+	return results[0], nil
 }
 
 // helper function to create Tensor image repreresentation
@@ -562,7 +569,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		responseError(w, "Unable to create new session", err, http.StatusInternalServerError)
 		return
 	}
-	output, err := session.Run(
+	results, err := session.Run(
 		map[tf.Output]*tf.Tensor{
 			graph.Operation(InputNode).Output(0): tensor,
 		},
@@ -575,7 +582,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// our model probabilities
-	probs := output[0].Value().([][]float32)[0]
+	probs := results[0].Value().([][]float32)[0]
 
 	// make prediction response
 	topN := 5
@@ -583,7 +590,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		topN = len(labels)
 	}
 	responseJSON(w, ClassifyResult{
-		Filename: "input",
+		Filename: "input", // TODO: we may replace the input name here to something meaningful
 		Labels:   findBestLabels(probs, topN),
 	})
 
