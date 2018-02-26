@@ -270,8 +270,8 @@ func loadModel(fname, flabels string) error {
 	return nil
 }
 
-// helper function to create Tensor from given input
-// for more info see https://pgaleone.eu/tensorflow/go/2017/05/29/understanding-tensorflow-using-go/
+// helper function to generate predictions based on given row values
+// influenced by: https://pgaleone.eu/tensorflow/go/2017/05/29/understanding-tensorflow-using-go/
 func makePredictions(row *Row) ([]float32, error) {
 	// create tensor vector for our computations
 	tensor, err := tf.NewTensor(row.Values)
