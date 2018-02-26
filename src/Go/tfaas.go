@@ -272,43 +272,27 @@ func loadModel(fname, flabels string) error {
 
 // helper function to create Tensor from given input
 // for more info see https://pgaleone.eu/tensorflow/go/2017/05/29/understanding-tensorflow-using-go/
-func makeTensorFromData(row *Row) (*tf.Tensor, error) {
-	var err error
-
-	// Create the first node of the graph: an empty node, the root of our graph
-	root := op.NewScope()
-
-	// placeholders for our input and output
-	input := op.Placeholder(root, tf.Float)
-	output := op.Placeholder(root, tf.Int32)
-
-	// create a TF graph which will perform the computations
-	// TODO: investigate if we need global or local variable for graph (so far we use global one)
-	graph, err = root.Finalize()
-	if err != nil {
-		return nil, err
-	}
-
-	// setup session with our graph
-	session, err := tf.NewSession(graph, sessionOptions)
-	if err != nil {
-		return nil, err
-	}
-	defer session.Close()
-
+func makePredictions(row *Row) ([]float32, error) {
 	// create tensor vector for our computations
 	tensor, err := tf.NewTensor(row.Values)
 	if err != nil {
 		return nil, err
 	}
-	results, err := session.Run(
-		map[tf.Output]*tf.Tensor{input: tensor},
-		[]tf.Output{output},
-		nil)
+
+	// Run inference with existing graph which we get from loadModel call
+	session, err := tf.NewSession(graph, sessionOptions)
 	if err != nil {
 		return nil, err
 	}
-	return results[0], nil
+	defer session.Close()
+	results, err := session.Run(
+		map[tf.Output]*tf.Tensor{graph.Operation(InputNode).Output(0): tensor},
+		[]tf.Output{graph.Operation(OutputNode).Output(0)},
+		nil)
+
+	// our model probabilities
+	probs := results[0].Value().([][]float32)[0]
+	return probs, nil
 }
 
 // helper function to create Tensor image repreresentation
@@ -556,33 +540,12 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		}).Info("received")
 	}
 
-	// Make tensor, we need to replace make
-	tensor, err := makeTensorFromData(recs)
+	// generate predictions
+	probs, err := makePredictions(recs)
 	if err != nil {
-		responseError(w, "Unable to call makeTensorFromData", err, http.StatusBadRequest)
+		responseError(w, "unable to make predictions", err, http.StatusInternalServerError)
 		return
 	}
-
-	// Run inference
-	session, err := tf.NewSession(graph, sessionOptions)
-	if err != nil {
-		responseError(w, "Unable to create new session", err, http.StatusInternalServerError)
-		return
-	}
-	results, err := session.Run(
-		map[tf.Output]*tf.Tensor{
-			graph.Operation(InputNode).Output(0): tensor,
-		},
-		[]tf.Output{
-			graph.Operation(OutputNode).Output(0),
-		},
-		nil)
-	if err != nil {
-		responseError(w, "Could not run inference", err, http.StatusInternalServerError)
-		return
-	}
-	// our model probabilities
-	probs := results[0].Value().([][]float32)[0]
 
 	// make prediction response
 	topN := 5
@@ -593,12 +556,6 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		Filename: "input", // TODO: we may replace the input name here to something meaningful
 		Labels:   findBestLabels(probs, topN),
 	})
-
-	// prepare our response
-	//     var labels []LabelResult
-	//     labels = append(labels, LabelResult{Label: "higgs", Probability: 0.8})
-	//     labels = append(labels, LabelResult{Label: "qcd", Probability: 0.2})
-	//     responseJSON(w, labels)
 }
 
 // helper data structure to change verbosity level of the running server
