@@ -52,6 +52,10 @@ type Row struct {
 	Values []float32 `json:"values"`
 }
 
+func (r *Row) String() string {
+	return fmt.Sprintf("%v", r.Values)
+}
+
 // global variables to hold TF graph and labels
 var (
 	graph          *tf.Graph
@@ -264,6 +268,40 @@ func loadModel(fname, flabels string) error {
 		return err
 	}
 	return nil
+}
+
+// helper function to create Tensor from given input
+func makeTensorFromData(row *Row) (*tf.Tensor, error) {
+	tensor, err := tf.NewTensor(row.String())
+	if err != nil {
+		return nil, err
+	}
+	graph, input, output, err := makeRowGraph(row)
+	if err != nil {
+		return nil, err
+	}
+	session, err := tf.NewSession(graph, sessionOptions)
+	if err != nil {
+		return nil, err
+	}
+	defer session.Close()
+	normalized, err := session.Run(
+		map[tf.Output]*tf.Tensor{input: tensor},
+		[]tf.Output{output},
+		nil)
+	if err != nil {
+		return nil, err
+	}
+	return normalized[0], nil
+}
+
+// Creates a graph to decode our row
+func makeRowGraph(row *Row) (graph *tf.Graph, input, output tf.Output, err error) {
+	s := op.NewScope()
+	input = op.Placeholder(s, tf.String)
+	output = op.Placeholder(s, tf.Float)
+	graph, err = s.Finalize()
+	return graph, input, output, err
 }
 
 // helper function to create Tensor image repreresentation
@@ -511,11 +549,49 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		}).Info("received")
 	}
 
+	// Make tensor, we need to replace make
+	tensor, err := makeTensorFromData(recs)
+	if err != nil {
+		responseError(w, "Unable to call makeTensorFromData", err, http.StatusBadRequest)
+		return
+	}
+
+	// Run inference
+	session, err := tf.NewSession(graph, sessionOptions)
+	if err != nil {
+		responseError(w, "Unable to create new session", err, http.StatusInternalServerError)
+		return
+	}
+	output, err := session.Run(
+		map[tf.Output]*tf.Tensor{
+			graph.Operation(InputNode).Output(0): tensor,
+		},
+		[]tf.Output{
+			graph.Operation(OutputNode).Output(0),
+		},
+		nil)
+	if err != nil {
+		responseError(w, "Could not run inference", err, http.StatusInternalServerError)
+		return
+	}
+	// our model probabilities
+	probs := output[0].Value().([][]float32)[0]
+
+	// make prediction response
+	topN := 5
+	if len(labels) < topN {
+		topN = len(labels)
+	}
+	responseJSON(w, ClassifyResult{
+		Filename: "input",
+		Labels:   findBestLabels(probs, topN),
+	})
+
 	// prepare our response
-	var labels []LabelResult
-	labels = append(labels, LabelResult{Label: "higgs", Probability: 0.8})
-	labels = append(labels, LabelResult{Label: "qcd", Probability: 0.2})
-	responseJSON(w, labels)
+	//     var labels []LabelResult
+	//     labels = append(labels, LabelResult{Label: "higgs", Probability: 0.8})
+	//     labels = append(labels, LabelResult{Label: "qcd", Probability: 0.2})
+	//     responseJSON(w, labels)
 }
 
 // helper data structure to change verbosity level of the running server
