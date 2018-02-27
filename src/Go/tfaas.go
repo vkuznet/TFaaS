@@ -289,6 +289,9 @@ func makePredictions(row *Row) ([]float32, error) {
 		map[tf.Output]*tf.Tensor{graph.Operation(InputNode).Output(0): tensor},
 		[]tf.Output{graph.Operation(OutputNode).Output(0)},
 		nil)
+    if err != nil {
+        return nil, err
+    }
 
 	// our model probabilities
 	probs := results[0].Value().([][]float32)[0]
