@@ -273,8 +273,11 @@ func loadModel(fname, flabels string) error {
 // helper function to generate predictions based on given row values
 // influenced by: https://pgaleone.eu/tensorflow/go/2017/05/29/understanding-tensorflow-using-go/
 func makePredictions(row *Row) ([]float32, error) {
+    // our input is a vector, we wrap it into matrix ([ [1,1,...], [], ...])
+    matrix := [][]float32{row.Values}
 	// create tensor vector for our computations
-	tensor, err := tf.NewTensor(row.Values)
+	tensor, err := tf.NewTensor(matrix)
+	//tensor, err := tf.NewTensor(row.Values)
 	if err != nil {
 		return nil, err
 	}
@@ -468,7 +471,7 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 		topN = len(labels)
 	}
 	responseJSON(w, ClassifyResult{
-		Filename: header.Filename,
+		Filename: "input", // TODO: we may replace the input name here to something meaningful
 		Labels:   findBestLabels(probs, topN),
 	})
 }
@@ -549,16 +552,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		responseError(w, "unable to make predictions", err, http.StatusInternalServerError)
 		return
 	}
-
-	// make prediction response
-	topN := 5
-	if len(labels) < topN {
-		topN = len(labels)
-	}
-	responseJSON(w, ClassifyResult{
-		Filename: "input", // TODO: we may replace the input name here to something meaningful
-		Labels:   findBestLabels(probs, topN),
-	})
+    responseJSON(w, probs)
 }
 
 // helper data structure to change verbosity level of the running server
