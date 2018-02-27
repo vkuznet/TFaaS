@@ -45,3 +45,20 @@ scurl -XPOST -d '{"keys":["a","b"],"values":[1.1,2.0]}' https://localhost:8083/j
 # see scripts/README.md area for more details
 scripts/request proto.msg https://localhost:8083/proto
 ```
+
+### Generate self-signed host certificates
+When you run HTTPs server you need to provide a host certificate to it.
+You may generate self-signed certificates or obtain official ones from CA
+authorities. Here we provide an example how to generate self-signed
+certificates. To do that you need to have openssl library on your node
+and execute the following command:
+```
+openssl req -new -newkey rsa:2048 -nodes -keyout server.key -out server.csr
+```
+Then, enter the following CSR details when prompted:
+- Common Name: The FQDN (fully-qualified domain name) you want to secure with the certificate such as www.google.com, secure.website.org, *.domain.net, etc.
+- Organization: The full legal name of your organization including the corporate identifier.
+- Organization Unit (OU): Your department such as ‘Information Technology’ or ‘Website Security.’
+- City or Locality: The locality or city where your organization is legally incorporated. Do not abbreviate.
+- State or Province: The state or province where your organization is legally incorporated. Do not abbreviate.
+- Country: The official two-letter country code (i.e. US, CH) where your organization is legally incorporated.
