@@ -70,7 +70,7 @@ var (
 var _userDNs []string
 
 // global HTTP client
-var _client = HttpClient()
+var _client *http.Client
 
 // global client's x509 certificates
 var _certs []tls.Certificate
@@ -94,7 +94,7 @@ func tlsCerts() ([]tls.Certificate, error) {
 	}
 	if uproxy == "" && uckey == "" { // user doesn't have neither proxy or user certs
 		if Auth == "true" {
-			logs.Fatal("Neither proxy or user certs are found, use X509_USER_PROXY/X509_USER_KEY/X509_USER_CERT to set them up")
+			logs.Fatal("Neither proxy or user certs are found, use X509_USER_PROXY/X509_USER_KEY/X509_USER_CERT to set them up or run with -auth false")
 		}
 		return nil, nil
 	}
@@ -641,6 +641,7 @@ func main() {
 	flag.Parse()
 
 	var err error
+    _client = HttpClient()
 
 	// create session options from given config TF proto file
 	sessionOptions = readConfigProto(configProto)
