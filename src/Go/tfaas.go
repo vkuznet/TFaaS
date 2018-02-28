@@ -621,54 +621,79 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var dir string
 	flag.StringVar(&dir, "dir", "models", "local directory to serve by this server")
-	var port string
-	flag.StringVar(&port, "port", "8083", "server port")
+	var port int
+	flag.IntVar(&port, "port", 8083, "server port")
 	flag.StringVar(&Auth, "auth", "true", "Use authentication or not")
 	var serverKey string
-	flag.StringVar(&serverKey, "serverKey", "server.key", "server key file")
+	flag.StringVar(&serverKey, "serverKey", "", "server key file")
 	var serverCert string
-	flag.StringVar(&serverCert, "serverCert", "server.crt", "server cert file")
+	flag.StringVar(&serverCert, "serverCert", "", "server cert file")
 	var modelName string
-	flag.StringVar(&modelName, "modelName", "model.pb", "model protobuf file name")
+	flag.StringVar(&modelName, "modelName", "", "model protobuf file name")
 	var modelLabels string
-	flag.StringVar(&modelLabels, "modelLabels", "labels.csv", "model labels")
-	flag.StringVar(&InputNode, "inputNode", "input_1", "TF input node name")
-	flag.StringVar(&OutputNode, "outputNode", "output_node0", "TF output node name")
+	flag.StringVar(&modelLabels, "modelLabels", "", "model labels")
+	flag.StringVar(&InputNode, "inputNode", "", "TF input node name")
+	flag.StringVar(&OutputNode, "outputNode", "", "TF output node name")
 	var configProto string
 	flag.StringVar(&configProto, "configProto", "", "TF proto config file")
 	flag.Parse()
 
+	var err error
+
 	// create session options from given config TF proto file
 	sessionOptions = readConfigProto(configProto)
 
-	err := loadModel(modelName, modelLabels)
-	if err != nil {
+	if modelName != "" {
+		err = loadModel(modelName, modelLabels)
+		if err != nil {
+			logs.WithFields(logs.Fields{
+				"Error":  err,
+				"Model":  modelName,
+				"Labels": modelLabels,
+			}).Error("unable to open TF model")
+		}
 		logs.WithFields(logs.Fields{
-			"Error":  err,
-			"Model":  modelName,
-			"Labels": modelLabels,
-		}).Error("unable to open TF model")
+			"Model":       modelName,
+			"Labels":      modelLabels,
+			"InputNode":   InputNode,
+			"OutputNode":  OutputNode,
+			"ConfigProto": configProto,
+		}).Info("serving TF model")
+	} else {
+		logs.Warn("No model file is supplied, will unable to run inference")
 	}
 
 	http.Handle("/models/", http.StripPrefix("/models/", http.FileServer(http.Dir(dir))))
 	http.HandleFunc("/", AuthHandler)
-	server := &http.Server{
-		Addr: fmt.Sprintf(":%s", port),
-		TLSConfig: &tls.Config{
-			ClientAuth: tls.RequestClientCert,
-		},
+	addr := fmt.Sprintf(":%d", port)
+	if serverKey != "" && serverCert != "" {
+		server := &http.Server{
+			Addr: addr,
+			TLSConfig: &tls.Config{
+				ClientAuth: tls.RequestClientCert,
+			},
+		}
+		if _, err := os.Open(serverKey); err != nil {
+			logs.WithFields(logs.Fields{
+				"Error": err,
+				"File":  serverKey,
+			}).Error("unable to open server key file")
+		}
+		if _, err := os.Open(serverCert); err != nil {
+			logs.WithFields(logs.Fields{
+				"Error": err,
+				"File":  serverCert,
+			}).Error("unable to open server cert file")
+		}
+		logs.WithFields(logs.Fields{"Addr": addr}).Info("Starting HTTPs server")
+		err = server.ListenAndServeTLS(serverCert, serverKey)
+	} else {
+		logs.WithFields(logs.Fields{"Addr": addr}).Info("Starting HTTP server")
+		err = http.ListenAndServe(addr, nil)
 	}
-	if _, err := os.Open(serverKey); err != nil {
+	if err != nil {
 		logs.WithFields(logs.Fields{
 			"Error": err,
-			"File":  serverKey,
-		}).Error("unable to open server key file")
+		}).Fatal("ListenAndServe: ")
 	}
-	if _, err := os.Open(serverCert); err != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-			"File":  serverCert,
-		}).Error("unable to open server cert file")
-	}
-	server.ListenAndServeTLS(serverCert, serverKey)
 }
