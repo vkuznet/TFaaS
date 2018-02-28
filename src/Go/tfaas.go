@@ -31,6 +31,9 @@ var VERBOSE int
 // InputNode represents input node name in TF graph
 var InputNode string
 
+// Auth represents flag to use authentication or not
+var Auth bool
+
 // OutputNode represents input node name in TF graph
 var OutputNode string
 
@@ -273,8 +276,8 @@ func loadModel(fname, flabels string) error {
 // helper function to generate predictions based on given row values
 // influenced by: https://pgaleone.eu/tensorflow/go/2017/05/29/understanding-tensorflow-using-go/
 func makePredictions(row *Row) ([]float32, error) {
-    // our input is a vector, we wrap it into matrix ([ [1,1,...], [], ...])
-    matrix := [][]float32{row.Values}
+	// our input is a vector, we wrap it into matrix ([ [1,1,...], [], ...])
+	matrix := [][]float32{row.Values}
 	// create tensor vector for our computations
 	tensor, err := tf.NewTensor(matrix)
 	//tensor, err := tf.NewTensor(row.Values)
@@ -292,9 +295,9 @@ func makePredictions(row *Row) ([]float32, error) {
 		map[tf.Output]*tf.Tensor{graph.Operation(InputNode).Output(0): tensor},
 		[]tf.Output{graph.Operation(OutputNode).Output(0)},
 		nil)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
 	// our model probabilities
 	probs := results[0].Value().([][]float32)[0]
@@ -552,7 +555,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		responseError(w, "unable to make predictions", err, http.StatusInternalServerError)
 		return
 	}
-    responseJSON(w, probs)
+	responseJSON(w, probs)
 }
 
 // helper data structure to change verbosity level of the running server
@@ -589,11 +592,13 @@ func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 // AuthHandler authenticate incoming requests and route them to appropriate handler
 func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	// check if server started with hkey file (auth is required)
-	status := auth(r)
-	if !status {
-		msg := "You are not allowed to access this resource"
-		http.Error(w, msg, http.StatusForbidden)
-		return
+	if Auth {
+		status := auth(r)
+		if !status {
+			msg := "You are not allowed to access this resource"
+			http.Error(w, msg, http.StatusForbidden)
+			return
+		}
 	}
 	arr := strings.Split(r.URL.Path, "/")
 	path := arr[len(arr)-1]
@@ -618,6 +623,7 @@ func main() {
 	flag.StringVar(&dir, "dir", "models", "local directory to serve by this server")
 	var port string
 	flag.StringVar(&port, "port", "8083", "server port")
+	flag.BoolVar(&Auth, "auth", true, "Use authentication or not")
 	var serverKey string
 	flag.StringVar(&serverKey, "serverKey", "server.key", "server Key")
 	var serverCert string
