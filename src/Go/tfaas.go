@@ -32,7 +32,7 @@ var VERBOSE int
 var InputNode string
 
 // Auth represents flag to use authentication or not
-var Auth bool
+var Auth string
 
 // OutputNode represents input node name in TF graph
 var OutputNode string
@@ -592,7 +592,7 @@ func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 // AuthHandler authenticate incoming requests and route them to appropriate handler
 func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	// check if server started with hkey file (auth is required)
-	if Auth {
+	if Auth == "true" {
 		status := auth(r)
 		if !status {
 			msg := "You are not allowed to access this resource"
@@ -623,11 +623,11 @@ func main() {
 	flag.StringVar(&dir, "dir", "models", "local directory to serve by this server")
 	var port string
 	flag.StringVar(&port, "port", "8083", "server port")
-	flag.BoolVar(&Auth, "auth", true, "Use authentication or not")
+	flag.StringVar(&Auth, "auth", "true", "Use authentication or not")
 	var serverKey string
-	flag.StringVar(&serverKey, "serverKey", "server.key", "server Key")
+	flag.StringVar(&serverKey, "serverKey", "server.key", "server key file")
 	var serverCert string
-	flag.StringVar(&serverCert, "serverCert", "server.crt", "server Cert")
+	flag.StringVar(&serverCert, "serverCert", "server.crt", "server cert file")
 	var modelName string
 	flag.StringVar(&modelName, "modelName", "model.pb", "model protobuf file name")
 	var modelLabels string
@@ -661,11 +661,13 @@ func main() {
 	if _, err := os.Open(serverKey); err != nil {
 		logs.WithFields(logs.Fields{
 			"Error": err,
+			"File":  serverKey,
 		}).Error("unable to open server key file")
 	}
 	if _, err := os.Open(serverCert); err != nil {
 		logs.WithFields(logs.Fields{
 			"Error": err,
+			"File":  serverCert,
 		}).Error("unable to open server cert file")
 	}
 	server.ListenAndServeTLS(serverCert, serverKey)
