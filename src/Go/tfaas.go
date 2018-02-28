@@ -655,6 +655,7 @@ func main() {
 			}).Error("unable to open TF model")
 		}
 		logs.WithFields(logs.Fields{
+			"Auth":        Auth,
 			"Model":       modelName,
 			"Labels":      modelLabels,
 			"InputNode":   InputNode,
