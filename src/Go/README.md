@@ -141,6 +141,13 @@ Here we supply the following list of parameters:
 - modelName file which contains full dump (including weights) of our TF model
 - input/outputNode names used in our TF model
 
+If `tfaas` server quite and complained about CPU, e.g.
+*Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.2 AVX AVX2 FMA*
+it means that your TF library is not tuned (compiled) for your CPU. To resolve
+the issue TF library needs to be complied from the source. For comprehensive
+discussion please see this [post](https://stackoverflow.com/questions/47068709/your-cpu-supports-instructions-that-this-tensorflow-binary-was-not-compiled-to-u)
+and this [one](https://stackoverflow.com/questions/41293077/how-to-compile-tensorflow-with-sse4-2-and-avx-instructions)
+
 ### How to get predictions from tfaas server
 Once `tfaas` is up and running (default port is 8083) we can use it to server
 prediction for our input data. Let's create a simple (curl-based) client:
