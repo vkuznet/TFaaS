@@ -93,7 +93,9 @@ func tlsCerts() ([]tls.Certificate, error) {
 		}
 	}
 	if uproxy == "" && uckey == "" { // user doesn't have neither proxy or user certs
-		logs.Warn("Neither proxy or user certs are found, to proceed use auth=false option otherwise setup X509 environment")
+		if Auth == "true" {
+			logs.Fatal("Neither proxy or user certs are found, use X509_USER_PROXY/X509_USER_KEY/X509_USER_CERT to set them up")
+		}
 		return nil, nil
 	}
 	if uproxy != "" {
