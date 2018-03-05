@@ -1,0 +1,15 @@
+{
+    "port": 8083,
+    "auth": "true",
+    "modelDir": "models",
+    "modelName": "model.pb",
+    "modelLabels": "labels.csv",
+    "inputNode": "input_1",
+    "outputNode": "output_node0",
+    "configProto": "",
+    "base": "",
+    "serverKey": "/opt/certs/server.key",
+    "serverCrt": "/opt/certs/server.crt",
+    "logFormatter": "text",
+    "verbose": 0
+}
