@@ -196,8 +196,20 @@ scurl https://localhost:8083/models/
 # to fetch concrete model file
 scurl https://localhost:8083/models/tf.model1
 
-# to increase verbosity level of the server
-scurl -XPOST -d '{"level":1}' https://localhost:8083/verbose
+# update server parameters, e.g. change verbosity level, model name, etc.
+cat > c.json << EOF
+{
+    "modelDir": "models2",
+    "modelName": "model2.pb",
+    "modelLabels": "labels2.csv",
+    "inputNode": "input_1_232323",
+    "outputNode": "output_node_232323",
+    "configProto": "",
+    "logFormatter": "text",
+    "verbose": 1
+}
+EOF
+scurl -X POST -H "Content-type: application/json" -d @c.json https://localhost:8083/set
 
 # query prediction for our image (if we run TFaaS as image classifier)
 scurl https://localhost:8083/image -F 'image=@/path/file.png'
