@@ -196,15 +196,16 @@ scurl https://localhost:8083/models/
 # to fetch concrete model file
 scurl https://localhost:8083/models/tf.model1
 
-# upload new model file to the server
+# upload new model file to the server, it will be placed to modelDir area
+# specific by server configuration
 scurl -X POST https://localhost:8083/upload -F 'model=@/path/model.pb'
 
 # update server parameters, e.g. change verbosity level, model name, etc.
 cat > c.json << EOF
 {
     "modelDir": "models2",
-    "modelName": "model2.pb",
-    "modelLabels": "labels2.csv",
+    "model": "model2.pb",
+    "labels": "labels2.csv",
     "inputNode": "input_1_232323",
     "outputNode": "output_node_232323",
     "configProto": "",
