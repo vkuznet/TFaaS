@@ -4,11 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
-	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"hash/adler32"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -629,7 +627,6 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 // POST methods
 
 // UploadHandler uploads TF models into the server
-// http://sanatgersappa.blogspot.com/2013/03/handling-multiple-file-uploads-in-go.html
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -640,76 +637,36 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	if VERBOSE > 0 {
 		logs.WithFields(logs.Fields{
 			"Header": r.Header,
-		}).Println("HEADER UploadDataHandler", r.Header)
+		}).Println("HEADER UploadHandler", r.Header)
 	}
-	// create multipart reader
-	mr, e := r.MultipartReader()
-	if e != nil {
-		logs.WithFields(logs.Fields{
-			"Error": e,
-		}).Error("UploadDataHandler unable to establish MultipartReader", e)
-		w.WriteHeader(http.StatusMethodNotAllowed)
+	modelFile, header, err := r.FormFile("model")
+	if err != nil {
+		responseError(w, "unable to read input request", err, http.StatusInternalServerError)
 		return
 	}
+	defer modelFile.Close()
 
-	// parse header values and extract transfer record meta-data
-	name := r.Header.Get("model")
-	arr := strings.Split(name, "/")
+    // prepare file name to write to
+	arr := strings.Split(header.Filename, "/")
 	fname := arr[len(arr)-1]
-	model := fmt.Sprintf("%s/%s", _config.ModelDir, fname)
+	modelFileName := fmt.Sprintf("%s/%s", _config.ModelDir, fname)
 
-	// create a file which we'll write
-	file, e := os.Create(model)
-	defer file.Close()
-	if e != nil {
-		logs.WithFields(logs.Fields{
-			"Model": model,
-			"Error": e,
-		}).Error("ERROR UploadHandler unable to open", model, e)
-		http.Error(w, e.Error(), http.StatusInternalServerError)
+    // read data from request and write it out to our local file
+    data, err := ioutil.ReadAll(modelFile)
+	if err != nil {
+		responseError(w, "unable to read model file", err, http.StatusInternalServerError)
 		return
 	}
-	// create a hasher to calculate data hash
-	hasher := adler32.New()
-
-	// loop over parts of HTTP request, pass it through TeeReader to destination file and collect bytes
-	var bytes int64
-	for {
-		p, e := mr.NextPart()
-		if e == io.EOF {
-			break
-		}
-		if p.FileName() == "" {
-			continue
-		}
-		if e != nil {
-			logs.WithFields(logs.Fields{
-				"Error": e,
-			}).Error("UploadHandler unable to read chunk from the stream", e)
-			break
-		}
-		// here is pipe: mr->p->hasher->file
-		reader := io.TeeReader(p, hasher)
-		b, e := io.Copy(file, reader)
-		// in case we don't need hasher the code would be
-		// b, e := io.Copy(file, p)
-		if e != nil {
-			logs.WithFields(logs.Fields{
-				"Error": e,
-			}).Error("UploadHandler unable to copy chunk", e)
-			break
-		}
-		bytes += b
+    err = ioutil.WriteFile(modelFileName, data, 0644)
+	if err != nil {
+		responseError(w, "unable to write model file", err, http.StatusInternalServerError)
+		return
 	}
-
-	hash := hex.EncodeToString(hasher.Sum(nil))
-	resp := UploadResponse{Bytes: bytes, Hash: hash}
 	logs.WithFields(logs.Fields{
-		"Model": model,
-		"Bytes": bytes,
-		"Hash":  hash,
+		"File": modelFileName,
 	}).Info("Uploaded new model")
-	responseJSON(w, resp)
+	w.WriteHeader(http.StatusOK)
+	return
 }
 
 // SetHandler sets different options for the server
