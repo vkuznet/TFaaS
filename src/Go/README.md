@@ -196,6 +196,9 @@ scurl https://localhost:8083/models/
 # to fetch concrete model file
 scurl https://localhost:8083/models/tf.model1
 
+# upload new model file to the server
+scurl -X POST https://localhost:8083/upload -F 'model=@/path/model.pb'
+
 # update server parameters, e.g. change verbosity level, model name, etc.
 cat > c.json << EOF
 {
