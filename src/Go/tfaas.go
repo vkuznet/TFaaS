@@ -4,9 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"hash/adler32"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -37,6 +39,24 @@ var Auth string
 // OutputNode represents input node name in TF graph
 var OutputNode string
 
+// ModelDir keeps location of TF models
+var ModelDir string
+
+// ModelName keeps name of TF model to use
+var ModelName string
+
+// ModelLabels keeps name of label file to use
+var ModelLabels string
+
+// ConfigProto keeps name of config proto to use
+var ConfigProto string
+
+// UploadResponse represents response from server to the client about upload of the model
+type UploadResponse struct {
+	Bytes int64  `json:"bytes"` // bytes of the uploaded model
+	Hash  string `json:"hash"`  // hash of the uploaded model
+}
+
 // ClassifyResult structure represents result of our TF model classification
 type ClassifyResult struct {
 	Filename string        `json:"filename"`
@@ -59,12 +79,42 @@ func (r *Row) String() string {
 	return fmt.Sprintf("%v", r.Values)
 }
 
+// Configuration stores dbs configuration parameters
+type Configuration struct {
+	Port         int    `json:"port"`         // dbs port number
+	Auth         string `json:"auth"`         // use authentication or not
+	ModelDir     string `json:"modelDir"`     // location of model directory
+	ModelName    string `json:"model"`        // name of the model to use
+	ModelLabels  string `json:"labels"`       // name of labels file to use
+	InputNode    string `json:"inputNode"`    // TF input node name to use
+	OutputNode   string `json:"outputNode"`   // TF output node name to use
+	ConfigProto  string `json:"configProto"`  // TF config proto file to use
+	Base         string `json:"base"`         // dbs base path
+	LogFormatter string `json:"logFormatter"` // log formatter
+	Verbose      int    `json:"verbose"`      // verbosity level
+	ServerKey    string `json:"serverKey"`    // server key for https
+	ServerCrt    string `json:"serverCrt"`    // server certificate for https
+}
+
+// String returns string representation of server configuration
+func (c *Configuration) String() string {
+	return fmt.Sprintf("<Config port=%d dir=%s base=%s auth=%s model=%s labels=%s inputNode=%s outptuNode=%s configProt=%s verbose=%d log=%s crt=%s key=%s>", c.Port, c.ModelDir, c.Base, c.Auth, c.ModelName, c.ModelLabels, c.InputNode, c.OutputNode, c.ConfigProto, c.Verbose, c.LogFormatter, c.ServerCrt, c.ServerKey)
+}
+
+// Params returns string representation of server parameters
+func (c *Configuration) Params() string {
+	return fmt.Sprintf("<Params dir=%s model=%s labels=%s inputNode=%s outptuNode=%s configProt=%s verbose=%d log=%s>", c.ModelDir, c.ModelName, c.ModelLabels, c.InputNode, c.OutputNode, c.ConfigProto, c.Verbose, c.LogFormatter)
+}
+
 // global variables to hold TF graph and labels
 var (
-	graph          *tf.Graph
-	labels         []string
-	sessionOptions *tf.SessionOptions
+	_graph          *tf.Graph
+	_labels         []string
+	_sessionOptions *tf.SessionOptions
 )
+
+// global config
+var _config Configuration
 
 // global variable which we initialize once
 var _userDNs []string
@@ -115,8 +165,8 @@ func tlsCerts() ([]tls.Certificate, error) {
 	return _certs, nil
 }
 
-// HttpClient provides HTTP client
-func HttpClient() *http.Client {
+// httpClient provides HTTP client
+func httpClient() *http.Client {
 	// get X509 certs
 	certs, err := tlsCerts()
 	if err != nil {
@@ -184,6 +234,22 @@ func userDNs() []string {
 		}
 	}
 	return out
+}
+
+// helper function to parse configuration file
+func parseConfig(configFile string) error {
+	data, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		logs.WithFields(logs.Fields{"configFile": configFile}).Fatal("Unable to read", err)
+		return err
+	}
+	err = json.Unmarshal(data, &_config)
+	if err != nil {
+		logs.WithFields(logs.Fields{"configFile": configFile}).Fatal("Unable to parse", err)
+		return err
+	}
+	logs.Info(_config.String())
+	return nil
 }
 
 // InList helper function to check item in a list
@@ -254,8 +320,8 @@ func loadModel(fname, flabels string) error {
 	if err != nil {
 		return err
 	}
-	graph = tf.NewGraph()
-	if err := graph.Import(model, ""); err != nil {
+	_graph = tf.NewGraph()
+	if err := _graph.Import(model, ""); err != nil {
 		return err
 	}
 	// Load labels
@@ -267,7 +333,7 @@ func loadModel(fname, flabels string) error {
 	scanner := bufio.NewScanner(labelsFile)
 	// Labels are separated by newlines
 	for scanner.Scan() {
-		labels = append(labels, scanner.Text())
+		_labels = append(_labels, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
 		return err
@@ -288,14 +354,14 @@ func makePredictions(row *Row) ([]float32, error) {
 	}
 
 	// Run inference with existing graph which we get from loadModel call
-	session, err := tf.NewSession(graph, sessionOptions)
+	session, err := tf.NewSession(_graph, _sessionOptions)
 	if err != nil {
 		return nil, err
 	}
 	defer session.Close()
 	results, err := session.Run(
-		map[tf.Output]*tf.Tensor{graph.Operation(InputNode).Output(0): tensor},
-		[]tf.Output{graph.Operation(OutputNode).Output(0)},
+		map[tf.Output]*tf.Tensor{_graph.Operation(InputNode).Output(0): tensor},
+		[]tf.Output{_graph.Operation(OutputNode).Output(0)},
 		nil)
 	if err != nil {
 		return nil, err
@@ -316,7 +382,7 @@ func makeTensorFromImage(imageBuffer *bytes.Buffer, imageFormat string) (*tf.Ten
 	if err != nil {
 		return nil, err
 	}
-	session, err := tf.NewSession(graph, sessionOptions)
+	session, err := tf.NewSession(graph, _sessionOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -374,10 +440,10 @@ func findBestLabels(probabilities []float32, topN int) []LabelResult {
 	// Make a list of label/probability pairs
 	var resultLabels []LabelResult
 	for i, p := range probabilities {
-		if i >= len(labels) {
+		if i >= len(_labels) {
 			break
 		}
-		resultLabels = append(resultLabels, LabelResult{Label: labels[i], Probability: p})
+		resultLabels = append(resultLabels, LabelResult{Label: _labels[i], Probability: p})
 	}
 	// Sort by probability
 	sort.Sort(ByProbability(resultLabels))
@@ -386,7 +452,7 @@ func findBestLabels(probabilities []float32, topN int) []LabelResult {
 }
 
 //
-// HTTP handlers
+// HTTP handlers, GET methods
 //
 
 // DataHandler authenticate incoming requests and route them to appropriate handler
@@ -437,7 +503,7 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Run inference
-	session, err := tf.NewSession(graph, sessionOptions)
+	session, err := tf.NewSession(_graph, _sessionOptions)
 	if err != nil {
 		responseError(w, "Unable to create new session", err, http.StatusInternalServerError)
 		return
@@ -457,10 +523,10 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	output, err := session.Run(
 		map[tf.Output]*tf.Tensor{
-			graph.Operation(InputNode).Output(0): tensor,
+			_graph.Operation(InputNode).Output(0): tensor,
 		},
 		[]tf.Output{
-			graph.Operation(OutputNode).Output(0),
+			_graph.Operation(OutputNode).Output(0),
 		},
 		nil)
 	if err != nil {
@@ -472,8 +538,8 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	// make prediction response
 	topN := 5
-	if len(labels) < topN {
-		topN = len(labels)
+	if len(_labels) < topN {
+		topN = len(_labels)
 	}
 	responseJSON(w, ClassifyResult{
 		Filename: "input", // TODO: we may replace the input name here to something meaningful
@@ -560,28 +626,140 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	responseJSON(w, probs)
 }
 
-// helper data structure to change verbosity level of the running server
-type level struct {
-	Level int `json:"level"`
-}
+// POST methods
 
-// VerboseHandler sets verbosity level for the server
-func VerboseHandler(w http.ResponseWriter, r *http.Request) {
+// UploadHandler uploads TF models into the server
+// http://sanatgersappa.blogspot.com/2013/03/handling-multiple-file-uploads-in-go.html
+func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		logs.Warn("Unable to parse request body: ", err)
+	defer r.Body.Close()
+
+	if VERBOSE > 0 {
+		logs.WithFields(logs.Fields{
+			"Header": r.Header,
+		}).Println("HEADER UploadDataHandler", r.Header)
 	}
-	var v level
-	err = json.Unmarshal(body, &v)
-	if err == nil {
-		logs.Info("Switch to verbose level: ", v.Level)
-		VERBOSE = v.Level
+	// create multipart reader
+	mr, e := r.MultipartReader()
+	if e != nil {
+		logs.WithFields(logs.Fields{
+			"Error": e,
+		}).Error("UploadDataHandler unable to establish MultipartReader", e)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	// parse header values and extract transfer record meta-data
+	name := r.Header.Get("model")
+	arr := strings.Split(name, "/")
+	fname := arr[len(arr)-1]
+	model := fmt.Sprintf("%s/%s", _config.ModelDir, fname)
+
+	// create a file which we'll write
+	file, e := os.Create(model)
+	defer file.Close()
+	if e != nil {
+		logs.WithFields(logs.Fields{
+			"Model": model,
+			"Error": e,
+		}).Error("ERROR UploadHandler unable to open", model, e)
+		http.Error(w, e.Error(), http.StatusInternalServerError)
+		return
+	}
+	// create a hasher to calculate data hash
+	hasher := adler32.New()
+
+	// loop over parts of HTTP request, pass it through TeeReader to destination file and collect bytes
+	var bytes int64
+	for {
+		p, e := mr.NextPart()
+		if e == io.EOF {
+			break
+		}
+		if p.FileName() == "" {
+			continue
+		}
+		if e != nil {
+			logs.WithFields(logs.Fields{
+				"Error": e,
+			}).Error("UploadHandler unable to read chunk from the stream", e)
+			break
+		}
+		// here is pipe: mr->p->hasher->file
+		reader := io.TeeReader(p, hasher)
+		b, e := io.Copy(file, reader)
+		// in case we don't need hasher the code would be
+		// b, e := io.Copy(file, p)
+		if e != nil {
+			logs.WithFields(logs.Fields{
+				"Error": e,
+			}).Error("UploadHandler unable to copy chunk", e)
+			break
+		}
+		bytes += b
+	}
+
+	hash := hex.EncodeToString(hasher.Sum(nil))
+	resp := UploadResponse{Bytes: bytes, Hash: hash}
+	logs.WithFields(logs.Fields{
+		"Model": model,
+		"Bytes": bytes,
+		"Hash":  hash,
+	}).Info("Uploaded new model")
+	responseJSON(w, resp)
+}
+
+// SetHandler sets different options for the server
+func SetHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	defer r.Body.Close()
+	var conf = Configuration{}
+	err := json.NewDecoder(r.Body).Decode(&conf)
+	if err != nil {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+		}).Error("SetHandler unable to marshal", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	logs.WithFields(logs.Fields{
+		"Set": conf.Params(),
+	}).Info("update server settings")
+	VERBOSE = conf.Verbose
+	if conf.LogFormatter == "json" {
+		logs.SetFormatter(&logs.JSONFormatter{})
+	} else if conf.LogFormatter == "text" {
+		logs.SetFormatter(&logs.TextFormatter{})
+	} else {
+		logs.SetFormatter(&logs.TextFormatter{})
+	}
+	if conf.InputNode != "" {
+		InputNode = conf.InputNode
+	}
+	if conf.OutputNode != "" {
+		OutputNode = conf.OutputNode
+	}
+	if conf.ConfigProto != "" {
+		ConfigProto = _config.ConfigProto
+		_sessionOptions = readConfigProto(ConfigProto)
+	}
+	if ModelDir != "" {
+		ModelDir = _config.ModelDir
+	}
+	if ModelName != "" {
+		ModelName = _config.ModelName
+	}
+	if ModelLabels != "" {
+		ModelLabels = _config.ModelLabels
 	}
 	w.WriteHeader(http.StatusOK)
+	return
 }
 
 // DefaultHandler authenticate incoming requests and route them to appropriate handler
@@ -605,6 +783,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	arr := strings.Split(r.URL.Path, "/")
 	path := arr[len(arr)-1]
 	switch path {
+	case "upload":
+		UploadHandler(w, r)
 	case "data":
 		DataHandler(w, r)
 	case "json":
@@ -613,84 +793,82 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 		PredictProtobufHandler(w, r)
 	case "image":
 		ImageHandler(w, r)
-	case "verbose":
-		VerboseHandler(w, r)
+	case "set":
+		SetHandler(w, r)
 	default:
 		DefaultHandler(w, r)
 	}
 }
 
 func main() {
-	var dir string
-	flag.StringVar(&dir, "dir", "models", "local directory to serve by this server")
-	var port int
-	flag.IntVar(&port, "port", 8083, "server port")
-	flag.StringVar(&Auth, "auth", "true", "Use authentication or not")
-	var serverKey string
-	flag.StringVar(&serverKey, "serverKey", "", "server key file")
-	var serverCert string
-	flag.StringVar(&serverCert, "serverCert", "", "server cert file")
-	var modelName string
-	flag.StringVar(&modelName, "modelName", "", "model protobuf file name")
-	var modelLabels string
-	flag.StringVar(&modelLabels, "modelLabels", "", "model labels")
-	flag.StringVar(&InputNode, "inputNode", "", "TF input node name")
-	flag.StringVar(&OutputNode, "outputNode", "", "TF output node name")
-	var configProto string
-	flag.StringVar(&configProto, "configProto", "", "TF proto config file")
+	var config string
+	flag.StringVar(&config, "config", "config.json", "configuration file for our server")
 	flag.Parse()
 
 	var err error
-    _client = HttpClient()
+	_client = httpClient()
+	err = parseConfig(config)
+	if err != nil {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+		}).Fatal("Unable to parse config")
+	}
 
 	// create session options from given config TF proto file
-	sessionOptions = readConfigProto(configProto)
+	_sessionOptions = readConfigProto(_config.ConfigProto)
+	InputNode = _config.InputNode
+	OutputNode = _config.OutputNode
+	ConfigProto = _config.ConfigProto
+	ModelDir = _config.ModelDir
+	ModelName = _config.ModelName
+	ModelLabels = _config.ModelLabels
+	Auth = _config.Auth
 
-	if modelName != "" {
-		err = loadModel(modelName, modelLabels)
+	if ModelName != "" {
+		err = loadModel(ModelName, ModelLabels)
 		if err != nil {
 			logs.WithFields(logs.Fields{
 				"Error":  err,
-				"Model":  modelName,
-				"Labels": modelLabels,
+				"Model":  ModelName,
+				"Labels": ModelLabels,
 			}).Error("unable to open TF model")
 		}
 		logs.WithFields(logs.Fields{
 			"Auth":        Auth,
-			"Model":       modelName,
-			"Labels":      modelLabels,
+			"Model":       ModelName,
+			"Labels":      ModelLabels,
 			"InputNode":   InputNode,
 			"OutputNode":  OutputNode,
-			"ConfigProto": configProto,
+			"ConfigProto": ConfigProto,
 		}).Info("serving TF model")
 	} else {
 		logs.Warn("No model file is supplied, will unable to run inference")
 	}
 
-	http.Handle("/models/", http.StripPrefix("/models/", http.FileServer(http.Dir(dir))))
+	http.Handle("/models/", http.StripPrefix("/models/", http.FileServer(http.Dir(ModelDir))))
 	http.HandleFunc("/", AuthHandler)
-	addr := fmt.Sprintf(":%d", port)
-	if serverKey != "" && serverCert != "" {
+	addr := fmt.Sprintf(":%d", _config.Port)
+	if _config.ServerKey != "" && _config.ServerCrt != "" {
 		server := &http.Server{
 			Addr: addr,
 			TLSConfig: &tls.Config{
 				ClientAuth: tls.RequestClientCert,
 			},
 		}
-		if _, err := os.Open(serverKey); err != nil {
+		if _, err := os.Open(_config.ServerKey); err != nil {
 			logs.WithFields(logs.Fields{
 				"Error": err,
-				"File":  serverKey,
+				"File":  _config.ServerKey,
 			}).Error("unable to open server key file")
 		}
-		if _, err := os.Open(serverCert); err != nil {
+		if _, err := os.Open(_config.ServerCrt); err != nil {
 			logs.WithFields(logs.Fields{
 				"Error": err,
-				"File":  serverCert,
+				"File":  _config.ServerCrt,
 			}).Error("unable to open server cert file")
 		}
 		logs.WithFields(logs.Fields{"Addr": addr}).Info("Starting HTTPs server")
-		err = server.ListenAndServeTLS(serverCert, serverKey)
+		err = server.ListenAndServeTLS(_config.ServerCrt, _config.ServerKey)
 	} else {
 		logs.WithFields(logs.Fields{"Addr": addr}).Info("Starting HTTP server")
 		err = http.ListenAndServe(addr, nil)
