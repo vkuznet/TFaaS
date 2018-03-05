@@ -101,7 +101,7 @@ func (c *Configuration) String() string {
 
 // Params returns string representation of server parameters
 func (c *Configuration) Params() string {
-	return fmt.Sprintf("<Params dir=%s model=%s labels=%s inputNode=%s outptuNode=%s configProt=%s verbose=%d log=%s>", c.ModelDir, c.ModelName, c.ModelLabels, c.InputNode, c.OutputNode, c.ConfigProto, c.Verbose, c.LogFormatter)
+	return fmt.Sprintf("<Params model=%s labels=%s inputNode=%s outptuNode=%s configProt=%s verbose=%d log=%s>", c.ModelName, c.ModelLabels, c.InputNode, c.OutputNode, c.ConfigProto, c.Verbose, c.LogFormatter)
 }
 
 // global variables to hold TF graph and labels
@@ -336,6 +336,10 @@ func loadModel(fname, flabels string) error {
 	if err := scanner.Err(); err != nil {
 		return err
 	}
+    logs.WithFields(logs.Fields{
+        "Model":  ModelName,
+        "Labels": ModelLabels,
+    }).Info("load TF model")
 	return nil
 }
 
@@ -703,17 +707,25 @@ func SetHandler(w http.ResponseWriter, r *http.Request) {
 		OutputNode = conf.OutputNode
 	}
 	if conf.ConfigProto != "" {
-		ConfigProto = _config.ConfigProto
+		ConfigProto = conf.ConfigProto
 		_sessionOptions = readConfigProto(ConfigProto)
 	}
-	if ModelDir != "" {
-		ModelDir = _config.ModelDir
+	if conf.ModelLabels != "" {
+		ModelLabels = conf.ModelLabels
 	}
-	if ModelName != "" {
-		ModelName = _config.ModelName
-	}
-	if ModelLabels != "" {
-		ModelLabels = _config.ModelLabels
+	if conf.ModelName != "" {
+		ModelName = conf.ModelName
+        if !strings.HasPrefix(ModelName, "/") {
+            ModelName = fmt.Sprintf("%s/%s", ModelDir, ModelName)
+        }
+		err := loadModel(ModelName, ModelLabels)
+		if err != nil {
+			logs.WithFields(logs.Fields{
+				"Error":  err,
+				"Model":  ModelName,
+				"Labels": ModelLabels,
+			}).Error("unable to open TF model")
+		}
 	}
 	w.WriteHeader(http.StatusOK)
 	return
