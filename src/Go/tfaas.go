@@ -336,10 +336,10 @@ func loadModel(fname, flabels string) error {
 	if err := scanner.Err(); err != nil {
 		return err
 	}
-    logs.WithFields(logs.Fields{
-        "Model":  ModelName,
-        "Labels": ModelLabels,
-    }).Info("load TF model")
+	logs.WithFields(logs.Fields{
+		"Model":  ModelName,
+		"Labels": ModelLabels,
+	}).Info("load TF model")
 	return nil
 }
 
@@ -650,18 +650,18 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer modelFile.Close()
 
-    // prepare file name to write to
+	// prepare file name to write to
 	arr := strings.Split(header.Filename, "/")
 	fname := arr[len(arr)-1]
 	modelFileName := fmt.Sprintf("%s/%s", _config.ModelDir, fname)
 
-    // read data from request and write it out to our local file
-    data, err := ioutil.ReadAll(modelFile)
+	// read data from request and write it out to our local file
+	data, err := ioutil.ReadAll(modelFile)
 	if err != nil {
 		responseError(w, "unable to read model file", err, http.StatusInternalServerError)
 		return
 	}
-    err = ioutil.WriteFile(modelFileName, data, 0644)
+	err = ioutil.WriteFile(modelFileName, data, 0644)
 	if err != nil {
 		responseError(w, "unable to write model file", err, http.StatusInternalServerError)
 		return
@@ -715,9 +715,9 @@ func SetHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if conf.ModelName != "" {
 		ModelName = conf.ModelName
-        if !strings.HasPrefix(ModelName, "/") {
-            ModelName = fmt.Sprintf("%s/%s", ModelDir, ModelName)
-        }
+		if !strings.HasPrefix(ModelName, "/") {
+			ModelName = fmt.Sprintf("%s/%s", ModelDir, ModelName)
+		}
 		err := loadModel(ModelName, ModelLabels)
 		if err != nil {
 			logs.WithFields(logs.Fields{
