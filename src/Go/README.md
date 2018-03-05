@@ -200,10 +200,11 @@ scurl https://localhost:8083/models/tf.model1
 # specific by server configuration
 scurl -X POST https://localhost:8083/upload -F 'model=@/path/model.pb'
 
-# update server parameters, e.g. change verbosity level, model name, etc.
-cat > c.json << EOF
+# update server parameters:
+# you're allowed to change model, labels input and output nodes as well
+# as TF configuration and set server logging formatter and verbosity level.
+cat > params.json << EOF
 {
-    "modelDir": "models2",
     "model": "model2.pb",
     "labels": "labels2.csv",
     "inputNode": "input_1_232323",
@@ -213,7 +214,10 @@ cat > c.json << EOF
     "verbose": 1
 }
 EOF
-scurl -X POST -H "Content-type: application/json" -d @c.json https://localhost:8083/set
+# above we asked to use model2.pb and labels2.csv (both of them should
+# be available in modelDir area of the server) as well as we set
+# new input/output node name and server configuration
+scurl -X POST -H "Content-type: application/json" -d @params.json https://localhost:8083/set
 
 # query prediction for our image (if we run TFaaS as image classifier)
 scurl https://localhost:8083/image -F 'image=@/path/file.png'
