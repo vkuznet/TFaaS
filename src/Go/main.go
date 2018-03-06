@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
+	"time"
 
 	logs "github.com/sirupsen/logrus"
 )
@@ -43,10 +45,22 @@ func (c *Configuration) Params() string {
 	return fmt.Sprintf("<Params model=%s labels=%s inputNode=%s outptuNode=%s configProt=%s verbose=%d log=%s>", c.ModelName, c.ModelLabels, c.InputNode, c.OutputNode, c.ConfigProto, c.Verbose, c.LogFormatter)
 }
 
+// helper function to return current version
+func info() string {
+	goVersion := runtime.Version()
+	tstamp := time.Now()
+	return fmt.Sprintf("Build: git={{VERSION}} go=%s date=%s", goVersion, tstamp)
+}
+
 func main() {
 	var config string
 	flag.StringVar(&config, "config", "config.json", "configuration file for our server")
 	flag.Parse()
+
+	if version {
+		fmt.Println(info())
+		os.Exit(0)
+	}
 
 	var err error
 	_client = httpClient()
