@@ -217,7 +217,10 @@ EOF
 # above we asked to use model2.pb and labels2.csv (both of them should
 # be available in modelDir area of the server) as well as we set
 # new input/output node name and server configuration
-scurl -X POST -H "Content-type: application/json" -d @params.json https://localhost:8083/set
+scurl -X POST -H "Content-type: application/json" -d @params.json https://localhost:8083/params
+
+# get server parameters
+scurl https://localhost:8083/params
 
 # query prediction for our image (if we run TFaaS as image classifier)
 scurl https://localhost:8083/image -F 'image=@/path/file.png'
