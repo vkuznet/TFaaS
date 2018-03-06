@@ -328,10 +328,10 @@ func ModelsHandler(w http.ResponseWriter, r *http.Request) {
 		responseError(w, fmt.Sprintf("unable to open: %s", _modelDir), err, http.StatusInternalServerError)
 		return
 	}
-    var models []string
-    for _, f := range files {
-        models = append(models, f.Name())
-    }
+	var models []string
+	for _, f := range files {
+		models = append(models, f.Name())
+	}
 	responseJSON(w, models)
 }
 
