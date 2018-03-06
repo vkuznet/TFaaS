@@ -104,7 +104,6 @@ func main() {
 		logs.Warn("No model file is supplied, will unable to run inference")
 	}
 
-	http.Handle("/models/", http.StripPrefix("/models/", http.FileServer(http.Dir(_modelDir))))
 	http.HandleFunc("/", AuthHandler)
 	addr := fmt.Sprintf(":%d", _config.Port)
 	if _config.ServerKey != "" && _config.ServerCrt != "" {

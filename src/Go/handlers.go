@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -319,6 +320,17 @@ func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+// ModelsHandler authenticate incoming requests and route them to appropriate handler
+func ModelsHandler(w http.ResponseWriter, r *http.Request) {
+	files, err := ioutil.ReadDir(_modelDir)
+	if err != nil {
+		log.Fatal(err)
+		responseError(w, fmt.Sprintf("unable to open: %s", _modelDir), err, http.StatusInternalServerError)
+		return
+	}
+	responseJSON(w, files)
+}
+
 // DefaultHandler authenticate incoming requests and route them to appropriate handler
 func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
@@ -352,6 +364,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 		ImageHandler(w, r)
 	case "params":
 		ParamsHandler(w, r)
+	case "models":
+		ModelsHandler(w, r)
 	default:
 		DefaultHandler(w, r)
 	}
