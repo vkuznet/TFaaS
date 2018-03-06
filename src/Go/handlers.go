@@ -328,7 +328,11 @@ func ModelsHandler(w http.ResponseWriter, r *http.Request) {
 		responseError(w, fmt.Sprintf("unable to open: %s", _modelDir), err, http.StatusInternalServerError)
 		return
 	}
-	responseJSON(w, files)
+    var models []string
+    for _, f := range files {
+        models = append(models, f.Name())
+    }
+	responseJSON(w, models)
 }
 
 // DefaultHandler authenticate incoming requests and route them to appropriate handler
