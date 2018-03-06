@@ -55,6 +55,8 @@ func info() string {
 func main() {
 	var config string
 	flag.StringVar(&config, "config", "config.json", "configuration file for our server")
+	var version bool
+	flag.BoolVar(&version, "version", false, "Show version")
 	flag.Parse()
 
 	if version {
