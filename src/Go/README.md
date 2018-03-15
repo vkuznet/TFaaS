@@ -25,9 +25,9 @@ go get github.com/tensorflow/tensorflow/tensorflow/go/op
 ```
 - download necessary dependencies for `tfaas`:
 ```
-go get github.com/vkuznet/x509proxy
-go get github.com/golang/protobuf
-go get github.com/sirupsen/logrus
+go get -u github.com/vkuznet/x509proxy
+go get -u github.com/golang/protobuf/protoc-gen-go
+go get -u github.com/sirupsen/logrus
 ```
 - build `tfaas` Go server by running `make` and you'll get `tfaas` executable
   which is ready to server your models.
