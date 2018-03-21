@@ -42,7 +42,7 @@ func (c *Configuration) String() string {
 
 // Params returns string representation of server parameters
 func (c *Configuration) Params() string {
-	return fmt.Sprintf("<Params model=%s labels=%s inputNode=%s outptuNode=%s configProt=%s verbose=%d log=%s>", c.ModelName, c.ModelLabels, c.InputNode, c.OutputNode, c.ConfigProto, c.Verbose, c.LogFormatter)
+	return fmt.Sprintf("<TFaaS model=%s labels=%s inputNode=%s outptuNode=%s configProto=%s>", c.ModelName, c.ModelLabels, c.InputNode, c.OutputNode, c.ConfigProto)
 }
 
 // helper function to return current version

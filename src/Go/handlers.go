@@ -226,32 +226,39 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			"Header": r.Header,
 		}).Println("HEADER UploadHandler", r.Header)
 	}
-	modelFile, header, err := r.FormFile("model")
-	if err != nil {
-		responseError(w, "unable to read input request", err, http.StatusInternalServerError)
-		return
-	}
-	defer modelFile.Close()
+	for _, name := range []string{"model", "labels"} {
+		modelFile, header, err := r.FormFile(name)
+		if err != nil {
+			if name == "model" {
+				responseError(w, "unable to read input request", err, http.StatusInternalServerError)
+				return
+			} else {
+				continue
+			}
+		}
+		defer modelFile.Close()
 
-	// prepare file name to write to
-	arr := strings.Split(header.Filename, "/")
-	fname := arr[len(arr)-1]
-	modelFileName := fmt.Sprintf("%s/%s", _config.ModelDir, fname)
+		// prepare file name to write to
+		arr := strings.Split(header.Filename, "/")
+		fname := arr[len(arr)-1]
+		fileName := fmt.Sprintf("%s/%s", _config.ModelDir, fname)
 
-	// read data from request and write it out to our local file
-	data, err := ioutil.ReadAll(modelFile)
-	if err != nil {
-		responseError(w, "unable to read model file", err, http.StatusInternalServerError)
-		return
+		// read data from request and write it out to our local file
+		data, err := ioutil.ReadAll(modelFile)
+		if err != nil {
+			responseError(w, "unable to read model file", err, http.StatusInternalServerError)
+			return
+		}
+		err = ioutil.WriteFile(fileName, data, 0644)
+		if err != nil {
+			responseError(w, "unable to write file", err, http.StatusInternalServerError)
+			return
+		}
+		logs.WithFields(logs.Fields{
+			"File": fileName,
+		}).Info("Uploaded")
 	}
-	err = ioutil.WriteFile(modelFileName, data, 0644)
-	if err != nil {
-		responseError(w, "unable to write model file", err, http.StatusInternalServerError)
-		return
-	}
-	logs.WithFields(logs.Fields{
-		"File": modelFileName,
-	}).Info("Uploaded new model")
+
 	w.WriteHeader(http.StatusOK)
 	return
 }
@@ -259,13 +266,9 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 // ParamsHandler sets different options for the server
 func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		out, err := json.Marshal(_config)
-		if err != nil {
-			responseError(w, "unable to marshal data", err, http.StatusInternalServerError)
-			return
-		}
+		c := Configuration{ModelName: _modelName, ModelLabels: _modelLabels, InputNode: _inputNode, OutputNode: _outputNode, ConfigProto: _configProto}
 		w.WriteHeader(http.StatusOK)
-		w.Write(out)
+		w.Write([]byte(c.Params()))
 		return
 	}
 	defer r.Body.Close()
@@ -280,7 +283,7 @@ func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	logs.WithFields(logs.Fields{
 		"Set": conf.Params(),
-	}).Info("update server settings")
+	}).Info("update server parameters")
 	VERBOSE = conf.Verbose
 	if conf.LogFormatter == "json" {
 		logs.SetFormatter(&logs.JSONFormatter{})
@@ -301,6 +304,9 @@ func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if conf.ModelLabels != "" {
 		_modelLabels = conf.ModelLabels
+		if !strings.HasPrefix(_modelLabels, "/") {
+			_modelLabels = fmt.Sprintf("%s/%s", _modelDir, _modelLabels)
+		}
 	}
 	if conf.ModelName != "" {
 		_modelName = conf.ModelName
