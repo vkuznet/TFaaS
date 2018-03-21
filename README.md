@@ -19,3 +19,6 @@ The projects will explore and implement the following topics
 - explore Cloud and custom solution for TF back-end as well as
   [distributed Keras](https://github.com/cerndb/dist-keras) framework on Spark
   cluster
+
+The TFaaS demonstrator instruction is available
+[here](https://github.com/vkuznet/TFaaS/blob/master/DEMO.md)
