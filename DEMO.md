@@ -49,4 +49,4 @@ For the demo I used the following:
    `scurl -H "Content-type: application/json" -d '{"key":[...], "values":[...]}' https://localhost:8083/json`
 
 Full demo can be found
-[here](https://www.youtube.com/edit?video_id=TPI2odQm7hE&video_referrer=watch)
+[here](https://www.youtube.com/watch?v=ZGjnM8wk8eA)
