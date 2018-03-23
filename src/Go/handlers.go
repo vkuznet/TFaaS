@@ -160,10 +160,36 @@ func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
 		}).Info("received")
 	}
 
-	// example how to use tfaaspb protobuffer to ship back prediction data
+	// convert tfaaspb.Row into Row
+	var keys []string
+	var values []float32
+	for _, k := range recs.Key {
+		keys = append(keys, k)
+	}
+	for _, v := range recs.Value {
+		values = append(values, v)
+	}
+	records := &Row{Keys: keys, Values: values}
+
+	// generate predictions
+	probs, err := makePredictions(records)
+	if err != nil {
+		responseError(w, "unable to make predictions", err, http.StatusInternalServerError)
+		return
+	}
+
+	if VERBOSE > 0 {
+		logs.WithFields(logs.Fields{
+			"Inputs": records,
+			"Probs":  probs,
+		}).Info("respose")
+	}
+
+	// wrap our probabilities into Predictions class
 	var objects []*tfaaspb.Class
-	objects = append(objects, &tfaaspb.Class{Label: "higgs", Probability: float32(0.2)})
-	objects = append(objects, &tfaaspb.Class{Label: "qcd", Probability: float32(0.8)})
+	for _, p := range probs {
+		objects = append(objects, &tfaaspb.Class{Probability: float32(p)})
+	}
 	pobj := &tfaaspb.Predictions{Prediction: objects}
 	out, err := proto.Marshal(pobj)
 	if err != nil {
