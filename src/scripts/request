@@ -16,4 +16,3 @@ scurl="curl -L -k --key $HOME/.globus/userkey.pem --cert $HOME/.globus/usercert.
 cat $MSG | protoc -I$pdir --encode $REQUEST $PROTO | \
     $scurl -sS -X POST --data-binary @- $URL | \
     protoc -I$pdir --decode $RESPONSE $PROTO
-
