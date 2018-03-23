@@ -1,13 +1,14 @@
 #!/bin/bash
 
-if [ $# -eq 0 ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "--help" ] || [ $# -ne 2 ]; then
-    echo "Usage: request proto.msg url"
+if [ $# -eq 0 ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "--help" ] || [ $# -ne 3 ]; then
+    echo "Usage: request <proto_dir> <proto.msg> <url>"
     exit 0
 fi
 
-pdir=/Users/vk/CMS/DMWM/GIT/TFaaS/src/proto
-MSG=$1
-URL=$2
+pdir=$1
+MSG=$2
+URL=$3
+echo "request $pdir $MSG $URL"
 PROTO=tfaas.proto
 REQUEST=tfaaspb.Row # our protobuf package name dot message name
 RESPONSE=tfaaspb.Predictions
