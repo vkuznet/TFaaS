@@ -33,6 +33,7 @@ type Configuration struct {
 	Verbose      int    `json:"verbose"`      // verbosity level
 	ServerKey    string `json:"serverKey"`    // server key for https
 	ServerCrt    string `json:"serverCrt"`    // server certificate for https
+	UpdateDNs    int    `json:"updateDNs"`    // interval in minutes to update user DNs
 }
 
 // String returns string representation of server configuration
@@ -106,7 +107,27 @@ func main() {
 
 	http.HandleFunc("/", AuthHandler)
 	addr := fmt.Sprintf(":%d", _config.Port)
-	if _config.ServerKey != "" && _config.ServerCrt != "" {
+	_, e1 := os.Stat(_config.ServerCrt)
+	_, e2 := os.Stat(_config.ServerKey)
+	if e1 == nil && e2 == nil {
+
+		if Auth == "true" {
+			// init userDNs and update it periodically
+			_userDNs = UserDNs{DNs: userDNs(), Time: time.Now()}
+			go func() {
+				for {
+					interval := _config.UpdateDNs
+					if interval == 0 {
+						interval = 60
+					}
+					d := time.Duration(interval) * time.Minute
+					logs.WithFields(logs.Fields{"Time": time.Now(), "Duration": d}).Info("userDNs are updated")
+					time.Sleep(d) // sleep for next iteration
+					_userDNs = UserDNs{DNs: userDNs(), Time: time.Now()}
+				}
+			}()
+		}
+
 		server := &http.Server{
 			Addr: addr,
 			TLSConfig: &tls.Config{

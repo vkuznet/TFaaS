@@ -11,5 +11,6 @@
     "serverKey": "/opt/certs/server.key",
     "serverCrt": "/opt/certs/server.crt",
     "logFormatter": "text",
+    "updateDNs": 600,
     "verbose": 0
 }

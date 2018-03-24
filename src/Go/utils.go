@@ -8,13 +8,20 @@ import (
 	"net/http"
 	"os"
 	"os/user"
+	"time"
 
 	logs "github.com/sirupsen/logrus"
 	"github.com/vkuznet/x509proxy"
 )
 
+// UserDNs structure holds information about user DNs
+type UserDNs struct {
+	DNs  []string
+	Time time.Time
+}
+
 // global variable which we initialize once
-var _userDNs []string
+var _userDNs UserDNs
 
 // global HTTP client
 var _client *http.Client
@@ -180,12 +187,8 @@ func UserDN(r *http.Request) string {
 
 // custom logic for CMS authentication, users may implement their own logic here
 func auth(r *http.Request) bool {
-
-	if len(_userDNs) == 0 {
-		_userDNs = userDNs()
-	}
 	userDN := UserDN(r)
-	match := InList(userDN, _userDNs)
+	match := InList(userDN, _userDNs.DNs)
 	if !match {
 		logs.WithFields(logs.Fields{
 			"User DN": userDN,
