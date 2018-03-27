@@ -427,6 +427,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	switch path {
 	case "upload":
 		UploadHandler(w, r)
+	case "delete":
+		DeleteHandler(w, r)
 	case "data":
 		DataHandler(w, r)
 	case "json":
@@ -442,4 +444,31 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		DefaultHandler(w, r)
 	}
+}
+
+// DELETE APIs
+// DeleteHandler authenticate incoming requests and route them to appropriate handler
+func DeleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "DELETE" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	model := r.FormValue("model")
+	files, err := ioutil.ReadDir(_config.ModelDir)
+	if err != nil {
+		responseError(w, fmt.Sprintf("unable to read: %s", _config.ModelDir), err, http.StatusInternalServerError)
+		return
+	}
+	for _, f := range files {
+		if f.Name() == model {
+			path := fmt.Sprintf("%s/%s", _config.ModelDir, f.Name())
+			err = os.RemoveAll(path)
+			if err != nil {
+				responseError(w, fmt.Sprintf("unable to remove: %s", path), err, http.StatusInternalServerError)
+				return
+			}
+		}
+	}
+	delete(_models, model)
+	w.WriteHeader(http.StatusOK)
 }

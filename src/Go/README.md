@@ -161,6 +161,8 @@ The `tfaas` server provides several APIs:
   - `/params` uploads new set of parameters to TFaaS
   - `/json` serves inference for given set of input parameters in JSON data-format
   - `/proto` serves inference in ProtoBuffer data-format
+- DELETE APIs:
+  - `/delete` deletes given model from TFaaS server
 
 Here are few concrete examples of API usage:
 ```
@@ -182,6 +184,9 @@ scurl -i -X POST https://localhost:8083/upload -F 'name=image' -F 'params=@/opt/
 # once models are uploaded we can list them back via HTTP GET request
 scurl https://localhost:8083/models/
 [{"name":"image","model":"tf_model_20180315.pb","labels":"labels.txt","options":null,"inputNode":"input_1_1","outputNode":"output_node0"},{"name":"luca","model":"model_0228.pb","labels":"labels.csv","options":null,"inputNode":"dense_4_input","outputNode":"output_node0"}]
+
+# we can remove given mode from TFaaS server
+scurl -X DELETE https://localhost:8083/delete?model=image
 
 # update server parameters:
 # you're allowed to change model, labels input and output nodes as well
