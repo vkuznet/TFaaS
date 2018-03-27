@@ -23,10 +23,6 @@ type Configuration struct {
 	Port         int    `json:"port"`         // dbs port number
 	Auth         string `json:"auth"`         // use authentication or not
 	ModelDir     string `json:"modelDir"`     // location of model directory
-	ModelName    string `json:"model"`        // name of the model to use
-	ModelLabels  string `json:"labels"`       // name of labels file to use
-	InputNode    string `json:"inputNode"`    // TF input node name to use
-	OutputNode   string `json:"outputNode"`   // TF output node name to use
 	ConfigProto  string `json:"configProto"`  // TF config proto file to use
 	Base         string `json:"base"`         // dbs base path
 	LogFormatter string `json:"logFormatter"` // log formatter
@@ -38,12 +34,7 @@ type Configuration struct {
 
 // String returns string representation of server configuration
 func (c *Configuration) String() string {
-	return fmt.Sprintf("<Config port=%d dir=%s base=%s auth=%s model=%s labels=%s inputNode=%s outptuNode=%s configProt=%s verbose=%d log=%s crt=%s key=%s>", c.Port, c.ModelDir, c.Base, c.Auth, c.ModelName, c.ModelLabels, c.InputNode, c.OutputNode, c.ConfigProto, c.Verbose, c.LogFormatter, c.ServerCrt, c.ServerKey)
-}
-
-// Params returns string representation of server parameters
-func (c *Configuration) Params() string {
-	return fmt.Sprintf("<TFaaS model=%s labels=%s inputNode=%s outptuNode=%s configProto=%s>", c.ModelName, c.ModelLabels, c.InputNode, c.OutputNode, c.ConfigProto)
+	return fmt.Sprintf("<Config port=%d dir=%s base=%s auth=%s configProt=%s verbose=%d log=%s crt=%s key=%s>", c.Port, c.ModelDir, c.Base, c.Auth, c.ConfigProto, c.Verbose, c.LogFormatter, c.ServerCrt, c.ServerKey)
 }
 
 // helper function to return current version
@@ -75,34 +66,16 @@ func main() {
 	}
 
 	// create session options from given config TF proto file
-	_sessionOptions = readConfigProto(_config.ConfigProto)
-	_inputNode = _config.InputNode
-	_outputNode = _config.OutputNode
-	_configProto = _config.ConfigProto
-	_modelDir = _config.ModelDir
-	_modelName = _config.ModelName
-	_modelLabels = _config.ModelLabels
-	Auth = _config.Auth
+	_sessionOptions = readConfigProto(_config.ConfigProto) // default session options
+	_models = make(map[string]TFModel)                     // initialize TF models cache
+	Auth = _config.Auth                                    // set if we gonna use auth or not
 
-	if _modelName != "" {
-		err = loadModel(_modelName, _modelLabels)
-		if err != nil {
-			logs.WithFields(logs.Fields{
-				"Error":  err,
-				"Model":  _modelName,
-				"Labels": _modelLabels,
-			}).Error("unable to open TF model")
-		}
+	// load models
+	err = loadModels()
+	if err != nil {
 		logs.WithFields(logs.Fields{
-			"Auth":        Auth,
-			"Model":       _modelName,
-			"Labels":      _modelLabels,
-			"InputNode":   _inputNode,
-			"OutputNode":  _outputNode,
-			"ConfigProto": _configProto,
-		}).Info("serving TF model")
-	} else {
-		logs.Warn("No model file is supplied, will unable to run inference")
+			"Error": err,
+		}).Fatal("Unable to load TF models")
 	}
 
 	http.HandleFunc("/", AuthHandler)

@@ -18,6 +18,7 @@ message Hits {
 message Row {
     repeated string key = 1;
     repeated float value = 2;
+    string model = 3;
 }
 
 // DataFrame is a collection of rows

@@ -125,22 +125,24 @@ label2
 ### How to run tfass server
 Now we have all pieces to run `tfaas` server. We can do it as following:
 ```
-# create models directory which we can server, e.g. mkdir -p $PWD/models
-# ensure that we create labels.csv file
-# place our TF model named mode.pb into models area
-# find out input and output node TF node names
-# run the server
-./tfaas -dir $PWD/models 
-   -serverCert /data/certs/hostcert.pem -serverKey /data/certs/hostkey.pem
-   -modelLabels labels.csv -modelName models/model.pb
-   -inputNode input_1_1 -outputNode output_node0
-```
-Here we supply the following list of parameters:
-- server cert/key files to start-up HTTPs server
-- modelLabels file which contains list of labels used by our TF model
-- modelName file which contains full dump (including weights) of our TF model
-- input/outputNode names used in our TF model
+# here is our configuration json file
+cat config.json
+{
+    "port": 8083,
+    "auth": "true",
+    "modelDir": "models",
+    "configProto": "",
+    "base": "",
+    "serverKey": "/opt/certs/server.key",
+    "serverCrt": "/opt/certs/server.crt",
+    "logFormatter": "text",
+    "updateDNs": 600,
+    "verbose": 0
+}
 
+# run the server with our config file
+./tfaas -config config.json
+```
 If `tfaas` server quite and complained about CPU, e.g.
 *Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.2 AVX AVX2 FMA*
 it means that your TF library is not tuned (compiled) for your CPU. To resolve
@@ -148,44 +150,19 @@ the issue TF library needs to be complied from the source. For comprehensive
 discussion please see this [post](https://stackoverflow.com/questions/47068709/your-cpu-supports-instructions-that-this-tensorflow-binary-was-not-compiled-to-u)
 and this [one](https://stackoverflow.com/questions/41293077/how-to-compile-tensorflow-with-sse4-2-and-avx-instructions)
 
-### How to get predictions from tfaas server
-Once `tfaas` is up and running (default port is 8083) we can use it to server
-prediction for our input data. Let's create a simple (curl-based) client:
-```
-#!/bin/bash
-
-# construct our input vector
-cat > /tmp/sb_input.json << EOF
-{
-    "keys":["a1","a2","a3","a4","a5","a6","a7","a8","a9"],
-    "values":[1,1,1,1,1,1,1,1,1]
-}
-EOF
-
-# host settings
-headers="Content-type: application/json"
-host=https://localhost:8083
-
-# send request to host/json end-point
-curl -L -k --key userkey.pem --cert usercert.pem -H "$headers" -d @/tmp/sb_input.json $host/json
-```
-Here, we created our input vector in JSON data-format
-```
-{
-    "keys":["a1","a2","a3","a4","a5","a6","a7","a8","a9"],
-    "values":[1,1,1,1,1,1,1,1,1]
-}
-```
-which contains list of keys (in our example 9 keys, "a1" till "a9") and
-corresponding values (in our case all ones, but in general it is your
-input values in float data type).
-
-Then, we invoke curl call (with necessary options) and pass it
-to `$host/json` URI. The passed body is our JSON input which we load
-from `/tmp/sb_input.json` file we created before.
-
 ### tfaas server APIs
 The `tfaas` server provides several APIs:
+- GET APIs:
+  - `/models` lists all available models/labels uploaded to TFaaS
+  - `/params` lists model parameters to be used by TFaaS
+  - `/models/<tf_model.pb>` fetches concrete model from TFaaS
+- POST APIs:
+  - `/upload` pushes your model to TFaaS
+  - `/params` uploads new set of parameters to TFaaS
+  - `/json` serves inference for given set of input parameters in JSON data-format
+  - `/proto` serves inference in ProtoBuffer data-format
+
+Here are few concrete examples of API usage:
 ```
 # here we define scurl as a shortcut to
 # curl -L -k --key ~/.globus/userkey.pem --cert ~/.globus/usercert.pem
@@ -197,8 +174,14 @@ scurl https://localhost:8083/models/
 scurl https://localhost:8083/models/tf.model1
 
 # upload new model file to the server, it will be placed to modelDir area
-# specific by server configuration
-scurl -X POST https://localhost:8083/upload -F 'model=@/path/model.pb'
+# we must provide name, params, model and labels form values
+scurl -i -X POST https://localhost:8083/upload -F 'name=luca' -F 'params=@/opt/cms/data/models/luca/params.json' -F 'model=@/opt/cms/data/models/luca/model_0228.pb' -F 'labels=@/opt/cms/data/models/luca/labels.csv'
+# yet another example
+scurl -i -X POST https://localhost:8083/upload -F 'name=image' -F 'params=@/opt/cms/data/models/higgs_qcd_muons/params.json' -F 'model=@/opt/cms/data/models/higgs_qcd_muons/tf_model_20180315.pb' -F 'labels=@/opt/cms/data/models/higgs_qcd_muons/labels.txt'
+
+# once models are uploaded we can list them back via HTTP GET request
+scurl https://localhost:8083/models/
+[{"name":"image","model":"tf_model_20180315.pb","labels":"labels.txt","options":null,"inputNode":"input_1_1","outputNode":"output_node0"},{"name":"luca","model":"model_0228.pb","labels":"labels.csv","options":null,"inputNode":"dense_4_input","outputNode":"output_node0"}]
 
 # update server parameters:
 # you're allowed to change model, labels input and output nodes as well
@@ -209,9 +192,6 @@ cat > params.json << EOF
     "labels": "labels2.csv",
     "inputNode": "input_1_232323",
     "outputNode": "output_node_232323",
-    "configProto": "",
-    "logFormatter": "text",
-    "verbose": 1
 }
 EOF
 # above we asked to use model2.pb and labels2.csv (both of them should
@@ -223,13 +203,22 @@ scurl -X POST -H "Content-type: application/json" -d @params.json https://localh
 scurl https://localhost:8083/params
 
 # query prediction for our image (if we run TFaaS as image classifier)
-scurl https://localhost:8083/image -F 'image=@/path/file.png'
+scurl https://localhost:8083/image -F 'image=@/opt/cms/data/hep/train/RelValJpsiMuMu/run1_evt299719_lumi3.png' -F 'model=image'
 
 # use JSON API to get prediction for our input data
-scurl -XPOST -d '{"keys":["a","b"],"values":[1.1,2.0]}' https://localhost:8083/json
+scurl -XPOST -d '{"keys":["a","b"],"values":[1.1,2.0], "model":"bestModel"}' https://localhost:8083/json
 
 # use Protobuf API to get prediction for out input message (proto.msg)
 # see scripts/README.md area for more details
+
+# here is an example of proto.msg file
+key: "attr1"
+value: 1.1
+key: "attr2"
+value: 2.2
+model: "image"
+
+# now we can run inference as following
 scripts/request proto.msg https://localhost:8083/proto
 ```
 For protobuf messages, please consult this

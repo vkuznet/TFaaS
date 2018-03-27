@@ -21,6 +21,7 @@ message Hits {
 message Row {
     repeated string key = 1;
     repeated float value = 2;
+    string model = 3;
 }
 
 // DataFrame is a collection of rows
@@ -52,11 +53,11 @@ We need to pick up protoc-X.Y.Z-OS.zip file.
 Generate protobuffer code to (de)-serialize our proto file
 ```
 # generate Go code
-protoc/bin/protoc -I=$PWD/src/proto --go_out=$PWD/src/Go/tfaaspb $PWD/src/proto/tfaas.proto
+protoc -I=$PWD/src/proto --go_out=$PWD/src/Go/tfaaspb $PWD/src/proto/tfaas.proto
 # generate C++ code
-protoc/bin/protoc -I=$PWD/src/proto --cpp_out=$PWD/src/cpp $PWD/src/proto/tfaas.proto
+protoc -I=$PWD/src/proto --cpp_out=$PWD/src/cpp $PWD/src/proto/tfaas.proto
 # generate Python code
-protoc/bin/protoc -I=$PWD/src/proto --python_out=$PWD/src/python $PWD/src/proto/tfaas.proto
+protoc -I=$PWD/src/proto --python_out=$PWD/src/python $PWD/src/proto/tfaas.proto
 ```
 
 ### How to generate TensorFlow proto config APIs

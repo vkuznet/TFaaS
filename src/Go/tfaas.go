@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -28,22 +29,100 @@ type LabelResult struct {
 
 // Row structure represents input set of attributes client will send to the server
 type Row struct {
-	Keys   []string  `json:"keys"`
-	Values []float32 `json:"values"`
+	Keys   []string  `json:"keys"`   // row attribute names
+	Values []float32 `json:"values"` // row values
+	Model  string    `json:"model"`  // TF model name to use
 }
 
 func (r *Row) String() string {
 	return fmt.Sprintf("%v", r.Values)
 }
 
+// TFModel provides meta-data description of TF model to be used
+type TFParams struct {
+	Name       string   `json:"name"`       // model name
+	Model      string   `json:"model"`      // model file name
+	Labels     string   `json:"labels"`     // model labels file name
+	Options    []string `json:"options"`    // model options
+	InputNode  string   `json:"inputNode"`  // model input node name
+	OutputNode string   `json:"outputNode"` // model output node name
+}
+
+func (p *TFParams) String() string {
+	return fmt.Sprintf("<TFParams: name=%s model=%s labels=%s options=%v inputNode=%s outputNode=%s>", p.Name, p.Model, p.Labels, p.Options, p.InputNode, p.OutputNode)
+}
+
+// TFModel holds actual TF model (graph, labels, session options)
+type TFModel struct {
+	Params         TFParams
+	Graph          *tf.Graph
+	Labels         []string
+	SessionOptions *tf.SessionOptions
+}
+
+// helper function to load TF graph and labels
+func (m *TFModel) loadModel() error {
+	if m.Graph != nil {
+		return nil
+	}
+	modelPath := fmt.Sprintf("%s/%s/%s", _config.ModelDir, m.Params.Name, m.Params.Model)
+	modelLabels := fmt.Sprintf("%s/%s/%s", _config.ModelDir, m.Params.Name, m.Params.Labels)
+	graph, labels, err := loadModel(modelPath, modelLabels)
+	if err != nil {
+		return err
+	}
+	m.Graph = graph
+	m.Labels = labels
+	return nil
+}
+
+// global cache which will hold all TFModels
 // global variables
 var (
-	_graph                                                                     *tf.Graph
-	_labels                                                                    []string
-	_sessionOptions                                                            *tf.SessionOptions
-	_config                                                                    Configuration
-	_inputNode, _outputNode, _modelDir, _modelName, _modelLabels, _configProto string
+	_models         map[string]TFModel // local cache of all available TFModels
+	_params         TFParams           // current params set
+	_sessionOptions *tf.SessionOptions // TF session options
+	_config         Configuration      // TFaaS configuration
+	_configProto    string             // protobuf configuration
 )
+
+// helper function to load concrete TF model for given set of TF parameters
+func loadTFModel(params TFParams) (TFModel, error) {
+	if tfm, ok := _models[params.Name]; ok {
+		return tfm, nil
+	}
+	tfm := TFModel{Params: params}
+	err := tfm.loadModel()
+	if err == nil {
+		_models[params.Name] = tfm
+	}
+	return tfm, err
+}
+
+// helper function to load TF models from model area
+func loadModels() error {
+	files, err := ioutil.ReadDir(_config.ModelDir)
+	if err != nil {
+		return err
+	}
+	for _, f := range files {
+		fname := fmt.Sprintf("%s/%s/params.json", _config.ModelDir, f.Name())
+		data, err := ioutil.ReadFile(fname)
+		if err != nil {
+			return err
+		}
+		var params TFParams
+		err = json.Unmarshal(data, &params)
+		if err != nil {
+			return err
+		}
+		_, err = loadTFModel(params)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // helper function to read TF config proto message provided in input file
 func readConfigProto(fname string) *tf.SessionOptions {
@@ -62,35 +141,36 @@ func readConfigProto(fname string) *tf.SessionOptions {
 }
 
 // helper function to load TF model
-func loadModel(fname, flabels string) error {
+func loadModel(fname, flabels string) (*tf.Graph, []string, error) {
+	var labels []string
+	graph := tf.NewGraph()
 	// Load inception model
 	model, err := ioutil.ReadFile(fname)
 	if err != nil {
-		return err
+		return graph, labels, err
 	}
-	_graph = tf.NewGraph()
-	if err := _graph.Import(model, ""); err != nil {
-		return err
+	if err := graph.Import(model, ""); err != nil {
+		return graph, labels, err
 	}
 	// Load labels
 	labelsFile, err := os.Open(flabels)
 	if err != nil {
-		return err
+		return graph, labels, err
 	}
 	defer labelsFile.Close()
 	scanner := bufio.NewScanner(labelsFile)
 	// Labels are separated by newlines
 	for scanner.Scan() {
-		_labels = append(_labels, scanner.Text())
+		labels = append(labels, scanner.Text())
 	}
 	if err := scanner.Err(); err != nil {
-		return err
+		return graph, labels, err
 	}
 	logs.WithFields(logs.Fields{
-		"Model":  _modelName,
-		"Labels": _modelLabels,
+		"Model":  fname,
+		"Labels": flabels,
 	}).Info("load TF model")
-	return nil
+	return graph, labels, nil
 }
 
 // helper function to generate predictions based on given row values
@@ -100,20 +180,31 @@ func makePredictions(row *Row) ([]float32, error) {
 	matrix := [][]float32{row.Values}
 	// create tensor vector for our computations
 	tensor, err := tf.NewTensor(matrix)
-	//tensor, err := tf.NewTensor(row.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	// load TF model
+	var params TFParams
+	if row.Model == "" {
+		params = _params
+	} else {
+		params = TFParams{Name: row.Model}
+	}
+	tfm, err := loadTFModel(params)
 	if err != nil {
 		return nil, err
 	}
 
 	// Run inference with existing graph which we get from loadModel call
-	session, err := tf.NewSession(_graph, _sessionOptions)
+	session, err := tf.NewSession(tfm.Graph, _sessionOptions)
 	if err != nil {
 		return nil, err
 	}
 	defer session.Close()
 	results, err := session.Run(
-		map[tf.Output]*tf.Tensor{_graph.Operation(_inputNode).Output(0): tensor},
-		[]tf.Output{_graph.Operation(_outputNode).Output(0)},
+		map[tf.Output]*tf.Tensor{tfm.Graph.Operation(tfm.Params.InputNode).Output(0): tensor},
+		[]tf.Output{tfm.Graph.Operation(tfm.Params.OutputNode).Output(0)},
 		nil)
 	if err != nil {
 		return nil, err
@@ -171,14 +262,14 @@ func (a ByProbability) Len() int           { return len(a) }
 func (a ByProbability) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByProbability) Less(i, j int) bool { return a[i].Probability > a[j].Probability }
 
-func findBestLabels(probabilities []float32, topN int) []LabelResult {
+func findBestLabels(labels []string, probabilities []float32, topN int) []LabelResult {
 	// Make a list of label/probability pairs
 	var resultLabels []LabelResult
 	for i, p := range probabilities {
-		if i >= len(_labels) {
+		if i >= len(labels) {
 			break
 		}
-		resultLabels = append(resultLabels, LabelResult{Label: _labels[i], Probability: p})
+		resultLabels = append(resultLabels, LabelResult{Label: labels[i], Probability: p})
 	}
 	// Sort by probability
 	sort.Sort(ByProbability(resultLabels))

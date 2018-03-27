@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -68,6 +67,20 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 		responseError(w, fmt.Sprintf("wrong method: %v", r.Method), nil, http.StatusMethodNotAllowed)
 		return
 	}
+	model := r.FormValue("model")
+	if model == "" {
+		msg := fmt.Sprintf("unable to read %s model", model)
+		responseError(w, msg, nil, http.StatusInternalServerError)
+		return
+	}
+	// read image model
+	params := TFParams{Name: model}
+	tfm, err := loadTFModel(params)
+	if err != nil {
+		responseError(w, "unable to read image model", err, http.StatusInternalServerError)
+		return
+	}
+
 	// Read image
 	imageFile, header, err := r.FormFile("image")
 	imageName := strings.Split(header.Filename, ".")
@@ -88,7 +101,7 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Run inference
-	session, err := tf.NewSession(_graph, _sessionOptions)
+	session, err := tf.NewSession(tfm.Graph, _sessionOptions)
 	if err != nil {
 		responseError(w, "Unable to create new session", err, http.StatusInternalServerError)
 		return
@@ -108,10 +121,10 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	output, err := session.Run(
 		map[tf.Output]*tf.Tensor{
-			_graph.Operation(_inputNode).Output(0): tensor,
+			tfm.Graph.Operation(tfm.Params.InputNode).Output(0): tensor,
 		},
 		[]tf.Output{
-			_graph.Operation(_outputNode).Output(0),
+			tfm.Graph.Operation(tfm.Params.OutputNode).Output(0),
 		},
 		nil)
 	if err != nil {
@@ -123,12 +136,12 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	// make prediction response
 	topN := 5
-	if len(_labels) < topN {
-		topN = len(_labels)
+	if len(tfm.Labels) < topN {
+		topN = len(tfm.Labels)
 	}
 	responseJSON(w, ClassifyResult{
 		Filename: "input", // TODO: we may replace the input name here to something meaningful
-		Labels:   findBestLabels(probs, topN),
+		Labels:   findBestLabels(tfm.Labels, probs, topN),
 	})
 }
 
@@ -169,7 +182,7 @@ func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
 	for _, v := range recs.Value {
 		values = append(values, v)
 	}
-	records := &Row{Keys: keys, Values: values}
+	records := &Row{Keys: keys, Values: values, Model: recs.Model}
 
 	// generate predictions
 	probs, err := makePredictions(records)
@@ -250,24 +263,46 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	if VERBOSE > 0 {
 		logs.WithFields(logs.Fields{
 			"Header": r.Header,
-		}).Println("HEADER UploadHandler", r.Header)
+		}).Info("UploadHandler")
 	}
-	for _, name := range []string{"model", "labels"} {
+	var mkey, path string
+	var params TFParams
+	for _, name := range []string{"name", "params", "model", "labels"} {
+		emsg := fmt.Sprintf("request does not provide %s", name)
+		if name == "name" {
+			mkey = r.FormValue(name)
+			if mkey == "" {
+				responseError(w, emsg, nil, http.StatusInternalServerError)
+				return
+			}
+			path = fmt.Sprintf("%s/%s", _config.ModelDir, mkey)
+			// create requested area for TF model
+			err := os.MkdirAll(path, 0744)
+			if err != nil {
+				msg := fmt.Sprintf("unable to create %s", path)
+				responseError(w, msg, err, http.StatusInternalServerError)
+				return
+			}
+			continue
+		}
 		modelFile, header, err := r.FormFile(name)
 		if err != nil {
-			if name == "model" {
-				responseError(w, "unable to read input request", err, http.StatusInternalServerError)
-				return
-			} else {
-				continue
-			}
+			responseError(w, emsg, err, http.StatusInternalServerError)
+			return
 		}
 		defer modelFile.Close()
 
 		// prepare file name to write to
 		arr := strings.Split(header.Filename, "/")
 		fname := arr[len(arr)-1]
-		fileName := fmt.Sprintf("%s/%s", _config.ModelDir, fname)
+		if name == "params" && fname != "params.json" {
+			fname = "params.json"
+			msg := fmt.Sprintf("store as %s", fname)
+			logs.WithFields(logs.Fields{
+				"FileName": header.Filename,
+			}).Info(msg)
+		}
+		fileName := fmt.Sprintf("%s/%s", path, fname)
 
 		// read data from request and write it out to our local file
 		data, err := ioutil.ReadAll(modelFile)
@@ -275,6 +310,22 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			responseError(w, "unable to read model file", err, http.StatusInternalServerError)
 			return
 		}
+
+		// read TF parameters
+		if name == "params" {
+			err = json.Unmarshal(data, &params)
+			if err != nil {
+				responseError(w, "unable to unmarshal TF parameters", err, http.StatusInternalServerError)
+				return
+			}
+			if mkey != params.Name {
+				msg := fmt.Sprintf("mismatch of mkey=%s and TFParam.Name=%s", mkey, params.Name)
+				responseError(w, msg, err, http.StatusInternalServerError)
+				return
+			}
+		}
+
+		// write out content to our store
 		err = ioutil.WriteFile(fileName, data, 0644)
 		if err != nil {
 			responseError(w, "unable to write file", err, http.StatusInternalServerError)
@@ -284,6 +335,15 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			"File": fileName,
 		}).Info("Uploaded")
 	}
+	// load model for our TF params
+	_, err := loadTFModel(params)
+	if err != nil {
+		logs.WithFields(logs.Fields{
+			"Error":  err,
+			"Params": params.String(),
+		}).Error("unable to open TF model")
+	}
+	_params = params // set current params set
 
 	w.WriteHeader(http.StatusOK)
 	return
@@ -292,77 +352,54 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 // ParamsHandler sets different options for the server
 func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		c := Configuration{ModelName: _modelName, ModelLabels: _modelLabels, InputNode: _inputNode, OutputNode: _outputNode, ConfigProto: _configProto}
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(c.Params()))
+		data, err := json.Marshal(_params)
+		if err != nil {
+			logs.WithFields(logs.Fields{
+				"Error": err,
+			}).Error("ParamsHandler unable to marshal")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		w.Write(data)
 		return
 	}
 	defer r.Body.Close()
-	var conf = Configuration{}
-	err := json.NewDecoder(r.Body).Decode(&conf)
+	var params TFParams
+	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		logs.WithFields(logs.Fields{
 			"Error": err,
-		}).Error("ParamsHandler unable to marshal", err)
+		}).Error("ParamsHandler unable to marshal")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	logs.WithFields(logs.Fields{
-		"Set": conf.Params(),
-	}).Info("update server parameters")
-	VERBOSE = conf.Verbose
-	if conf.LogFormatter == "json" {
-		logs.SetFormatter(&logs.JSONFormatter{})
-	} else if conf.LogFormatter == "text" {
-		logs.SetFormatter(&logs.TextFormatter{})
-	} else {
-		logs.SetFormatter(&logs.TextFormatter{})
+		"Params": params,
+	}).Info("update TF parameters")
+	if !strings.HasPrefix(params.Labels, "/") {
+		params.Labels = fmt.Sprintf("%s/%s", _config.ModelDir, params.Labels)
 	}
-	if conf.InputNode != "" {
-		_inputNode = conf.InputNode
+	if !strings.HasPrefix(params.Model, "/") {
+		params.Model = fmt.Sprintf("%s/%s", _config.ModelDir, params.Model)
 	}
-	if conf.OutputNode != "" {
-		_outputNode = conf.OutputNode
+	// load model for our TF params
+	_, err = loadTFModel(params)
+	if err != nil {
+		logs.WithFields(logs.Fields{
+			"Error":  err,
+			"Params": params.String(),
+		}).Error("unable to open TF model")
 	}
-	if conf.ConfigProto != "" {
-		_configProto = conf.ConfigProto
-		_sessionOptions = readConfigProto(_configProto)
-	}
-	if conf.ModelLabels != "" {
-		_modelLabels = conf.ModelLabels
-		if !strings.HasPrefix(_modelLabels, "/") {
-			_modelLabels = fmt.Sprintf("%s/%s", _modelDir, _modelLabels)
-		}
-	}
-	if conf.ModelName != "" {
-		_modelName = conf.ModelName
-		if !strings.HasPrefix(_modelName, "/") {
-			_modelName = fmt.Sprintf("%s/%s", _modelDir, _modelName)
-		}
-		err := loadModel(_modelName, _modelLabels)
-		if err != nil {
-			logs.WithFields(logs.Fields{
-				"Error":  err,
-				"Model":  _modelName,
-				"Labels": _modelLabels,
-			}).Error("unable to open TF model")
-		}
-	}
+	_params = params // set current params set
 	w.WriteHeader(http.StatusOK)
 	return
 }
 
 // ModelsHandler authenticate incoming requests and route them to appropriate handler
 func ModelsHandler(w http.ResponseWriter, r *http.Request) {
-	files, err := ioutil.ReadDir(_modelDir)
-	if err != nil {
-		log.Fatal(err)
-		responseError(w, fmt.Sprintf("unable to open: %s", _modelDir), err, http.StatusInternalServerError)
-		return
-	}
-	var models []string
-	for _, f := range files {
-		models = append(models, f.Name())
+	var models []TFParams
+	for _, tfm := range _models {
+		models = append(models, tfm.Params)
 	}
 	responseJSON(w, models)
 }
