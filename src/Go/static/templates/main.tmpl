@@ -36,6 +36,9 @@
                 <div class="div-font">
                     TFaaS built using modern technologie
                     and scale along with your hardware.
+                    It does not lock you into specific
+                    provider. Deploy it at your premises
+                    and control your use-case usage.
                 </div>
                 <p>
 					<button class="button secondary outline w50" data-component="modal" data-target="#benchmark" data-text="Hide Me">Learn more</button>
@@ -49,7 +52,9 @@
                 <div class="div-font">
                     TFaaS provides reach and flexible set
                     of APIs to efficiently manage your TF
-                    models.
+                    models. The TFaaS web server supports
+                    JSON or Protobuffer data-formats to
+                    support your clients.
                 </div>
                 <p>
 					<button class="button secondary outline w50" data-component="modal" data-target="#apis" data-text="Hide Me">Learn more</button>
@@ -61,6 +66,7 @@
 </div>
 
 <!-- second row -->
+<!--
 <div class="row">
     <div class="col col-2"></div>
     <div class="col col-2"></div>
@@ -97,6 +103,7 @@
     </div>
     <div class="col col-2"></div>
 </div>
+-->
 
 <!-- third row -->
 <div class="row">
@@ -171,6 +178,40 @@
             </div>
         </div>
 
+    </div>
+    <div class="col col-2"></div>
+</div>
+
+<p class="vertical-space1"></p>
+
+<div class="row">
+    <div class="col col-2"></div>
+    <div class="col col-8">
+        <h4 class="upper strong header-font">
+        From deployment to production
+        </h4>
+        <div>
+            <span class="label badge error">1</span>
+            Deploy docker image:
+            <pre>
+    docker run --rm -h `hostname -f` -p 8083:8083 -v /tmp/tfaas:/etc/secrets -i -t veknet/tfaas
+            </pre>
+        </div>
+        <div>
+            <span class="label badge warning">2</span>
+            Upload your model:
+            <pre>
+    curl -X POST https://localhost:8083/upload -F 'name=image' -F 'params=@/path/params.json' \
+    -F 'model=@/path/tf_model.pb' -F 'labels=@/path/labels.txt'
+            </pre>
+        </div>
+        <div>
+            <span class="label badge success">3</span>
+            Get predictions:
+            <pre>
+    curl https://localhost:8083/image -F 'image=@/image.png' -F 'model=image'
+            </pre>
+        </div>
     </div>
     <div class="col col-2"></div>
 </div>
