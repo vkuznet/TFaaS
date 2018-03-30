@@ -1,7 +1,8 @@
 {
     "port": 8083,
-    "auth": "true",
+    "auth": "false",
     "modelDir": "models",
+    "staticDir": "static",
     "configProto": "",
     "base": "",
     "serverKey": "/opt/certs/server.key",
