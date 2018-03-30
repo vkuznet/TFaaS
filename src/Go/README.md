@@ -188,20 +188,16 @@ scurl https://localhost:8083/models/
 # we can remove given mode from TFaaS server
 scurl -X DELETE https://localhost:8083/delete?model=image
 
-# update server parameters:
-# you're allowed to change model, labels input and output nodes as well
-# as TF configuration and set server logging formatter and verbosity level.
+# update server default TF parameters:
 cat > params.json << EOF
 {
+    "name": "luca",
     "model": "model2.pb",
     "labels": "labels2.csv",
     "inputNode": "input_1_232323",
     "outputNode": "output_node_232323",
 }
 EOF
-# above we asked to use model2.pb and labels2.csv (both of them should
-# be available in modelDir area of the server) as well as we set
-# new input/output node name and server configuration
 scurl -X POST -H "Content-type: application/json" -d @params.json https://localhost:8083/params
 
 # get server parameters
@@ -211,12 +207,12 @@ scurl https://localhost:8083/params
 scurl https://localhost:8083/image -F 'image=@/opt/cms/data/hep/train/RelValJpsiMuMu/run1_evt299719_lumi3.png' -F 'model=image'
 
 # use JSON API to get prediction for our input data
-scurl -XPOST -d '{"keys":["a","b"],"values":[1.1,2.0], "model":"bestModel"}' https://localhost:8083/json
+scurl -XPOST -d '{"keys":["a","b"],"values":[1.1,2.0], "model":"luca"}' https://localhost:8083/json
 
 # use Protobuf API to get prediction for out input message (proto.msg)
 # see scripts/README.md area for more details
 
-# here is an example of proto.msg file
+# here is an example of input.msg file
 key: "attr1"
 value: 1.1
 key: "attr2"
@@ -224,7 +220,7 @@ value: 2.2
 model: "image"
 
 # now we can run inference as following
-scripts/request proto.msg https://localhost:8083/proto
+scripts/request $PWD/src/proto input.msg https://localhost:8083/proto
 ```
 For protobuf messages, please consult this
 [page](https://github.com/vkuznet/TFaaS/blob/master/src/proto/README.md)
