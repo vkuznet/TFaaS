@@ -1,0 +1,48 @@
+#gradient {
+    background: linear-gradient(to right, rgba(255,0,0,0), rgba(179,199,238,1));
+}
+.gradient {
+    background: linear-gradient(to right, rgba(255,0,0,0), rgba(179,199,238,1));
+}
+
+.header-font {
+    font-family: "Optima, sans-serif";
+    color: rgb(0,145,146);
+    font-size: 20px;
+}
+
+.div-font {
+    font-family: "Optima, sans-serif";
+    color: rgb(121,121,121);
+}
+
+.vertical-space1 {
+    margin-bottom: 1cm;
+}
+.vertical-space2 {
+    margin-bottom: 3cm;
+}
+.vertical-space3 {
+    margin-bottom: 3cm;
+}
+
+.modal-layout {
+    margin: 50px; 
+}
+
+#slideshow { 
+    margin: 50px auto; 
+    position: relative; 
+/*    width: 240px; */
+/*    height: 240px; */
+    padding: 10px; 
+/*    box-shadow: 0 0 20px rgba(0,0,0,0.4); */
+}
+
+#slideshow > div { 
+    position: absolute; 
+    top: 10px; 
+    left: 10px; 
+    right: 10px; 
+    bottom: 10px; 
+}
