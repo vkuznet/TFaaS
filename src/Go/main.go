@@ -18,11 +18,17 @@ var VERBOSE int
 // Auth represents flag to use authentication or not
 var Auth string
 
+// global variables
+var (
+	_main, _header, _footer string
+)
+
 // Configuration stores dbs configuration parameters
 type Configuration struct {
 	Port         int    `json:"port"`         // dbs port number
 	Auth         string `json:"auth"`         // use authentication or not
 	ModelDir     string `json:"modelDir"`     // location of model directory
+	StaticDir    string `json:"staticDir"`    // speficy static dir location
 	ConfigProto  string `json:"configProto"`  // TF config proto file to use
 	Base         string `json:"base"`         // dbs base path
 	LogFormatter string `json:"logFormatter"` // log formatter
@@ -30,6 +36,7 @@ type Configuration struct {
 	ServerKey    string `json:"serverKey"`    // server key for https
 	ServerCrt    string `json:"serverCrt"`    // server certificate for https
 	UpdateDNs    int    `json:"updateDNs"`    // interval in minutes to update user DNs
+	CacheLimit   int    `json:"cacheLimit"`   // number of TFModels to keep in cache
 }
 
 // String returns string representation of server configuration
@@ -67,18 +74,40 @@ func main() {
 
 	// create session options from given config TF proto file
 	_sessionOptions = readConfigProto(_config.ConfigProto) // default session options
-	_models = make(map[string]TFModel)                     // initialize TF models cache
-	Auth = _config.Auth                                    // set if we gonna use auth or not
-
-	// load models
-	err = loadModels()
-	if err != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-		}).Fatal("Unable to load TF models")
+	cacheLimit := _config.CacheLimit
+	if cacheLimit == 0 {
+		cacheLimit = 10 // default number of models to keep in cache
 	}
+	_cache = TFCache{Models: make(map[string]TFCacheEntry), Limit: cacheLimit}
+	Auth = _config.Auth // set if we gonna use auth or not
 
-	http.HandleFunc("/", AuthHandler)
+	// define our handlers
+	base := _config.Base
+	sdir := _config.StaticDir
+	if sdir == "" {
+		path, _ := os.Getwd()
+		sdir = fmt.Sprintf("%s/static", path)
+	}
+	cssDir := fmt.Sprintf("%s/css", sdir)
+	jsDir := fmt.Sprintf("%s/js", sdir)
+	tmplDir := fmt.Sprintf("%s/templates", sdir)
+	imgDir := fmt.Sprintf("%s/images", sdir)
+	http.Handle(base+"/css/", http.StripPrefix(base+"/css/", http.FileServer(http.Dir(cssDir))))
+	http.Handle(base+"/js/", http.StripPrefix(base+"/js/", http.FileServer(http.Dir(jsDir))))
+	http.Handle(base+"/images/", http.StripPrefix(base+"/images/", http.FileServer(http.Dir(imgDir))))
+	http.HandleFunc(base+"/", AuthHandler)
+
+	// setup templates
+	var templates Templates
+	tmplData := make(map[string]interface{})
+	tmplData["Base"] = _config.Base
+	tmplData["Content"] = fmt.Sprintf("Hello from TFaaS")
+	tmplData["Version"] = info()
+	_header = templates.Header(tmplDir, tmplData)
+	_footer = templates.Footer(tmplDir, tmplData)
+	_main = templates.Main(tmplDir, tmplData)
+
+	// start web server
 	addr := fmt.Sprintf(":%d", _config.Port)
 	_, e1 := os.Stat(_config.ServerCrt)
 	_, e2 := os.Stat(_config.ServerKey)

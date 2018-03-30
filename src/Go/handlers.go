@@ -74,10 +74,9 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// read image model
-	params := TFParams{Name: model}
-	tfm, err := loadTFModel(params)
+	tfm, err := _cache.get(model)
 	if err != nil {
-		responseError(w, "unable to read image model", err, http.StatusInternalServerError)
+		responseError(w, "unable to get image model from the cache", err, http.StatusInternalServerError)
 		return
 	}
 
@@ -335,16 +334,8 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			"File": fileName,
 		}).Info("Uploaded")
 	}
-	// load model for our TF params
-	_, err := loadTFModel(params)
-	if err != nil {
-		logs.WithFields(logs.Fields{
-			"Error":  err,
-			"Params": params.String(),
-		}).Error("unable to open TF model")
-	}
-	_params = params // set current params set
-
+	// set current parameters set
+	_params = params
 	w.WriteHeader(http.StatusOK)
 	return
 }
@@ -382,24 +373,36 @@ func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(params.Model, "/") {
 		params.Model = fmt.Sprintf("%s/%s", _config.ModelDir, params.Model)
 	}
-	// load model for our TF params
-	_, err = loadTFModel(params)
-	if err != nil {
-		logs.WithFields(logs.Fields{
-			"Error":  err,
-			"Params": params.String(),
-		}).Error("unable to open TF model")
-	}
-	_params = params // set current params set
+	// set current parameters set
+	_params = params
 	w.WriteHeader(http.StatusOK)
 	return
 }
 
-// ModelsHandler authenticate incoming requests and route them to appropriate handler
+// ModelsHandler returns a list of known models
 func ModelsHandler(w http.ResponseWriter, r *http.Request) {
 	var models []TFParams
-	for _, tfm := range _models {
-		models = append(models, tfm.Params)
+	// read all files in our model area
+	files, err := ioutil.ReadDir(_config.ModelDir)
+	if err != nil {
+		responseError(w, fmt.Sprintf("unable to read: %s", _config.ModelDir), err, http.StatusInternalServerError)
+		return
+	}
+	// loop over found model areas and read their parameters
+	for _, f := range files {
+		path := fmt.Sprintf("%s/%s", _config.ModelDir, f.Name())
+		fname := fmt.Sprintf("%s/params.json", path)
+		file, err := os.Open(fname)
+		defer file.Close()
+		if err == nil {
+			var params TFParams
+			if err := json.NewDecoder(file).Decode(&params); err != nil {
+				msg := fmt.Sprintf("unable to unmarshal %s", fname)
+				responseError(w, msg, err, http.StatusInternalServerError)
+				return
+			}
+			models = append(models, params)
+		}
 	}
 	responseJSON(w, models)
 }
@@ -407,8 +410,10 @@ func ModelsHandler(w http.ResponseWriter, r *http.Request) {
 // DefaultHandler authenticate incoming requests and route them to appropriate handler
 func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	msg := fmt.Sprintf("Hello %s", UserDN(r))
-	w.Write([]byte(msg))
+	w.Write([]byte(_header + _main + _footer))
+	//     w.WriteHeader(http.StatusOK)
+	//     msg := fmt.Sprintf("Hello %s", UserDN(r))
+	//     w.Write([]byte(msg))
 }
 
 // AuthHandler authenticate incoming requests and route them to appropriate handler
@@ -469,6 +474,6 @@ func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	delete(_models, model)
+	_cache.remove(model)
 	w.WriteHeader(http.StatusOK)
 }

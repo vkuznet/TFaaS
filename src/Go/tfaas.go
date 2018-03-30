@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
+	"time"
 
 	tf "github.com/tensorflow/tensorflow/tensorflow/go"
 	"github.com/tensorflow/tensorflow/tensorflow/go/op"
@@ -76,53 +77,86 @@ func (m *TFModel) loadModel() error {
 	return nil
 }
 
-// global cache which will hold all TFModels
+// TFCacheEntry holds all TFModels
+type TFCacheEntry struct {
+	TFModel TFModel
+	Time    time.Time
+}
+
+// TFCache holds all TFModels
+type TFCache struct {
+	Models map[string]TFCacheEntry
+	Limit  int
+}
+
+// add TFModel to the cache
+func (c *TFCache) add(name string) error {
+	if _, ok := c.Models[name]; ok {
+		return nil
+	}
+	logs.WithFields(logs.Fields{
+		"Model": name,
+	}).Info("load to cache")
+	path := fmt.Sprintf("%s/%s", _config.ModelDir, name)
+	fname := fmt.Sprintf("%s/params.json", path)
+	file, err := os.Open(fname)
+	defer file.Close()
+	if err != nil {
+		return err
+	}
+	var params TFParams
+	if err := json.NewDecoder(file).Decode(&params); err != nil {
+		return err
+	}
+	tfm := TFModel{Params: params}
+	err = tfm.loadModel()
+	if err == nil {
+		c.Models[params.Name] = TFCacheEntry{TFModel: tfm, Time: time.Now()}
+	}
+	return err
+}
+
+// remove given model from the cache
+func (c *TFCache) remove(name string) {
+	delete(c.Models, name)
+}
+
+// return TFModel from the cache
+func (c *TFCache) get(name string) (TFModel, error) {
+	if entry, ok := c.Models[name]; ok {
+		return entry.TFModel, nil
+	}
+	// our model is not available yet in cache
+	// check cache size and clean it up if necessary
+	if len(c.Models) >= c.Limit {
+		var oldestName string
+		oldestTime := time.Now()
+		for name, entry := range c.Models {
+			if entry.Time.Unix() < oldestTime.Unix() {
+				oldestName = name
+				oldestTime = entry.Time
+			}
+		}
+		delete(c.Models, oldestName)
+	}
+	// add new model into cache
+	err := c.add(name)
+	if err != nil {
+		return TFModel{}, err
+	}
+	// return model from the cache
+	entry, _ := c.Models[name]
+	return entry.TFModel, nil
+}
+
 // global variables
 var (
-	_models         map[string]TFModel // local cache of all available TFModels
+	_cache          TFCache            // local cache for TFModels
 	_params         TFParams           // current params set
 	_sessionOptions *tf.SessionOptions // TF session options
 	_config         Configuration      // TFaaS configuration
 	_configProto    string             // protobuf configuration
 )
-
-// helper function to load concrete TF model for given set of TF parameters
-func loadTFModel(params TFParams) (TFModel, error) {
-	if tfm, ok := _models[params.Name]; ok {
-		return tfm, nil
-	}
-	tfm := TFModel{Params: params}
-	err := tfm.loadModel()
-	if err == nil {
-		_models[params.Name] = tfm
-	}
-	return tfm, err
-}
-
-// helper function to load TF models from model area
-func loadModels() error {
-	files, err := ioutil.ReadDir(_config.ModelDir)
-	if err != nil {
-		return err
-	}
-	for _, f := range files {
-		fname := fmt.Sprintf("%s/%s/params.json", _config.ModelDir, f.Name())
-		data, err := ioutil.ReadFile(fname)
-		if err != nil {
-			return err
-		}
-		var params TFParams
-		err = json.Unmarshal(data, &params)
-		if err != nil {
-			return err
-		}
-		_, err = loadTFModel(params)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 // helper function to read TF config proto message provided in input file
 func readConfigProto(fname string) *tf.SessionOptions {
@@ -185,13 +219,11 @@ func makePredictions(row *Row) ([]float32, error) {
 	}
 
 	// load TF model
-	var params TFParams
-	if row.Model == "" {
-		params = _params
-	} else {
-		params = TFParams{Name: row.Model}
+	model := _params.Name
+	if row.Model != "" {
+		model = row.Model
 	}
-	tfm, err := loadTFModel(params)
+	tfm, err := _cache.get(model)
 	if err != nil {
 		return nil, err
 	}
