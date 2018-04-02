@@ -7,5 +7,5 @@ TFClient provides [predict](https://github.com/vkuznet/TFaaS/blob/master/src/cpp
 function to call TFaaS. It sends
 POST request via [libcurl](https://curl.haxx.se/libcurl)
 library to TFaaS server. The request contains a
-[Hits](https://github.com/vkuznet/TFaaS/blob/master/src/proto/tfaas.proto)
+[DataFrame](https://github.com/vkuznet/TFaaS/blob/master/src/proto/tfaas.proto)
 data-structure and response has class predictions.
