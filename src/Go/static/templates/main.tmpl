@@ -41,7 +41,7 @@
                     and control your use-case usage.
                 </div>
                 <p>
-					<button class="button secondary outline w50" data-component="modal" data-target="#benchmark" data-text="Hide Me">Learn more</button>
+					<button class="button secondary outline" data-component="modal" data-target="#benchmark" data-text="Hide Me">Learn more</button>
                 </p>
 
             </div>
@@ -57,7 +57,7 @@
                     support your clients.
                 </div>
                 <p>
-					<button class="button secondary outline w50" data-component="modal" data-target="#apis" data-text="Hide Me">Learn more</button>
+					<button class="button secondary outline" data-component="modal" data-target="#apis" data-text="Hide Me">Learn more</button>
                 </p>
             </div>
         </div>
@@ -66,46 +66,47 @@
 </div>
 
 <!-- second row -->
-<!--
+<p class="vertical-space1"></p>
+
 <div class="row">
     <div class="col col-2"></div>
-    <div class="col col-2"></div>
-    <div class="col col-6">
-        <div class="row gutters">
-            <div class="col col-6">
-                <div class="upper strong header-font">
-                Unlock your use-case 
+    <div class="col col-8">
+        <h4 class="upper strong header-font">
+        From deployment to production
+        </h4>
+        <div class="div-font">
+            <div>
+                <span class="label badge error">1</span>
+                Deploy docker image:
+                <div class="tfaas-code">
+        docker run --rm -h `hostname -f` -p 8083:8083 -v /tmp/tfaas:/etc/secrets -i -t veknet/tfaas
                 </div>
-                <div class="div-font">
-                    TFaaS does not lock you into specific
-                    provider. Deploy it at your premises
-                    and control your use-case usage.
-                </div>
-                <p>
-					<button class="button secondary outline w50" data-component="modal" data-target="#usecase" data-text="Hide Me">Learn more</button>
-                </p>
             </div>
-            <div class="col col-6">
-                <div class="upper strong header-font">
-                Integration
+            <div>
+                <span class="label badge warning">2</span>
+                Upload your model:
+                <div class="tfaas-code">
+        curl -X POST http://localhost:8083/upload -F 'name=ImageModel'
+        -F 'params=@/path/params.json'
+        -F 'model=@/path/tf_model.pb' -F 'labels=@/path/labels.txt'
                 </div>
-                <div class="div-font">
-                    TFaaS is HTTP(s) server using
-                    JSON or Protobuffer inter-exchange format.
-                    Therefore it is easy to integrate into
-                    your infratructure.
-                </div>
-                <p>
-					<button class="button secondary outline w50" data-component="modal" data-target="#integration" data-text="Hide Me">Learn more</button>
-                </p>
             </div>
+            <div>
+                <span class="label badge success">3</span>
+                Get predictions:
+                <div class="tfaas-code">
+        curl https://localhost:8083/image -F 'image=@/path/file.png' -F 'model=ImageModel'
+                </div>
+            </div>
+
+                Flexible configuration parameters allows you to adopt
+                TFaaS deployment to any use case.
         </div>
     </div>
     <div class="col col-2"></div>
 </div>
--->
 
-<!-- third row -->
+<!-- hidden area -->
 <div class="row">
     <div class="col col-2"></div>
     <div class="col col-2"></div>
@@ -158,89 +159,6 @@
             </div>
         </div>
 
-        <div id="usecase" class="modal-box hide">
-            <div class="modal">
-                <div class="modal-layout">
-                    <p class="vertical-space1"></p>
-                    <span class="close"></span>
-                    <h5>TFaaS use-cases</h5>
-                </div>
-            </div>
-        </div>
-
-        <div id="integration" class="modal-box hide">
-            <div class="modal">
-                <div class="modal-layout">
-                    <p class="vertical-space1"></p>
-                    <span class="close"></span>
-                    <h5>TFaaS integration</h5>
-                </div>
-            </div>
-        </div>
-
     </div>
     <div class="col col-2"></div>
 </div>
-
-<p class="vertical-space1"></p>
-
-<div class="row">
-    <div class="col col-2"></div>
-    <div class="col col-8">
-        <h4 class="upper strong header-font">
-        From deployment to production
-        </h4>
-        <div>
-            <span class="label badge error">1</span>
-            Deploy docker image:
-            <pre>
-    docker run --rm -h `hostname -f` -p 8083:8083 -v /tmp/tfaas:/etc/secrets -i -t veknet/tfaas
-            </pre>
-        </div>
-        <div>
-            <span class="label badge warning">2</span>
-            Upload your model:
-            <pre>
-    curl -X POST https://localhost:8083/upload -F 'name=image' -F 'params=@/path/params.json' \
-    -F 'model=@/path/tf_model.pb' -F 'labels=@/path/labels.txt'
-            </pre>
-        </div>
-        <div>
-            <span class="label badge success">3</span>
-            Get predictions:
-            <pre>
-    curl https://localhost:8083/image -F 'image=@/image.png' -F 'model=image'
-            </pre>
-        </div>
-    </div>
-    <div class="col col-2"></div>
-</div>
-
-<!-- image row -->
-<!-- https://css-tricks.com/snippets/jquery/simple-auto-playing-slideshow/ -->
-<!--
-<div class="row">
-    <div class="col col-2"></div>
-    <div class="col col-8">
-        <div id="slideshow">
-           <div><img src="{{.Base}}/images/tf_demo1.png"></div>
-           <div><img src="{{.Base}}/images/tf_demo2.png"></div>
-           <div><img src="{{.Base}}/images/tf_demo3.png"></div>
-        </div>
-    </div>
-    <div class="col col-2"></div>
-</div>
-
-<script>
-    $("#slideshow > div:gt(0)").hide();
-
-    setInterval(function() { 
-      $('#slideshow > div:first')
-        .fadeOut(1000)
-        .next()
-        .fadeIn(1000)
-        .end()
-        .appendTo('#slideshow');
-    },  3000);
-</script>
--->
