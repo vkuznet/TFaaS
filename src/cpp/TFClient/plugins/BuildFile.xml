@@ -1,0 +1,3 @@
+<use name="protobuf"/>
+<lib name="curl"/>
+<lib name="protobuf"/>
