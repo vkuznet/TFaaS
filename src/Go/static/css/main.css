@@ -46,3 +46,15 @@
     right: 10px; 
     bottom: 10px; 
 }
+
+.tfaas-code {
+    font-size: 16px;
+    font-weight: bold;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    margin-top: 10px;
+    margin-left: 30px;
+    margin-right: 20px;
+    margin-bottom: 10px;
+    display: block;
+    overflow: none;
+}
