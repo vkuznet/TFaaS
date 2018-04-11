@@ -30,23 +30,24 @@ For the demo I used the following:
 
    `scurl -i https://localhost:8083/models`
 
-2. upload TF model and labels into tfaas
+2. upload TF models and labels into tfaas
 
-   `scurl -i -X POST https://localhost:8083/upload -F 'model=@model_0228.pb' -F 'labels=@labels.txt'`
+   `scurl -i -X POST https://localhost:8083/upload -F 'name=model1' -F 'model=@model1.pb' -F 'labels=@labels1.txt'`
+   `scurl -i -X POST https://localhost:8083/upload -F 'name=model2' -F 'model=@model2.pb' -F 'labels=@labels2.txt'`
+
+   here we can upload as many models as we wish, in an example above we
+   uploaded two models and assigned to them different names (model1 and model2)
 
 3. check existing model parameters
 
    `scurl -i https://localhost:8083/params`
 
-4. create params.json with your parameters and upload it to tfaas server
+4. do #3 again just to be sure that your params will fit with your model (inputNode, outputNode, etc.)
 
-   `scurl -i -X POST -H "Content-type: application/json" -d @params.json https://localhost:8083/params`
+4. place your HTTP call e.g. via curl
 
-5. do #3 again just to be sure that your params will fit with your model (inputNode, outputNode, etc.)
-
-6. place your HTTP call e.g. via curl
-
-   `scurl -H "Content-type: application/json" -d '{"key":[...], "values":[...]}' https://localhost:8083/json`
+   `scurl -H "Content-type: application/json" -d '{"key":[...], "values":[...], "model":"model1"}' https://localhost:8083/json`
+   `scurl -F 'image=@/path/image.png' -F 'model=image' https://localhost:8083/image`
 
 Full demo can be found
 [here](https://www.youtube.com/watch?v=ZGjnM8wk8eA)
