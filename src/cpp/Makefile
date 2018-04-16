@@ -1,15 +1,24 @@
 include Makefile.mk
 
-CPPFLAGS=$(CPPUNIT_INCLUDES) -I$(SRC_DIR)/TFClient
-all: prepare libTFClient.so tfaasClient
+UNAME:=$(shell uname -s)
+ifeq ($(UNAME), Linux)
+TFAAS_LIB := libTFClient.so
+TFAAS_FLAGS := -shared
+else
+TFAAS_LIB := libTFClient.dylib
+TFAAS_FLAGS := -dynamiclib
+endif
 
-tfaasClient: libTFClient.so main.o
+CPPFLAGS=$(CPPUNIT_INCLUDES) -I$(SRC_DIR)/TFClient
+all: prepare tflib tfaasClient
+
+tfaasClient: tflib main.o
 	$(LINKER) main.o $(LDFLAGS) $(CPPUNIT_LIB) -L$(SRC_DIR)/lib -lTFClient -o $@
 
 fc_objects := $(patsubst %.cc,%.o,$(wildcard TFClient/*.cc))
 
-libTFClient.so: $(fc_objects)
-	$(LINKER) $+ -shared -o $(SRC_DIR)/lib/$@
+tflib: $(fc_objects)
+	$(LINKER) $+ $(LDFLAGS) $(TFAAS_FLAGS) $(CPPUNIT_LIB) -o $(SRC_DIR)/lib/$(TFAAS_LIB)
 
 prepare:
 	mkdir -p $(SRC_DIR)/lib
