@@ -45,8 +45,8 @@ static int writer(char *data, size_t size, size_t nmemb, string *writerData)
 // https://curl.haxx.se/libcurl/c/htmltitle.html
 // https://curl.haxx.se/libcurl/c/simplepost.html
 // helper function to communicate with external data-service, in our case TFaaS
-tfaaspb::Predictions tfaasRequest(string const& url, string const& input);
-tfaaspb::Predictions tfaasRequest(string const& url, string const& input) {
+tfaaspb::Predictions tfaasRequest(const std::string& url, const std::string& input);
+tfaaspb::Predictions tfaasRequest(const std::string& url, const std::string& input) {
     tfaaspb::Predictions preds;
     // read key/cert from environment
     auto ckey = getenv("X509_USER_PROXY");
@@ -105,8 +105,8 @@ tfaaspb::Predictions tfaasRequest(string const& url, string const& input) {
     return preds;
 }
 
-tfaaspb::Predictions predict(const std::string& url, const std::vector<std::string>& attrs, const std::vector<float>& values);
-tfaaspb::Predictions predict(const std::string& url, const std::vector<std::string>& attrs, const std::vector<float>& values)
+tfaaspb::Predictions predict(const std::string& url, const std::string& model, const std::vector<std::string>& attrs, const std::vector<float>& values);
+tfaaspb::Predictions predict(const std::string& url, const std::string& model, const std::vector<std::string>& attrs, const std::vector<float>& values)
 {
     tfaaspb::Predictions preds;
     if(attrs.size() != values.size()) {
@@ -114,18 +114,18 @@ tfaaspb::Predictions predict(const std::string& url, const std::vector<std::stri
         return preds;
     }
 
-    tfaaspb::DataFrame df;
-    auto row = df.add_row();
+    // construct row message from given model/attributes/values
+    tfaaspb::Row row;
+    row.set_model(model);
     for(int i = 0; i < int(attrs.size()); i++) {
-        row->add_key(attrs[i]);
-        row->add_value(values[i]);
+        row.add_key(attrs[i]);
+        row.add_value(values[i]);
     }
     string input;
-    if(!df.SerializeToString(&input)) {
+    if(!row.SerializeToString(&input)) {
         cerr << "unable to serialize data" << std::endl;
     } else {
         // send data to TFaaS and get back predictions for our data
-        cout << "sending to TFaaS: " << input << endl;
         preds = tfaasRequest(url, input);
     }
     return preds;
