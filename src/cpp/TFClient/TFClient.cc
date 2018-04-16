@@ -38,12 +38,6 @@ static int writer(char *data, size_t size, size_t nmemb, string *writerData)
 // helper function to communicate with external data-service, in our case TFaaS
 tfaaspb::Predictions tfaasRequest(const string& url, const string& input) {
     tfaaspb::Predictions preds;
-    // read key/cert from environment
-    auto ckey = getenv("X509_USER_PROXY");
-    auto cert = getenv("X509_USER_PROXY");
-    if (ckey == NULL || ckey == string("") || cert == NULL || cert == string("") ) {
-        cerr << "Unable to read X509_USER_PROXY environment" << endl;
-    }
     CURL *curl = NULL;
     CURLcode res;
 
@@ -52,8 +46,16 @@ tfaaspb::Predictions tfaasRequest(const string& url, const string& input) {
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
-    curl_easy_setopt(curl, CURLOPT_SSLKEY, ckey);
-    curl_easy_setopt(curl, CURLOPT_SSLCERT, cert);
+
+    // X509 auth: read key/cert from environment and set them up for curl call
+    auto ckey = getenv("X509_USER_PROXY");
+    auto cert = getenv("X509_USER_PROXY");
+    if (ckey != NULL && ckey != string("")) {
+        curl_easy_setopt(curl, CURLOPT_SSLKEY, ckey);
+    }
+    if (cert != NULL && cert != string("")) {
+        curl_easy_setopt(curl, CURLOPT_SSLCERT, cert);
+    }
 
     // Now specify the POST data
     curl_easy_setopt(curl, CURLOPT_POST, 1L);
