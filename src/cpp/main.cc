@@ -12,7 +12,7 @@ int main() {
     auto model = "luca";
 
     // fill out our data
-	for(int i=0; i<42; i++) {
+    for(int i=0; i<42; i++) {
         values.push_back(i);
         std::ostringstream oss;
         oss << i;
