@@ -83,10 +83,10 @@ tfaaspb::Predictions tfaasRequest(const string& url, const string& input) {
             cerr << "failed to parse input buffer" << endl;
             return preds;
         }
-        for (int i = 0; i < preds.prediction_size(); i++) {
-            const tfaaspb::Class& cls = preds.prediction(i);
-            cout << cls.label() << " probability: " << cls.probability() << endl;
-        }
+//        for (int i = 0; i < preds.prediction_size(); i++) {
+//            const tfaaspb::Class& cls = preds.prediction(i);
+//            cout << cls.label() << " probability: " << cls.probability() << endl;
+//        }
         google::protobuf::ShutdownProtobufLibrary();
     }
     // clean-up after we done with curl calls
