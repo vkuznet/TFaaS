@@ -103,19 +103,18 @@ tfaaspb::Predictions predict(const std::string& url, const std::string& model, c
         return preds;
     }
 
-    tfaaspb::DataFrame df;
-    auto row = df.add_row();
-    row->set_model(model);
+    // construct row message from given model/attributes/values
+    tfaaspb::Row row;
+    row.set_model(model);
     for(int i = 0; i < int(attrs.size()); i++) {
-        row->add_key(attrs[i]);
-        row->add_value(values[i]);
+        row.add_key(attrs[i]);
+        row.add_value(values[i]);
     }
     string input;
-    if(!df.SerializeToString(&input)) {
+    if(!row.SerializeToString(&input)) {
         cerr << "unable to serialize data" << std::endl;
     } else {
         // send data to TFaaS and get back predictions for our data
-        cout << "sending to TFaaS: " << input << endl;
         preds = tfaasRequest(url, input);
     }
     return preds;
