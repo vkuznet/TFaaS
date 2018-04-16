@@ -8,9 +8,7 @@ LDFLAGS= -pthread
 CXX:=g++
 LINKER:=g++
 
-# CPP unit stuff
-# CPPUNIT_INCLUDES := -I/opt/local/include
-# CPPUNIT_LIB_PATH := -L/opt/local/lib
-CPPUNIT_INCLUDES := -I/afs/cern.ch/user/v/valya/workspace/protobuf-3.5.1/install/include
-CPPUNIT_LIB_PATH := -L/afs/cern.ch/user/v/valya/workspace/protobuf-3.5.1/install/lib
+# CPP includes and libraries for TFaaS
+CPPUNIT_INCLUDES := -I/opt/local/include
+CPPUNIT_LIB_PATH := -L/opt/local/lib
 CPPUNIT_LIB := $(CPPUNIT_LIB_PATH) -lprotoc -lprotobuf -lcurl
