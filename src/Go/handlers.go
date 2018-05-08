@@ -8,15 +8,26 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
+	"sync/atomic"
 	"tfaaspb"
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/load"
+	"github.com/shirou/gopsutil/mem"
 	tf "github.com/tensorflow/tensorflow/tensorflow/go"
 
 	logs "github.com/sirupsen/logrus"
 )
+
+// TotalGetRequests counts total number of GET requests received by the server
+var TotalGetRequests uint64
+
+// TotalPostRequests counts total number of POST requests received by the server
+var TotalPostRequests uint64
 
 // helper function to provide response
 func responseError(w http.ResponseWriter, msg string, err error, code int) {
@@ -427,6 +438,13 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	// increment GET/POST counters
+	if r.Method == "GET" {
+		atomic.AddUint64(&TotalGetRequests, 1)
+	}
+	if r.Method == "POST" {
+		atomic.AddUint64(&TotalPostRequests, 1)
+	}
 	arr := strings.Split(r.URL.Path, "/")
 	path := arr[len(arr)-1]
 	switch path {
@@ -446,9 +464,43 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 		ParamsHandler(w, r)
 	case "models":
 		ModelsHandler(w, r)
+	case "status":
+		StatusHandler(w, r)
 	default:
 		DefaultHandler(w, r)
 	}
+}
+
+// StatusHandler handlers Status requests
+func StatusHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	// get cpu and mem profiles
+	m, _ := mem.VirtualMemory()
+	s, _ := mem.SwapMemory()
+	l, _ := load.Avg()
+	c, _ := cpu.Percent(time.Millisecond, true)
+
+	tmplData := make(map[string]interface{})
+	tmplData["NGo"] = runtime.NumGoroutine()
+	virt := Memory{Total: m.Total, Free: m.Free, Used: m.Used, UsedPercent: m.UsedPercent}
+	swap := Memory{Total: s.Total, Free: s.Free, Used: s.Used, UsedPercent: s.UsedPercent}
+	tmplData["Memory"] = Mem{Virtual: virt, Swap: swap}
+	tmplData["Load"] = l
+	tmplData["CPU"] = c
+	tmplData["Uptime"] = time.Since(Time0).Seconds()
+	tmplData["getRequests"] = TotalGetRequests
+	tmplData["postRequests"] = TotalPostRequests
+	data, err := json.Marshal(tmplData)
+	if err != nil {
+		w.Write([]byte(fmt.Sprintf("unable to marshal data, error=%v", err)))
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+	return
 }
 
 // DELETE APIs

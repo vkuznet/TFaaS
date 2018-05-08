@@ -18,6 +18,9 @@ var VERBOSE int
 // Auth represents flag to use authentication or not
 var Auth string
 
+// Time0 represents initial time when we start the server
+var Time0 time.Time
+
 // global variables
 var (
 	_main, _header, _footer string
@@ -51,6 +54,20 @@ func info() string {
 	return fmt.Sprintf("Build: git={{VERSION}} go=%s date=%s", goVersion, tstamp)
 }
 
+// Memory contains details about memory information
+type Memory struct {
+	Total       uint64  `json:"total"`
+	Free        uint64  `json:"free"`
+	Used        uint64  `json:"used"`
+	UsedPercent float64 `json:"usedPercent"`
+}
+
+// Mem keeps memory information
+type Mem struct {
+	Virtual Memory
+	Swap    Memory
+}
+
 func main() {
 	var config string
 	flag.StringVar(&config, "config", "config.json", "configuration file for our server")
@@ -62,6 +79,8 @@ func main() {
 		fmt.Println(info())
 		os.Exit(0)
 	}
+
+	Time0 = time.Now()
 
 	var err error
 	_client = httpClient()
