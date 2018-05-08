@@ -1,12 +1,12 @@
 {
-    "port": 8083,
+    "port": 8340,
     "auth": "false",
     "modelDir": "models",
     "staticDir": "static",
     "configProto": "",
-    "base": "",
-    "serverKey": "/opt/certs/server.key",
-    "serverCrt": "/opt/certs/server.crt",
+    "base": "/tfaas",
+    "serverKey": "",
+    "serverCrt": "",
     "logFormatter": "text",
     "updateDNs": 600,
     "verbose": 0
