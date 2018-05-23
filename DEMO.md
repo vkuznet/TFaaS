@@ -33,10 +33,15 @@ For the demo I used the following:
 2. upload TF models and labels into tfaas
 
    ```
+   # model parameters
+   cat params.json
+   {"name": "model1", "model": "model_0228.pb",
+    "labels": "labels.txt", "inputNode": "dense_4_input",
+    "outputNode": "output_node0"}
    # upload model1
-   scurl -i -X POST https://localhost:8083/upload -F 'name=model1' -F 'model=@model1.pb' -F 'labels=@labels1.txt'
+   scurl -i -X POST https://localhost:8083/upload -F 'name=model1' -F 'model=@model1.pb' -F 'labels=@labels1.txt' -F 'params=@params.json'
    # upload model2
-   scurl -i -X POST https://localhost:8083/upload -F 'name=model2' -F 'model=@model2.pb' -F 'labels=@labels2.txt'
+   scurl -i -X POST https://localhost:8083/upload -F 'name=model2' -F 'model=@model2.pb' -F 'labels=@labels2.txt' -F 'params=@params.json'
    ```
 
 3. check existing model parameters
