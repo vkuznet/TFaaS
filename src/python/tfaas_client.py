@@ -74,7 +74,7 @@ class HTTPSClientAuthHandler(urllib2.HTTPSHandler):
     key/ca information
     """
     def __init__(self, key=None, cert=None, capath=None, level=0):
-        if  level > 1:
+        if  level > 0:
             urllib2.HTTPSHandler.__init__(self, debuglevel=1)
         else:
             urllib2.HTTPSHandler.__init__(self)
@@ -172,6 +172,9 @@ class MultiPartForm(object):
             )
         
         # Add the files to upload
+        # here we use form-data content disposition instead of file one
+        # since this is how we define handlers in our Go server
+        # for more info see: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition
         parts.extend(
             [ part_boundary,
               'Content-Disposition: form-data; name="%s"; filename="%s"' % \
@@ -205,24 +208,21 @@ def delete(host, model, verbose=None, ckey=None, cert=None, capath=None):
     "delete API deletes given model in TFaaS server"
     url = host + '/delete'
     client = '%s (%s)' % (TFAAS_CLIENT, os.environ.get('USER', ''))
-    headers = {"Content-Type": "multipart/form-data", "User-Agent": client}
+    headers = {"User-Agent": client}
     if verbose:
         print("URL   : %s" % url)
         print("model : %s" % model)
-#    encoded_data = json.dumps({'model':model})
     form = MultiPartForm()
     form.add_field('model', model)
     edata = str(form)
     headers['Content-length'] = len(edata)
-    headers['Content-type'] = form.get_content_type()
+    headers['Content-Type'] = form.get_content_type()
     return getdata(url, headers, edata, ckey, cert, capath, verbose, method='DELETE')
-#    return getdata(url, headers, encoded_data, ckey, cert, capath, verbose, method='DELETE')
 
 def upload(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
     "upload API uploads given model to TFaaS server"
     url = host + '/upload'
     client = '%s (%s)' % (TFAAS_CLIENT, os.environ.get('USER', ''))
-    headers = {"Content-Type": "multipart/form-data", "User-Agent": client}
     headers = {"User-Agent": client}
     params = json.load(open(ifile))
     if verbose:
@@ -242,21 +242,7 @@ def upload(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
             form.add_field(key, params[key])
     edata = str(form)
     headers['Content-length'] = len(edata)
-    headers['Content-type'] = form.get_content_type()
-#    req = urllib2.Request(url)
-#    for hkey, hval in headers.items():
-#        req.add_header(hkey, hval)
-#    req.add_data(edata)
-#    if verbose:
-#        print
-#        print 'OUTGOING DATA:'
-#        print req.get_data()
-
-#        print
-#        print 'SERVER RESPONSE:'
-#        print urllib2.urlopen(req).read()
-#    return
-
+    headers['Content-Type'] = form.get_content_type()
     return getdata(url, headers, edata, ckey, cert, capath, verbose)
 
 def predict(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
