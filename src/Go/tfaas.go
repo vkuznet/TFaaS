@@ -68,6 +68,12 @@ func (m *TFModel) loadModel() error {
 	}
 	modelPath := fmt.Sprintf("%s/%s/%s", _config.ModelDir, m.Params.Name, m.Params.Model)
 	modelLabels := fmt.Sprintf("%s/%s/%s", _config.ModelDir, m.Params.Name, m.Params.Labels)
+	if VERBOSE > 0 {
+		logs.WithFields(logs.Fields{
+			"Path":   modelPath,
+			"Labels": modelLabels,
+		}).Info("load to cache")
+	}
 	graph, labels, err := loadModel(modelPath, modelLabels)
 	if err != nil {
 		return err
@@ -99,6 +105,11 @@ func (c *TFCache) add(name string) error {
 	}).Info("load to cache")
 	path := fmt.Sprintf("%s/%s", _config.ModelDir, name)
 	fname := fmt.Sprintf("%s/params.json", path)
+	if VERBOSE > 0 {
+		logs.WithFields(logs.Fields{
+			"File": fname,
+		}).Info("add to TFCache")
+	}
 	file, err := os.Open(fname)
 	defer file.Close()
 	if err != nil {
@@ -108,10 +119,25 @@ func (c *TFCache) add(name string) error {
 	if err := json.NewDecoder(file).Decode(&params); err != nil {
 		return err
 	}
+	if VERBOSE > 0 {
+		logs.WithFields(logs.Fields{
+			"params": params,
+		}).Info("add to TFCache")
+	}
 	tfm := TFModel{Params: params}
 	err = tfm.loadModel()
 	if err == nil {
 		c.Models[params.Name] = TFCacheEntry{TFModel: tfm, Time: time.Now()}
+	} else {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+		}).Error("Unable to load TF model")
+
+	}
+	if VERBOSE > 0 {
+		logs.WithFields(logs.Fields{
+			"TFCache": c,
+		}).Info("add to TFCache")
 	}
 	return err
 }
@@ -184,6 +210,10 @@ func loadModel(fname, flabels string) (*tf.Graph, []string, error) {
 		return graph, labels, err
 	}
 	if err := graph.Import(model, ""); err != nil {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+			"File":  fname,
+		}).Error("Unable to import graph model")
 		return graph, labels, err
 	}
 	// Load labels
@@ -225,6 +255,10 @@ func makePredictions(row *Row) ([]float32, error) {
 	}
 	tfm, err := _cache.get(model)
 	if err != nil {
+		logs.WithFields(logs.Fields{
+			"Error": err,
+			"Model": model,
+		}).Error("Unable to get model from the cache")
 		return nil, err
 	}
 
