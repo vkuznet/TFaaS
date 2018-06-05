@@ -254,7 +254,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	// generate predictions
 	probs, err := makePredictions(recs)
 	if err != nil {
-		responseError(w, "unable to make predictions", err, http.StatusInternalServerError)
+		responseError(w, "PredictHandler: unable to make predictions", err, http.StatusInternalServerError)
 		return
 	}
 	responseJSON(w, probs)
