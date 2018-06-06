@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -275,6 +276,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			"Header": r.Header,
 		}).Info("UploadHandler")
 	}
+	ctype := r.Header.Get("Content-Encoding")
 	var mkey, path string
 	var params TFParams
 	for _, name := range []string{"name", "params", "model", "labels"} {
@@ -335,11 +337,26 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// write out content to our store
-		err = ioutil.WriteFile(fileName, data, 0644)
-		if err != nil {
-			responseError(w, "unable to write file", err, http.StatusInternalServerError)
-			return
+		if ctype == "base64" && name == "model" {
+			var newData []byte
+			newData, err = base64.StdEncoding.DecodeString(string(data))
+			if err != nil {
+				responseError(w, "unable to decode input data", err, http.StatusInternalServerError)
+				return
+			}
+			err = ioutil.WriteFile(fileName, newData, 0644)
+			if err != nil {
+				responseError(w, "unable to write file", err, http.StatusInternalServerError)
+				return
+			}
+
+		} else {
+			// write out content to our store
+			err = ioutil.WriteFile(fileName, data, 0644)
+			if err != nil {
+				responseError(w, "unable to write file", err, http.StatusInternalServerError)
+				return
+			}
 		}
 		logs.WithFields(logs.Fields{
 			"File": fileName,
