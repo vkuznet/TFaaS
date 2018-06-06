@@ -243,6 +243,7 @@ def upload(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
     edata = str(form)
     headers['Content-length'] = len(edata)
     headers['Content-Type'] = form.get_content_type()
+    headers['Content-Encoding'] = 'base64'
     return getdata(url, headers, edata, ckey, cert, capath, verbose)
 
 def predict(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
