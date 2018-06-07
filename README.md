@@ -42,7 +42,8 @@ curl -X POST http://localhost:8083/upload -F 'name=ImageModel'
 -F 'params=@/path/params.json'
 -F 'model=@/path/tf_model.pb' -F 'labels=@/path/labels.txt'
 ```
-Get predictions:
+To get predictions we invoke curl call with new image file and specify our
+model name to use for inference:
 ```
 curl https://localhost:8083/image -F 'image=@/path/file.png' -F 'model=ImageModel'
 ```
