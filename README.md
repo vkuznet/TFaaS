@@ -13,11 +13,11 @@ The following set of APIs is provided:
   data-format
 
 ### TFaaS deployment
-The most convenient way to install TFaaS server is using docker image:
+The most convenient way to install TFaaS server is using docker image
+(default port of TFaaS is 8083):
 ```
 docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
 ```
-(default port of TFaaS is 8083).
 
 Otherwise, see [install instructions](https://github.com/vkuznet/TFaaS/blob/master/doc/INSTALL.md)
 to build and deploy TFaaS from source code.
