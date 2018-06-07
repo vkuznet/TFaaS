@@ -11,14 +11,14 @@ The following set of APIs is provided:
 - */json* and */proto* to serve TF models predictions in corresponding
   data-format
 
-#### TFaaS installation
+### TFaaS deployment
 The most convenient way to Install TFaaS server is using docker image:
 ```
 docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
 ```
 Otherwise, see [install instructions](https://github.com/vkuznet/TFaaS/blob/master/INSTALL.md)
 
-#### Clients
+### Clients
 Clients communicate with TFaaS via HTTP protocol. Here we present 3 client
 workflows: curl based, Python client and C++ client.
 
@@ -34,7 +34,7 @@ during inference), a model and labels file names, as well as input and output
 node names of our models which you can get by inspecting your TF model.
 ```
 
-##### curl client
+#### Curl client
 Upload your favorite model. We name it as *ImageModel*. Here we use TF model
 for image classification. The labels.txt contains list of labels for our
 images.
@@ -48,7 +48,7 @@ Get predictions:
 curl https://localhost:8083/image -F 'image=@/path/file.png' -F 'model=ImageModel'
 ```
 
-##### python client
+#### Python client
 For python example we'll use
 [tfaas_client.py](https://github.com/vkuznet/TFaaS/blob/master/src/python/tfaas_client.py).
 First, we create *upload.json* file with our upload parameters:
@@ -67,11 +67,13 @@ tfaas_client.py --url=$url --upload=upload.json
 # view registerd models in TFaaS server
 tfaas_client.py --url=$url --models
 ```
-Finally, we can ask for predictions by preparing our *input.json* file
+Finally, we can ask for predictions by preparing our *input.json* file which
+contains our keys (the list of names of our parameters), their values (the list
+of numerical values) and model name we want to use, e.g.:
 ```
 {"keys":["attr1", "attr2", ...], "values":[1,2,...], "name":"myModel"}
 ```
-and placing predict call:
+Finally, we can place predict call with our parameters:
 ```
 tfaas_client.py --url=$url --predict=input.json
 ```
@@ -108,7 +110,7 @@ int main() {
 }
 ```
 
-#### TFaaS benchmarks
+### TFaaS benchmarks
 Benchmark results on CentOS, 24 cores, 32GB of RAM serving DL NN with
 42x128x128x128x64x64x1x1 architecture (JSON and ProtoBuffer formats show similar performance):
 - 400 req/sec for 100 concurrent clients, 1000 requests in total
