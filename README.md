@@ -88,13 +88,13 @@ tfaas_client.py --url=$url --upload=upload.json
 # view registered models in TFaaS server
 tfaas_client.py --url=$url --models
 ```
-Finally, we can ask for predictions by preparing our *input.json* file which
+Finally, we can ask for predictions by preparing *input.json* file which
 contains our keys (the list of names of our parameters), their values (the list
-of numerical values) and model name we want to use, e.g.:
+of numerical values) and model name we want to use for inference, e.g.:
 ```
 {"keys":["attr1", "attr2", ...], "values":[1,2,...], "name":"myModel"}
 ```
-Finally, we can place predict call with our parameters:
+We can place the following call to get our predictions:
 ```
 tfaas_client.py --url=$url --predict=input.json
 ```
