@@ -110,7 +110,6 @@ int main() {
 
 #### TFaaS benchmarks
 Benchmark results on CentOS, 24 cores, 32GB of RAM serving DL NN with
-42x128x128x128x64x64x1x1 architecture:
+42x128x128x128x64x64x1x1 architecture (JSON and ProtoBuffer formats show similar performance):
 - 400 req/sec for 100 concurrent clients, 1000 requests in total
 - 480 req/sec for 200 concurrent clients, 5000 requests in total
-JSON and ProtoBuffer formats show similar performance.
