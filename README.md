@@ -62,6 +62,8 @@ This can be done by creating *upload.json* file with our upload parameters:
 It includes TF model, labels and parameters file names as well as
 name of our TF model. Now we can run our python client:
 ```
+# define url for TFaaS
+url=http://localhost:8083
 # upload our model
 tfaas_client.py --url=$url --upload=upload.json
 # view registerd models in TFaaS server
