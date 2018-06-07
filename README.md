@@ -20,19 +20,18 @@ Otherwise, see [install instructions](https://github.com/vkuznet/TFaaS/blob/mast
 
 ### Clients
 Clients communicate with TFaaS via HTTP protocol. Here we present 3 client
-workflows: curl based, Python client and C++ client.
+workflows using Curl, Python and C++ clients.
 
-First, we need to prepare parameters to upload our model. We create
-*params.json* file with the following content:
+First, we prepare a parameters *params.json* file to describe our model:
 ```
 {
   "name": "ImageModel", "model": "tf_model.pb", "labels": "labels.txt",
   "inputNode": "dense_4_input", "outputNode": "output_node0"
 }
-It listss model name (an alias which we can use later for choosing a model 
-during inference), a model and labels file names, as well as input and output
-node names of our models which you can get by inspecting your TF model.
 ```
+It lists model name, an alias which we can use later for choosing a model 
+during inference step, a model and labels file names, as well as input and output
+node names of our models which you can get by inspecting your TF model.
 
 #### Curl client
 Upload your favorite model. We name it as *ImageModel*. Here we use TF model
