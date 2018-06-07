@@ -64,9 +64,11 @@ name of our TF model. Now we can run our python client:
 ```
 # define url for TFaaS
 url=http://localhost:8083
+
 # upload our model
 tfaas_client.py --url=$url --upload=upload.json
-# view registerd models in TFaaS server
+
+# view registered models in TFaaS server
 tfaas_client.py --url=$url --models
 ```
 Finally, we can ask for predictions by preparing our *input.json* file which
