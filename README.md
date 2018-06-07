@@ -1,8 +1,9 @@
 ### TensorFlow as a Service (TFaaS)
 
-A general purpose framework to serve TensorFlow models.
-It provides reach and flexible set of APIs to efficiently manage your
-favorite TF models. The TFaaS supports JSON and ProtoBuffer data-formats.
+A general purpose framework (written in Go) to serve TensorFlow models.
+It provides reach and flexible set of APIs to efficiently access your
+favorite TF models via HTTP interface. The TFaaS supports JSON and ProtoBuffer
+data-formats.
 
 The following set of APIs is provided:
 - */upload* to push your favorite TF model to TFaaS server
@@ -12,17 +13,20 @@ The following set of APIs is provided:
   data-format
 
 ### TFaaS deployment
-The most convenient way to Install TFaaS server is using docker image:
+The most convenient way to install TFaaS server is using docker image:
 ```
 docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
 ```
-Otherwise, see [install instructions](https://github.com/vkuznet/TFaaS/blob/master/doc/INSTALL.md)
+(default port of TFaaS is 8083).
 
-### Clients
-Clients communicate with TFaaS via HTTP protocol. Here we present 3 client
+Otherwise, see [install instructions](https://github.com/vkuznet/TFaaS/blob/master/doc/INSTALL.md)
+to build and deploy TFaaS from source code.
+
+### TFaaS interface
+Clients communicate with TFaaS via HTTP protocol. Here we show 3 client
 workflows using Curl, Python and C++ clients.
 
-First, we prepare a parameters *params.json* file to describe our model:
+To upload the TF model we prepare a parameters *params.json* file describing our model:
 ```
 {
   "name": "ImageModel", "model": "tf_model.pb", "labels": "labels.txt",
@@ -33,14 +37,25 @@ It lists model name, an alias which we can use later for choosing a model
 during inference step, a model and labels file names, as well as input and output
 node names of our models which you can get by inspecting your TF model.
 
+The TF model, in this case named as ImageModel, will be registered in TFaaS
+for further use.
+
 #### Curl client
-Upload your favorite model. We name it as *ImageModel*. Here we use TF model
-for image classification. The labels.txt contains list of labels for our
-images.
+To upload our model we'll use curl client and provide model name, the
+aforementioned *params.json* file, the TF model itself as well as our
+label file:
 ```
 curl -X POST http://localhost:8083/upload -F 'name=ImageModel'
 -F 'params=@/path/params.json'
 -F 'model=@/path/tf_model.pb' -F 'labels=@/path/labels.txt'
+```
+Once model is uploaded, we can query TFaaS and see what is available.
+This can be done as following:
+```
+curl http://localhost:8083/models
+# it will return a JSON documents describing our models, e.g.
+[{"name":"ImageModel","model":"tf_model.pb","labels":"labels.txt",
+  "options":null,"inputNode":"dense_4_input","outputNode":"output_node0"}]
 ```
 To get predictions we invoke curl call with new image file and specify our
 model name to use for inference:
