@@ -16,7 +16,7 @@ The most convenient way to Install TFaaS server is using docker image:
 ```
 docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
 ```
-Otherwise, see [install instructions](https://github.com/vkuznet/TFaaS/blob/master/INSTALL.md)
+Otherwise, see [install instructions](https://github.com/vkuznet/TFaaS/blob/master/doc/INSTALL.md)
 
 ### Clients
 Clients communicate with TFaaS via HTTP protocol. Here we present 3 client
