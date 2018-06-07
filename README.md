@@ -11,11 +11,12 @@ The following set of APIs is provided:
 - */json* and */proto* to serve TF models predictions in corresponding
   data-format
 
-#### TFaaS deployment
-Install TFaaS server via docker image:
+#### TFaaS installation
+The most convenient way to Install TFaaS server is using docker image:
 ```
 docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
 ```
+Otherwise, see [install instructions](https://github.com/vkuznet/TFaaS/blob/master/INSTALL.md)
 
 #### Clients
 Clients communicate with TFaaS via HTTP protocol. Here we present 3 client
@@ -34,7 +35,9 @@ node names of our models which you can get by inspecting your TF model.
 ```
 
 ##### curl client
-Upload your favorite model (we name it as *ImageModel*)
+Upload your favorite model. We name it as *ImageModel*. Here we use TF model
+for image classification. The labels.txt contains list of labels for our
+images.
 ```
 curl -X POST http://localhost:8083/upload -F 'name=ImageModel'
 -F 'params=@/path/params.json'
@@ -55,19 +58,20 @@ First, we create *upload.json* file with our upload parameters:
   "name": "myModel", "params":"/path/params.json"
 }
 ```
-Now we can upload and view this model as following:
+It includes TF model, labels and parameters file names as well as
+name of our TF model.
+Now we can upload it and view this and other regostered models as following:
 ```
 # upload our model
 tfaas_client.py --url=$url --upload=upload.json
-# view our models
+# view registerd models in TFaaS server
 tfaas_client.py --url=$url --models
 ```
- 
-Finally, we can ask for prediction by preparing our *input.json* file
+Finally, we can ask for predictions by preparing our *input.json* file
 ```
 {"keys":["attr1", "attr2", ...], "values":[1,2,...], "name":"myModel"}
 ```
-and look-up predictions for it:
+and placing predict call:
 ```
 tfaas_client.py --url=$url --predict=input.json
 ```
