@@ -52,7 +52,9 @@ curl -X POST http://localhost:8083/upload -F 'name=ImageModel'
 Once model is uploaded, we can query TFaaS and see what is available.
 This can be done as following:
 ```
+# query which TF models are available
 curl http://localhost:8083/models
+
 # it will return a JSON documents describing our models, e.g.
 [{"name":"ImageModel","model":"tf_model.pb","labels":"labels.txt",
   "options":null,"inputNode":"dense_4_input","outputNode":"output_node0"}]
@@ -64,9 +66,9 @@ curl https://localhost:8083/image -F 'image=@/path/file.png' -F 'model=ImageMode
 ```
 
 #### Python client
-For python example we'll use
+For Python client example we'll use
 [tfaas_client.py](https://github.com/vkuznet/TFaaS/blob/master/src/python/tfaas_client.py).
-Similar to Curl client case we need to upload our model to TFaaS server.
+Similar to Curl client use case we need to upload our model to TFaaS server.
 This can be done by creating *upload.json* file with our upload parameters:
 ```
 {
@@ -74,7 +76,7 @@ This can be done by creating *upload.json* file with our upload parameters:
   "name": "myModel", "params":"/path/params.json"
 }
 ```
-It includes TF model, labels and parameters file names as well as
+It includes full path to our TF model, labels and parameters files as well as
 name of our TF model. Now we can run our python client:
 ```
 # define url for TFaaS
