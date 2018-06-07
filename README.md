@@ -51,7 +51,8 @@ curl https://localhost:8083/image -F 'image=@/path/file.png' -F 'model=ImageMode
 #### Python client
 For python example we'll use
 [tfaas_client.py](https://github.com/vkuznet/TFaaS/blob/master/src/python/tfaas_client.py).
-First, we create *upload.json* file with our upload parameters:
+Similar to Curl client case we need to upload our model to TFaaS server.
+This can be done by creating *upload.json* file with our upload parameters:
 ```
 {
   "model": "/path/tf_model.pb", "labels": "/path/labels.txt",
@@ -59,8 +60,7 @@ First, we create *upload.json* file with our upload parameters:
 }
 ```
 It includes TF model, labels and parameters file names as well as
-name of our TF model.
-Now we can upload it and view this and other regostered models as following:
+name of our TF model. Now we can run our python client:
 ```
 # upload our model
 tfaas_client.py --url=$url --upload=upload.json
