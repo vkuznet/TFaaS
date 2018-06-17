@@ -1,4 +1,4 @@
-TMPDIR:=/tmp/tfaas
+TMPDIR:=$(PWD)/build
 GOPATH:=$(TMPDIR):${GOPATH}
 OLDPWD:=$(PWD)
 export GOPATH
