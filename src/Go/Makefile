@@ -1,4 +1,4 @@
-TMPDIR:=$(PWD)/build
+TMPDIR:=$(PWD)/tmp
 GOPATH:=$(TMPDIR):${GOPATH}
 OLDPWD:=$(PWD)
 export GOPATH
