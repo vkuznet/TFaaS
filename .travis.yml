@@ -9,7 +9,6 @@ env:
     - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TRAVIS_BUILD_DIR/lib
 
 before_install:
-  - mkdir -p $WDIR
   - curl -k -L -O https://storage.googleapis.com/tensorflow/libtensorflow/$TFLIB
   - tar xfz $TFLIB
   - go get github.com/tensorflow/tensorflow/tensorflow/go
