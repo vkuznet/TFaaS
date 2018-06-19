@@ -13,8 +13,8 @@ The following set of APIs is provided:
 - ![#c5f015](https://placehold.it/15/c5f015/000000?text=+) `/upload` to push your favorite TF model to TFaaS server
 - ![#f03c15](https://placehold.it/15/f03c15/000000?text=+) `/delete` to delete your TF model from TFaaS server
 - ![#1589F0](https://placehold.it/15/1589F0/000000?text=+) `/models` to view existing TF models on TFaaS server
-- ![#521b92](https://placehold.it/15/521b92/000000?text=+) `/json` to serve TF model predictions in JSON
-- ![#9437ff](https://placehold.it/15/9437ff/000000?text=+) `/json` to serve TF model predictions in ProtoBuffer
+- ![#521b92](https://placehold.it/15/521b92/000000?text=+) `/json` to serve TF model predictions in JSON data-format
+- ![#9437ff](https://placehold.it/15/9437ff/000000?text=+) `/proto` to serve TF model predictions in ProtoBuffer data-format
 
 ### From deployment to production
 1. install docker image (TFaaS default port is 8083)
