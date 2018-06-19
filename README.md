@@ -17,19 +17,19 @@ The following set of APIs is provided:
 - ![#9437ff](https://placehold.it/15/9437ff/000000?text=+) `/proto` to serve TF model predictions in ProtoBuffer data-format
 
 ### From deployment to production
-1. install docker image (TFaaS default port is 8083)
+&#10112; install docker image (TFaaS default port is 8083)
 ```
 docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
 ```
 
-2. upload your TF model to TFaaS server
+&#10113; upload your TF model to TFaaS server
 ```
 curl -X POST http://localhost:8083/upload
 -F 'name=ImageModel' -F 'params=@/path/params.json'
 -F 'model=@/path/tf_model.pb' -F 'labels=@/path/labels.txt'
 ```
 
-3. get your predictions
+&#10114; get your predictions
 ```
 curl https://localhost:8083/image -F 'image=@/path/file.png' -F 'model=ImageModel'
 ```
