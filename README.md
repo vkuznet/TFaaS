@@ -24,7 +24,7 @@ docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
 ```
 
 Otherwise, see [install instructions](https://github.com/vkuznet/TFaaS/blob/master/doc/INSTALL.md)
-to build and deploy TFaaS from source code.
+how to build and deploy TFaaS from source code.
 
 ### TFaaS interface
 Clients communicate with TFaaS via HTTP protocol. See examples for
@@ -39,7 +39,8 @@ Benchmark results on CentOS, 24 cores, 32GB of RAM serving DL NN with
 42x128x128x128x64x64x1x1 architecture (JSON and ProtoBuffer formats show similar performance):
 - 400 req/sec for 100 concurrent clients, 1000 requests in total
 - 480 req/sec for 200 concurrent clients, 5000 requests in total
-For more information please see
+
+For more information please visit
 [bencmarks](https://github.com/vkuznet/TFaaS/blob/master/doc/Benchmarks.md)
 page.
 
