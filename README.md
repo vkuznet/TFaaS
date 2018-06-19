@@ -16,15 +16,25 @@ The following set of APIs is provided:
 - */json* and */proto* to serve TF models predictions in corresponding
   data-format
 
-### TFaaS deployment
-The most convenient way to install TFaaS server is using docker image
-(default port of TFaaS is 8083):
+### From deployment to production
+1. install docker image (TFaaS default port is 8083)
 ```
 docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
 ```
 
-Otherwise, see [install instructions](https://github.com/vkuznet/TFaaS/blob/master/doc/INSTALL.md)
-how to build and deploy TFaaS from source code.
+2. upload your TF model to TFaaS server
+```
+curl -X POST http://localhost:8083/upload
+-F 'name=ImageModel' -F 'params=@/path/params.json'
+-F 'model=@/path/tf_model.pb' -F 'labels=@/path/labels.txt'
+```
+
+3. get your predictions
+```
+curl https://localhost:8083/image -F 'image=@/path/file.png' -F 'model=ImageModel'
+```
+
+Fore more information please visit [curl client](https://github.com/vkuznet/TFaaS/blob/master/doc/curl_client.md) page.
 
 ### TFaaS interface
 Clients communicate with TFaaS via HTTP protocol. See examples for
@@ -45,6 +55,7 @@ For more information please visit
 page.
 
 ### More information
+- [Install instructions](https://github.com/vkuznet/TFaaS/blob/master/doc/INSTALL.md) to build TFaaS from source code
 - [End-to-end example of serving TF model in Go-server](https://github.com/vkuznet/TFaaS/blob/master/doc/workflow.md)
 - [Demo](https://github.com/vkuznet/TFaaS/blob/master/doc/DEMO.md)
 - [CMS experiment use-case](https://github.com/vkuznet/TFaaS/blob/master/doc/CMS.md)
