@@ -12,7 +12,6 @@ before_install:
   - mkdir -p $TRAVIS_BUILD_DIR/lib
   - wget https://storage.googleapis.com/tensorflow/libtensorflow/$TFLIB
   - tar xfz $TFLIB
-  - cp -r lib/* $TRAVIS_BUILD_DIR/lib
   - go get github.com/tensorflow/tensorflow/tensorflow/go
   - go get github.com/tensorflow/tensorflow/tensorflow/go/op
   - git clone https://github.com/google/protobuf.git
