@@ -1,5 +1,9 @@
 ### TensorFlow as a Service (TFaaS)
 
+[![Build Status](https://travis-ci.org/vkuznet/TFaaS.svg?branch=master)](https://travis-ci.org/vkuznet/TFaaS)
+[![Go Report Card](https://goreportcard.com/badge/github.com/vkuznet/TFaaS)](https://goreportcard.com/report/github.com/vkuznet/TFaaS)
+[![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=TensorFlow%20as%20a%20service%20&url=https://github.com/vkuznet/TFaaS&hashtags=tensorflow,go,python)
+
 A general purpose framework (written in Go) to serve TensorFlow models.
 It provides reach and flexible set of APIs to efficiently access your
 favorite TF models via HTTP interface. The TFaaS supports JSON and ProtoBuffer
