@@ -183,7 +183,7 @@ scurl -i -X POST https://localhost:8083/upload -F 'name=image' -F 'params=@/opt/
 
 # once models are uploaded we can list them back via HTTP GET request
 scurl https://localhost:8083/models/
-[{"name":"image","model":"tf_model_20180315.pb","labels":"labels.txt","options":null,"inputNode":"input_1_1","outputNode":"output_node0"},{"name":"luca","model":"model_0228.pb","labels":"labels.csv","options":null,"inputNode":"dense_4_input","outputNode":"output_node0"}]
+[{"name":"image","model":"tf_model_20180315.pb","labels":"labels.txt","options":null,"inputNode":"input_1_1","outputNode":"output_node0","description":"","timestamp":"2018-06-27 11:34:51"},{"name":"luca","model":"model_0228.pb","labels":"labels.csv","options":null,"inputNode":"dense_4_input","outputNode":"output_node0","description":"something here","timestamp":"2018-06-27 11:34:51"}]
 
 # we can remove given mode from TFaaS server
 scurl -X DELETE https://localhost:8083/delete?model=image
@@ -193,6 +193,7 @@ cat > params.json << EOF
 {
     "name": "luca",
     "model": "model2.pb",
+    "description": "my favorite TF model",
     "labels": "labels2.csv",
     "inputNode": "input_1_232323",
     "outputNode": "output_node_232323",

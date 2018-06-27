@@ -292,8 +292,20 @@ tfaas -confic config.json
     <div class="row">
         <div class="col col-2"></div>
         <div class="col col-8">
-            <div class="upper strong header-font">
-            Existing models
+            <div>
+                <h5>Existing models</h5>
+                {{range $_, $m := .Models}}
+                <ul>
+                    <li>name: {{$m.Name}}</li>
+                    <li>model: <a href="download/{{$m.Name}}/{{$m.Model}}">{{$m.Model}}</a></li>
+                    <li>labels: <a href="download/{{$m.Name}}/{{$m.Labels}}">{{$m.Labels}}</a></li>
+                    <li>description: {{$m.Description}}</li>
+                    <li>input node: {{$m.InputNode}}</li>
+                    <li>output node: {{$m.OutputNode}}</li>
+                    <li>timestamp: {{$m.TimeStamp}}</li>
+                </ul>
+                <hr/>
+                {{end}}
             </div>
         </div>
     </div>

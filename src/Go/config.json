@@ -9,5 +9,5 @@
     "serverCrt": "",
     "logFormatter": "text",
     "updateDNs": 600,
-    "verbose": 0
+    "verbose": 1
 }

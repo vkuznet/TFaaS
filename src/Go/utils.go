@@ -197,3 +197,33 @@ func auth(r *http.Request) bool {
 	}
 	return match
 }
+
+// TFModels provides list of existing models
+func TFModels() ([]TFParams, error) {
+	var models []TFParams
+	// read all files in our model area
+	files, err := ioutil.ReadDir(_config.ModelDir)
+	if err != nil {
+		return models, err
+	}
+	// loop over found model areas and read their parameters
+	for _, f := range files {
+		path := fmt.Sprintf("%s/%s", _config.ModelDir, f.Name())
+		fname := fmt.Sprintf("%s/params.json", path)
+		file, err := os.Open(fname)
+		defer file.Close()
+		if err == nil {
+			var params TFParams
+			if err := json.NewDecoder(file).Decode(&params); err != nil {
+				return models, err
+			}
+			if params.TimeStamp == "" {
+				params.TimeStamp = time.Now().String()
+			}
+			models = append(models, params)
+		} else {
+			return models, err
+		}
+	}
+	return models, nil
+}

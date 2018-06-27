@@ -41,16 +41,18 @@ func (r *Row) String() string {
 
 // TFModel provides meta-data description of TF model to be used
 type TFParams struct {
-	Name       string   `json:"name"`       // model name
-	Model      string   `json:"model"`      // model file name
-	Labels     string   `json:"labels"`     // model labels file name
-	Options    []string `json:"options"`    // model options
-	InputNode  string   `json:"inputNode"`  // model input node name
-	OutputNode string   `json:"outputNode"` // model output node name
+	Name        string   `json:"name"`        // model name
+	Model       string   `json:"model"`       // model file name
+	Labels      string   `json:"labels"`      // model labels file name
+	Options     []string `json:"options"`     // model options
+	InputNode   string   `json:"inputNode"`   // model input node name
+	OutputNode  string   `json:"outputNode"`  // model output node name
+	Description string   `json:"description"` // model description
+	TimeStamp   string   `json:"timestamp"`   // model timestamp
 }
 
 func (p *TFParams) String() string {
-	return fmt.Sprintf("<TFParams: name=%s model=%s labels=%s options=%v inputNode=%s outputNode=%s>", p.Name, p.Model, p.Labels, p.Options, p.InputNode, p.OutputNode)
+	return fmt.Sprintf("<TFParams: name=%s model=%s description=%s labels=%s options=%v inputNode=%s outputNode=%s, timestamp=%s>", p.Name, p.Model, p.Description, p.Labels, p.Options, p.InputNode, p.OutputNode, p.TimeStamp)
 }
 
 // TFModel holds actual TF model (graph, labels, session options)
@@ -118,6 +120,9 @@ func (c *TFCache) add(name string) error {
 	var params TFParams
 	if err := json.NewDecoder(file).Decode(&params); err != nil {
 		return err
+	}
+	if params.TimeStamp == "" {
+		params.TimeStamp = time.Now().String()
 	}
 	if VERBOSE > 0 {
 		logs.WithFields(logs.Fields{

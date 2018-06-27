@@ -23,7 +23,7 @@ var Time0 time.Time
 
 // global variables
 var (
-	_main, _header, _footer string
+	_header, _footer, _tmplDir string
 )
 
 // Configuration stores dbs configuration parameters
@@ -99,6 +99,7 @@ func main() {
 	}
 	_cache = TFCache{Models: make(map[string]TFCacheEntry), Limit: cacheLimit}
 	Auth = _config.Auth // set if we gonna use auth or not
+	VERBOSE = _config.Verbose
 
 	// define our handlers
 	base := _config.Base
@@ -107,13 +108,15 @@ func main() {
 		path, _ := os.Getwd()
 		sdir = fmt.Sprintf("%s/static", path)
 	}
+	tmplDir := fmt.Sprintf("%s/templates", sdir)
 	cssDir := fmt.Sprintf("%s/css", sdir)
 	jsDir := fmt.Sprintf("%s/js", sdir)
-	tmplDir := fmt.Sprintf("%s/templates", sdir)
 	imgDir := fmt.Sprintf("%s/images", sdir)
+	_tmplDir = tmplDir
 	http.Handle(base+"/css/", http.StripPrefix(base+"/css/", http.FileServer(http.Dir(cssDir))))
 	http.Handle(base+"/js/", http.StripPrefix(base+"/js/", http.FileServer(http.Dir(jsDir))))
 	http.Handle(base+"/images/", http.StripPrefix(base+"/images/", http.FileServer(http.Dir(imgDir))))
+	http.Handle(base+"/download/", http.StripPrefix(base+"/download/", http.FileServer(http.Dir(_config.ModelDir))))
 	http.HandleFunc(base+"/", AuthHandler)
 
 	// setup templates
@@ -122,9 +125,9 @@ func main() {
 	tmplData["Base"] = _config.Base
 	tmplData["Content"] = fmt.Sprintf("Hello from TFaaS")
 	tmplData["Version"] = info()
+	tmplData["Models"], _ = TFModels()
 	_header = templates.Header(tmplDir, tmplData)
 	_footer = templates.Footer(tmplDir, tmplData)
-	_main = templates.Main(tmplDir, tmplData)
 
 	// start web server
 	addr := fmt.Sprintf(":%d", _config.Port)

@@ -297,6 +297,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			continue
 		}
+		// read other parameters which represent files
 		modelFile, header, err := r.FormFile(name)
 		if err != nil {
 			responseError(w, emsg, err, http.StatusInternalServerError)
@@ -330,11 +331,17 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 				responseError(w, "unable to unmarshal TF parameters", err, http.StatusInternalServerError)
 				return
 			}
+			if params.TimeStamp == "" {
+				params.TimeStamp = time.Now().String()
+			}
 			if mkey != params.Name {
 				msg := fmt.Sprintf("mismatch of mkey=%s and TFParam.Name=%s", mkey, params.Name)
 				responseError(w, msg, err, http.StatusInternalServerError)
 				return
 			}
+			logs.WithFields(logs.Fields{
+				"params": params.String(),
+			}).Info("TF model parameters")
 		}
 
 		if ctype == "base64" && name == "model" {
@@ -409,39 +416,25 @@ func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 
 // ModelsHandler returns a list of known models
 func ModelsHandler(w http.ResponseWriter, r *http.Request) {
-	var models []TFParams
-	// read all files in our model area
-	files, err := ioutil.ReadDir(_config.ModelDir)
+	models, err := TFModels()
 	if err != nil {
-		responseError(w, fmt.Sprintf("unable to read: %s", _config.ModelDir), err, http.StatusInternalServerError)
-		return
-	}
-	// loop over found model areas and read their parameters
-	for _, f := range files {
-		path := fmt.Sprintf("%s/%s", _config.ModelDir, f.Name())
-		fname := fmt.Sprintf("%s/params.json", path)
-		file, err := os.Open(fname)
-		defer file.Close()
-		if err == nil {
-			var params TFParams
-			if err := json.NewDecoder(file).Decode(&params); err != nil {
-				msg := fmt.Sprintf("unable to unmarshal %s", fname)
-				responseError(w, msg, err, http.StatusInternalServerError)
-				return
-			}
-			models = append(models, params)
-		}
+		msg := fmt.Sprintf("Unable to get TF models")
+		responseError(w, msg, err, http.StatusInternalServerError)
 	}
 	responseJSON(w, models)
 }
 
 // DefaultHandler authenticate incoming requests and route them to appropriate handler
 func DefaultHandler(w http.ResponseWriter, r *http.Request) {
+	var templates Templates
+	tmplData := make(map[string]interface{})
+	tmplData["Base"] = _config.Base
+	tmplData["Content"] = fmt.Sprintf("Hello from TFaaS")
+	tmplData["Version"] = info()
+	tmplData["Models"], _ = TFModels()
+	main := templates.Main(_tmplDir, tmplData)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(_header + _main + _footer))
-	//     w.WriteHeader(http.StatusOK)
-	//     msg := fmt.Sprintf("Hello %s", UserDN(r))
-	//     w.Write([]byte(msg))
+	w.Write([]byte(_header + main + _footer))
 }
 
 // AuthHandler authenticate incoming requests and route them to appropriate handler
