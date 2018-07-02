@@ -34,3 +34,12 @@ We can place the following call to get our predictions:
 tfaas_client.py --url=$url --predict=input.json
 ```
 
+When we deal with images, i.e. perform image classification, we use the
+following API:
+```
+# send request to classify given image (in this case we uploaded HEP_images model)
+tfaas_client.py --url=$url --image=/path/file.png --model=HEP_images
+# the server response will looks like this (here the labels contains
+# three classes: higgs, qcd and muons)
+{"filename":"/path/file.png","labels":[{"label":"higgs","probability":1},{"label":"qcd","probability":2.815438e-8},{"label":"muons","probability":4.65911e-18}]}
+```
