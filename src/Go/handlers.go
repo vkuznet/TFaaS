@@ -94,7 +94,8 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Read image
 	imageFile, header, err := r.FormFile("image")
-	imageName := strings.Split(header.Filename, ".")
+	fileName := header.Filename
+	imageName := strings.Split(fileName, ".")
 	if err != nil {
 		responseError(w, "unable to read image", err, http.StatusInternalServerError)
 		return
@@ -151,7 +152,7 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 		topN = len(tfm.Labels)
 	}
 	responseJSON(w, ClassifyResult{
-		Filename: "input", // TODO: we may replace the input name here to something meaningful
+		Filename: fileName,
 		Labels:   findBestLabels(tfm.Labels, probs, topN),
 	})
 }
