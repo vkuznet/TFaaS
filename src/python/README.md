@@ -36,6 +36,10 @@ tfaas_client.py --url=$url --delete=model_name
 
 # get predictions from TFaaS server
 tfaas_client.py --url=$url --predict=input.json
+
+# get image predictions from TFaaS server
+# here we refer to uploaded on TFaaS ImageModel model
+tfaas_client.py --url=$url --image=/path/file.png --model=ImageModel
 ```
 
 ### HEP resnet

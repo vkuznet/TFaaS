@@ -18,7 +18,7 @@ The following set of APIs is provided:
 - ![#9437ff](https://placehold.it/15/9437ff/000000?text=+) `/proto` to serve TF model predictions in ProtoBuffer data-format
 
 ### From deployment to production
-#### &#10112; install docker image (TFaaS default port is 8083)
+#### &#10112; install docker image (TFaaS port is 8083)
 ```
 docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
 ```
