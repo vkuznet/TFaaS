@@ -44,6 +44,10 @@ class OptionParser():
             dest="upload", default="", help="upload model to TFaaS")
         self.parser.add_argument("--predict", action="store",
             dest="predict", default="", help="fetch prediction from TFaaS")
+        self.parser.add_argument("--image", action="store",
+            dest="image", default="", help="fetch prediction for given image")
+        self.parser.add_argument("--model", action="store",
+            dest="model", default="", help="TF model to use")
         self.parser.add_argument("--delete", action="store",
             dest="delete", default="", help="delete model in TFaaS")
         self.parser.add_argument("--models", action="store_true",
@@ -247,18 +251,37 @@ def upload(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
     headers['Content-Encoding'] = 'base64'
     return getdata(url, headers, edata, ckey, cert, capath, verbose)
 
-def predict(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
+def predict(host, ifile, model, verbose=None, ckey=None, cert=None, capath=None):
     "predict API get predictions from TFaaS server"
     url = host + '/json'
     client = '%s (%s)' % (TFAAS_CLIENT, os.environ.get('USER', ''))
     headers = {"Accept": "application/json", "User-Agent": client}
     params = json.load(open(ifile))
+    if model: # overwrite model name in given input file
+        params['model'] = model
     if verbose:
         print("URL   : %s" % url)
         print("ifile : %s" % ifile)
         print("params: %s" % json.dumps(params))
     encoded_data = json.dumps(params)
     return getdata(url, headers, encoded_data, ckey, cert, capath, verbose)
+
+def predictImage(host, ifile, model, verbose=None, ckey=None, cert=None, capath=None):
+    "predict API get predictions from TFaaS server"
+    url = host + '/image'
+    client = '%s (%s)' % (TFAAS_CLIENT, os.environ.get('USER', ''))
+    headers = {"Accept": "application/json", "User-Agent": client}
+    if verbose:
+        print("URL   : %s" % url)
+        print("ifile : %s" % ifile)
+        print("model : %s" % model)
+    form = MultiPartForm()
+    form.add_file('image', ifile, fileHandle=open(ifile, 'r'))
+    form.add_field('model', model)
+    edata = str(form)
+    headers['Content-length'] = len(edata)
+    headers['Content-Type'] = form.get_content_type()
+    return getdata(url, headers, edata, ckey, cert, capath, verbose)
 
 def getdata(url, headers, encoded_data, ckey, cert, capath, verbose=None, method='POST'):
     "helper function to use in predict/upload APIs, it place given URL call to the server"
@@ -307,7 +330,9 @@ def main():
     elif opts.models:
         res = models(opts.url, opts.verbose, opts.ckey, opts.cert, opts.capath)
     elif opts.predict:
-        res = predict(opts.url, opts.predict, opts.verbose, opts.ckey, opts.cert, opts.capath)
+        res = predict(opts.url, opts.predict, opts.model, opts.verbose, opts.ckey, opts.cert, opts.capath)
+    elif opts.image:
+        res = predictImage(opts.url, opts.image, opts.model, opts.verbose, opts.ckey, opts.cert, opts.capath)
     if res:
         print(res)
 
