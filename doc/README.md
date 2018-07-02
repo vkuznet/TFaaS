@@ -3,6 +3,7 @@ This area contains documentation about the following topics:
 - [Python client](https://github.com/vkuznet/TFaaS/blob/master/doc/python_client.md)
 - [C++ client](https://github.com/vkuznet/TFaaS/blob/master/doc/cpp_client.md)
 - [Various bencmarks](https://github.com/vkuznet/TFaaS/blob/master/doc/Benchmarks.md)
+- [R&D topics](https://github.com/vkuznet/TFaaS/blob/master/doc/RandD.md)
 - [CMS experiment use-case](https://github.com/vkuznet/TFaaS/blob/master/doc/CMS.md)
 - [Demo](https://github.com/vkuznet/TFaaS/blob/master/doc/DEMO.md)
 - [Install instructions](https://github.com/vkuznet/TFaaS/blob/master/doc/INSTALL.md)
