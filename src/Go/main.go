@@ -44,7 +44,7 @@ type Configuration struct {
 
 // String returns string representation of server configuration
 func (c *Configuration) String() string {
-	return fmt.Sprintf("<Config port=%d dir=%s base=%s auth=%s configProt=%s verbose=%d log=%s crt=%s key=%s>", c.Port, c.ModelDir, c.Base, c.Auth, c.ConfigProto, c.Verbose, c.LogFormatter, c.ServerCrt, c.ServerKey)
+	return fmt.Sprintf("<Config port=%d modelDir=%s staticDir=%s base=%s auth=%s configProt=%s verbose=%d log=%s crt=%s key=%s>", c.Port, c.ModelDir, c.StaticDir, c.Base, c.Auth, c.ConfigProto, c.Verbose, c.LogFormatter, c.ServerCrt, c.ServerKey)
 }
 
 // helper function to return current version
