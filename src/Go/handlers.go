@@ -433,6 +433,7 @@ func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 	tmplData["Content"] = fmt.Sprintf("Hello from TFaaS")
 	tmplData["Version"] = info()
 	tmplData["Models"], _ = TFModels()
+	tmplData["ModelDir"] = _config.ModelDir
 	main := templates.Main(_tmplDir, tmplData)
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(_header + main + _footer))
@@ -458,6 +459,9 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	arr := strings.Split(r.URL.Path, "/")
 	path := arr[len(arr)-1]
+	if _config.Base != "" {
+		path = arr[2] // since arr[0] is /, arr[1] is a base path
+	}
 	switch path {
 	case "upload":
 		UploadHandler(w, r)
@@ -477,6 +481,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 		ModelsHandler(w, r)
 	case "status":
 		StatusHandler(w, r)
+	case "netron":
+		NetronHandler(w, r)
 	default:
 		DefaultHandler(w, r)
 	}
@@ -512,6 +518,40 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(data)
 	return
+}
+
+// NetronHandler provides hook to netron visualization library for graphs,
+// see https://github.com/lutzroeder/Netron
+func NetronHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	var endPoint string
+	base := strings.TrimLeft(_config.Base, "/")
+	for _, v := range strings.Split(r.URL.Path, "/") {
+		if v == "" || v == base || v == "netron" {
+			continue
+		}
+		endPoint = fmt.Sprintf("%s/%s", endPoint, v)
+	}
+	var ifile string
+	endPoint = strings.TrimLeft(endPoint, "/")
+	if endPoint == "" || endPoint == "netron" {
+		ifile = fmt.Sprintf("%s/netron/%s", _config.StaticDir, "view-browser.html")
+	} else {
+		ifile = fmt.Sprintf("%s/netron/%s", _config.StaticDir, endPoint)
+	}
+	//     fmt.Println("ifile", ifile)
+	page, err := ioutil.ReadFile(ifile)
+	if err != nil {
+		logs.WithFields(logs.Fields{
+			"Path": r.URL.Path,
+		}).Error("unable to load")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(page)
 }
 
 // DELETE APIs
