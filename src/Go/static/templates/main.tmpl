@@ -298,6 +298,7 @@ tfaas -confic config.json
                 <ul>
                     <li>name: {{$m.Name}}</li>
                     <li>model: <a href="download/{{$m.Name}}/{{$m.Model}}">{{$m.Model}}</a></li>
+                    <li>graph: <a href="netron/?url={{$.Base}}%2fdownload%2f{{$m.Name}}%2f{{$m.Model}}">view</a></li>
                     <li>labels: <a href="download/{{$m.Name}}/{{$m.Labels}}">{{$m.Labels}}</a></li>
                     <li>description: {{$m.Description}}</li>
                     <li>input node: {{$m.InputNode}}</li>
@@ -549,3 +550,4 @@ if __name__ == '__main__':
         </div>
     </div>
 </div>
+
