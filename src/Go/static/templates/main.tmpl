@@ -297,12 +297,16 @@ tfaas -confic config.json
                 {{range $_, $m := .Models}}
                 <ul>
                     <li>name: {{$m.Name}}</li>
-                    <li>model: <a href="download/{{$m.Name}}/{{$m.Model}}">{{$m.Model}}</a></li>
-                    <li>graph: <a href="netron/?url={{$.Base}}%2fdownload%2f{{$m.Name}}%2f{{$m.Model}}">view</a></li>
+                    <li>
+                        model: <a href="download/{{$m.Name}}/{{$m.Model}}">{{$m.Model}}</a>,
+                        graph <a href="netron/?url={{$.Base}}%2fdownload%2f{{$m.Name}}%2f{{$m.Model}}">view</a>
+                    </li>
                     <li>labels: <a href="download/{{$m.Name}}/{{$m.Labels}}">{{$m.Labels}}</a></li>
                     <li>description: {{$m.Description}}</li>
+                    <!--
                     <li>input node: {{$m.InputNode}}</li>
                     <li>output node: {{$m.OutputNode}}</li>
+                    -->
                     <li>timestamp: {{$m.TimeStamp}}</li>
                 </ul>
                 <hr/>
