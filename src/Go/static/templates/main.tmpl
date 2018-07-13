@@ -387,6 +387,7 @@ tfaas_client.py --url=$url --predict=input.json
             </div>
 
             <br/>
+            <br/>
             <h5>How to write TF model?</h5>
             There are plenty of example you can find on Internet, but
             if you can look one example here:
@@ -534,6 +535,26 @@ if __name__ == '__main__':
 </pre>
             </div>
 
+            <br/>
+            <br/>
+            <h5>How to upload my model which is not in TensorFlow format?</h5>
+            The good news that it is possible. If your model is written in Keras
+            it is very straightforward. You may use
+            <a href="https://github.com/vkuznet/keras_to_tensorflow">keras to tensorflow</a>
+            tool to perform the conversion. Otherwise, if your model is other format,
+            e.g. PyTorch, Caffe, CNTK, Scikit-Learn, etc. you may consider to convert
+            your problem into <a href="https://onnx.ai/">ONNX</a> (Open Neural Network eXchange) format
+            and then convert it from ONNX to TensorFlow. Please see their
+            <a href="https://github.com/onnx/tutorials">tutorial</a> page for more details.
+
+            <br/>
+            <br/>
+            <h5>Is it possible to inspect/view my/other models available at TFaaS?</h5>
+            Yes, you can. Just navigate to <a href="#tab3">Models</a> page and use
+            graph view link to inspect your model. The TFaaS integrate
+            <a href="https://github.com/lutzroeder/Netron">netron</a>
+            toolkit for visualization of deep learning and machine learning models.
+
         </div>
     </div>
 </div>
@@ -550,7 +571,18 @@ if __name__ == '__main__':
         </div>
 
         <div class="col col-6">
-        Contact info
+
+            <h4 class="upper strong header-font">
+            Contact
+            </h4>
+
+            If you experience any problem or have an idea how to extend TFaaS
+            further please do not hesitate to submit
+            a <a href="https://github.com/vkuznet/TFaaS/issues">github issue</a>.
+            <br/>
+            The TFaaS source code is available at
+            <a href="https://github.com/vkuznet/TFaaS">GitHub</a> and you
+            are welcome to contribute to its development at any stage.
         </div>
     </div>
 </div>
