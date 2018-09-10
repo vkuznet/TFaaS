@@ -1,0 +1,13 @@
+{
+    "nan":0,
+    "nevts": 2000,
+    "epochs": 50,
+    "batch_size": 256,
+    "branch": "Events",
+    "selected_branches": "",
+    "exclude_branches": "",
+    "verbose":0,
+    "chunk_size": 1000,
+    "hist": "pdfs",
+    "verbose": 1
+}
