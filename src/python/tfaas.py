@@ -4,18 +4,24 @@
 """
 File       : tfaas.py
 Author     : Valentin Kuznetsov <vkuznet AT gmail dot com>
-Description: 
+Description: TFaaS APIs for remote access of HEP data via uproot
 """
 
 # system modules
 import os
 import sys
+import json
 import argparse
 import traceback
 
-# 3d part modules
+# numpy modules
+import numpy as np
+
+# uproot modules
 import uproot
-import pandas as pd
+
+# uproot reader
+from reader import DataReader, make_plot, object_size, size_format
 
 class OptionParser():
     def __init__(self):
@@ -23,68 +29,74 @@ class OptionParser():
         self.parser = argparse.ArgumentParser(prog='PROG')
         self.parser.add_argument("--fin", action="store",
             dest="fin", default="", help="Input ROOT file")
-        self.parser.add_argument("--branch", action="store",
-            dest="branch", default="Events", help="Input ROOT file branch (default Events)")
-        self.parser.add_argument("--branches", action="store",
-            dest="branches", default="", help="ROOT branches to read, 'Electron_,Jet_'")
-        self.parser.add_argument("--list-branches", action="store_true",
-            dest="list_branches", default=False, help="list ROOT branches and exit")
-        self.parser.add_argument("--fout", action="store",
-            dest="fout", default="", help="Output model file")
-        self.parser.add_argument("--verbose", action="store_true",
-            dest="verbose", default=False, help="verbose output")
+        self.parser.add_argument("--params", action="store",
+            dest="params", default="model.json", help="Input model parameters (default model.json)")
+        self.parser.add_argument("--specs", action="store",
+            dest="specs", default=None, help="Input specs file")
 
-def treeContent(tree):
-    print(tree.contents)
-    for key in tree.contents:
-        branch = key.split(';')[0]
-        print("key", key, branch)
-        try:
-            print(tree[branch])
-        except:
-            traceback.print_exc()
+class DataGenerator(object):
+    def __init__(self, fin, params, specs=None):
+        # parse given parameters
+        nan = params.get('nan', np.nan)
+        nevts = params.get('nevts', -1)
+        batch_size = params.get('batch_size', 256)
+        verbose = params.get('verbose', 0)
+        branch = params.get('branch', 'Events')
+        branches = params.get('selected_branches', [])
+        offset = params.get('offset', 1e-3)
+        chunk_size = params.get('chunk_size', 1000)
+        exclude_branches = params.get('exclude_branches', [])
+        specs = params.get('specs', specs)
 
-def listBranches(fin):
-    "Executor function"
-    try:
-        with uproot.open(fin) as tree:
-            print(tree)
-            for key in tree.keys():
-                branch = key.split(';')[0]
-                eTree = tree[branch]
-                print("### Branch {}".format(branch))
-                for name in eTree.fBranches:
-                    print(name)
-    except:
-        traceback.print_exc()
+        if exclude_branches and not isinstance(exclude_branches, list):
+            if os.path.isfile(exclude_branches):
+                exclude_branches = \
+                        [r.replace('\n', '') for r in open(exclude_branches).readlines()]
+            else:
+                exclude_branches = exclude_branches.split(',')
+            print("exclude branches", exclude_branches)
 
-def run(fin, fout, branch, branches, verbose=False):
-    "Executor function"
-    try:
-        with uproot.open(fin) as tree:
-            eTree = tree[branch]
-            print("Reading from branch: %s" % branch)
-            for key, val in eTree.allitems():
-                if key in branches:
-                    print("Branch: %s" % key)
-                    data = val.array()
-                    print(data)
-#             df = eTree.pandas.df(lambda b: b.dtype if b.name in branches else None)
-#             print(df)
-#             print(type(df))
-    except:
-        traceback.print_exc()
+	self.reader = DataReader(fin, branch=branch, selected_branches=branches,
+		exclude_branches=exclude_branches, nan=nan, offset=offset,
+                chunk_size=chunk_size, nevts=nevts, specs=specs, verbose=verbose)
+        self.start_idx = 0
+        self.nevts = nevts if nevts != -1 else self.reader.nrows
+        self.stop_idx = params.get('nevts', self.nevts)
+        self.batch_size = batch_size
 
+    def __len__(self):
+        "Return total number of batches this generator can deliver"
+        return int(np.floor(self.nevts / self.batch_size))
+
+    def __getitem__(self):
+        "Return next batch of events"
+        data = self.read_data(self.start_idx, self.stop_idx)
+        self.start_idx += self.stop_idx
+        if self.start_idx >= self.reader.nrows: # reset our indicies
+            self.start_idx = 0
+            self.stop_idx = self.nevts
+        yield data
+
+    def read_data(self, start=0, stop=100, verbose=0):
+	"Helper function to read ROOT data via uproot reader"
+	if stop == -1:
+	    for _ in range(self.reader.nrows):
+		xdf = self.reader.next(verbose=verbose)
+		yield xdf
+	else:
+	    for _ in range(start, stop):
+		xdf = self.reader.next(verbose=verbose)
+		yield xdf
 
 def main():
     "Main function"
     optmgr  = OptionParser()
     opts = optmgr.parser.parse_args()
-    if opts.list_branches:
-        listBranches(opts.fin)
-    else:
-        branches = [b.strip() for b in opts.branches.split(',')]
-        run(opts.fin, opts.fout, opts.branch, branches, opts.verbose)
+    fin = opts.fin
+    params = json.load(open(opts.params))
+    specs = json.load(open(opts.specs)) if opts.specs else None
+    gen = DataGenerator(fin, params, specs)
+    print("Input source: %s, read %s events, can deliver %s batches" % (fin, gen.nevts, len(gen)))
 
 if __name__ == '__main__':
     main()
