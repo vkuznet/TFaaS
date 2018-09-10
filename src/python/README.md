@@ -55,61 +55,62 @@ The model runs for 200 epochs and save Keras/TF model into `models` output
 directory.
 
 ### Reading ROOT files
-This code allows to read ROOT file content directly into NumPy/Pandas dataframe.
-It is based on [uproot](https://github.com/scikit-hep/uproot) framework.
+TFaaS python repository provides two base modules to read and manipulate with
+HEP ROOT files. The `reader.py` module defines a DataReader class which is
+able to read either local or remote ROOT files (via xrootd). And, `tfaas.py`
+module provide a basic DataGenerator class which can be used with any ML
+framework to read HEP ROOT data in chunks. Both modules are based on
+[uproot](https://github.com/scikit-hep/uproot) framework.
+
 Basic usage
 ```
-./tfaas.py --help
-usage: PROG [-h] [--fin FIN] [--branch BRANCH] [--branches BRANCHES]
-            [--list-branches] [--fout FOUT] [--verbose]
+./reader.py --help
+usage: PROG [-h] [--fin FIN] [--fout FOUT] [--nan NAN] [--branch BRANCH]
+            [--identifier IDENTIFIER] [--branches BRANCHES]
+            [--exclude-branches EXCLUDE_BRANCHES] [--nevts NEVTS]
+            [--chunk-size CHUNK_SIZE] [--specs SPECS] [--offset OFFSET]
+            [--info] [--hists] [--verbose VERBOSE]
 
 optional arguments:
-  -h, --help           show this help message and exit
-  --fin FIN            Input ROOT file
-  --branch BRANCH      Input ROOT file branch (default Events)
-  --branches BRANCHES  ROOT branches to read, 'Electron_,Jet_'
-  --list-branches      list ROOT branches and exit
-  --fout FOUT          Output model file
-  --verbose            verbose output
+  -h, --help            show this help message and exit
+  --fin FIN             Input ROOT file
+  --fout FOUT           Output file name to write ROOT specs
+  --nan NAN             NaN value (default 0)
+  --branch BRANCH       Input ROOT file branch (default Events)
+  --identifier IDENTIFIER
+                        Event identifier (default run,event,luminosityBlock)
+  --branches BRANCHES   Comma separated list of branches to read (default all)
+  --exclude-branches EXCLUDE_BRANCHES
+                        Comma separated list of branches to exclude (default
+                        None)
+  --nevts NEVTS         number of events to parse (default 5, use -1 to read
+                        all events)
+  --chunk-size CHUNK_SIZE
+                        Chunk size to use (default 1000)
+  --specs SPECS         Input specs file
+  --offset OFFSET       Offset value to shift from nan (default 1e-3)
+  --info                Provide info about ROOT tree
+  --hists               Create historgams for ROOT tree
+  --verbose VERBOSE     verbosity level
+
+# here is a concrete example of reading local ROOT file:
+./reader.py --fin=/opt/cms/data/Tau_Run2017F-31Mar2018-v1_NANOAOD.root --info --verbose=1 --nevts=2000
+
+# here is an example of reading remote ROOT file:
+./reader.py --fin=root://cms-xrd-global.cern.ch//store/data/Run2017F/Tau/NANOAOD/31Mar2018-v1/20000/6C6F7EAE-7880-E811-82C1-008CFA165F28.root --verbose=1 --nevts=2000 --info
+
+# both of aforementioned commands produce the following output
+First pass: 2000 events, 35.4363200665 sec, shape (2316,) 648 branches: flat 232 jagged
+VMEM used: 960.479232 (MB) SWAP used: 0.0 (MB)
+Number of events  : 1131872
+# flat branches   : 648
+...  # followed by a long list of ROOT branches found along with their dimentionality
+TrigObj_pt values in [5.03515625, 1999.75] range, dim=21
 ```
 
-To inspect the ROOT file please use `--list-branches` option, e.g.
-```
-./tfaas.py --fin=/opt/cms/data/nano-RelValTTBar.root --list-branches
-### Branch LuminosityBlocks
-run
-luminosityBlock
-### Branch Runs
-run
-genEventCount
-genEventSumw
-genEventSumw2
-nLHEScaleSumw
-LHEScaleSumw
-nLHEPdfSumw
-LHEPdfSumw
-### Branch Events
-run
-luminosityBlock
-event
-nElectron
-Electron_deltaEtaSC
-Electron_dxy
-Electron_eta
-Electron_mass
-...
-```
-
-And here is an example of readying Electron branches into pandas DataFrame:
-```
-./tfaas.py --fin=/opt/cms/data/nano-RelValTTBar.root --branch=Events --branches="Electron_pt,Electron_eta,Electron_dxy"
-      Electron_dxy  Electron_eta  Electron_pt
-0         0.003125     -1.424316    11.108109
-1        -0.448377     -1.196289   120.067390
-2         1.136900     -1.802734    19.996458
-3         0.014889      0.193848     8.102822
-...
-```
+The `tfaas.py` module is intended to be used in TFaaS server which can
+read remote files and perform the training of ML models with HEP ROOT
+files.
 
 More examples about using uproot may be found
 [here](https://github.com/jpivarski/jupyter-talks/blob/master/2017-10-13-lpc-testdrive/uproot-introduction-evaluated.ipynb)
