@@ -1,6 +1,7 @@
 {
     "nan":0,
     "nevts": 2000,
+    "nevts_chunk_size": 1000,
     "epochs": 50,
     "batch_size": 256,
     "branch": "Events",
