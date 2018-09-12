@@ -4,7 +4,7 @@
     "modelDir": "models",
     "staticDir": "static",
     "configProto": "",
-    "base": "/tfaas",
+    "base": "",
     "serverKey": "",
     "serverCrt": "",
     "logFormatter": "text",
