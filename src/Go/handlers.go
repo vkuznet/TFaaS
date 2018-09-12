@@ -459,8 +459,7 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	path := r.URL.Path
 	if _config.Base != "" {
-		base := fmt.Sprintf("/%s", _config.Base)
-		path = strings.Replace(path, base, "", 1)
+		path = strings.Replace(path, _config.Base, "", 1)
 	}
 	arr := strings.Split(path, "/")
 	path = arr[1]
