@@ -130,7 +130,7 @@ def mem_usage(vmem0, swap0, vmem1, swap1, msg=None):
 def performance(nevts, tree, data, startTime, endTime, msg=""):
     "helper function to show performance metrics of data read from a given tree"
     try:
-        nbytes = sum(x.contents.nbytes + x.stops.nbytes \
+        nbytes = sum(x.content.nbytes + x.stops.nbytes \
                 if isinstance(x, JaggedArray) \
                 else x.nbytes for x in data.values())
         print("# %s entries, %s %sbranches, %s MB, %s sec, %s MB/sec, %s kHz" % \
@@ -521,7 +521,7 @@ class DataReader(object):
                     except:
                         print("arrIdx=%s, len(jagged_keys)=%s" % (arrIdx, len(self.jagged_keys())))
                         traceback.print_exc()
-        return np.array([xdf, mask])
+        return xdf, mask
 
     def find_branch_idx(self, attr):
         "Find start and end indexes of given attribute"
