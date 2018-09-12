@@ -457,11 +457,13 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		atomic.AddUint64(&TotalPostRequests, 1)
 	}
-	arr := strings.Split(r.URL.Path, "/")
-	path := arr[len(arr)-1]
+	path := r.URL.Path
 	if _config.Base != "" {
-		path = arr[2] // since arr[0] is /, arr[1] is a base path
+		base := fmt.Sprintf("/%s", _config.Base)
+		path = strings.Replace(path, base, "", 1)
 	}
+	arr := strings.Split(path, "/")
+	path = arr[1]
 	switch path {
 	case "upload":
 		UploadHandler(w, r)
