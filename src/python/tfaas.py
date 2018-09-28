@@ -33,6 +33,8 @@ class OptionParser():
             dest="params", default="model.json", help="Input model parameters (default model.json)")
         self.parser.add_argument("--specs", action="store",
             dest="specs", default=None, help="Input specs file")
+        self.parser.add_argument("--files", action="store",
+            dest="files", default=None, help="either input file with files names or comma separate list of files")
 
 class DataGenerator(object):
     def __init__(self, fin, params=None, specs=None):
@@ -155,9 +157,6 @@ def test(files, params=None, specs=None):
         params = {}
     if not specs:
         specs = {}
-    input_shape = (1382,) # adjust appropriately
-    trainer = Trainer(testModel(input_shape), verbose=params.get('verbose', 0))
-    print("Trainer", trainer)
     for fin in files:
         fin = xfile(fin)
         print("Reading %s" % fin)
@@ -166,7 +165,12 @@ def test(files, params=None, specs=None):
         batch_size = specs.get('batch_size', 50)
         shuffle = specs.get('shuffle', True)
         split = specs.get('split', 0.3)
+        trainer = False
         for x_train in gen:
+            if not trainer:
+                input_shape = (np.shape(x_train)[-1],) # read number of attributes we have
+                print("### input data: {}".format(input_shape))
+                trainer = Trainer(testModel(input_shape), verbose=params.get('verbose', 0))
             print("x_train {} chunk of {} shape".format(x_train, np.shape(x_train)))
             if np.shape(x_train)[0] == 0:
                 print("received empty x_train chunk")
@@ -186,10 +190,10 @@ def main():
     specs = json.load(open(opts.specs)) if opts.specs else None
 #     gen = DataGenerator(fin, params, specs)
 #     print("Input source: %s, read %s events, can deliver %s batches" % (fin, gen.nevts, len(gen)))
-    files = [
-        '/store/data/Run2017F/ZeroBias/NANOAOD/31Mar2018-v1/100000/04D48B10-F295-E811-B520-6C3BE5B5F0A0.root',
-        '/store/data/Run2017F/ZeroBias/NANOAOD/31Mar2018-v1/100000/22B1CDEC-CE95-E811-9384-009C029C120A.root'
-        ]
+    if os.path.isfile(opts.files):
+        files = [f.replace('\n', '') for f in open(opts.files).readlines() if not f.startswith('#')]
+    else:
+        files = opts.files.split(',')
     test(files, params, specs)
 
 if __name__ == '__main__':
