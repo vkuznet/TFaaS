@@ -21,8 +21,6 @@ import random
 import argparse
 import traceback
 
-from types import NoneType
-
 # numpy
 import numpy as np
 
