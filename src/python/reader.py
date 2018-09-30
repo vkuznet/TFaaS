@@ -305,14 +305,16 @@ class DataReader(object):
                 self.gen = self.tree.iterate(entrysteps=nevts, keycache=self.cache)
         self.branches = {} # start with fresh dict
         try:
-            self.branches = self.gen.next()
+#             self.branches = self.gen.next() # python 2.X
+            self.branches = next(self.gen) # python 3.X and 2.X
         except StopIteration:
             if self.out_branches:
                 self.gen = self.tree.iterate(branches=self.out_branches+self.identifier,
                         entrysteps=nevts, keycache=self.cache)
             else:
                 self.gen = self.tree.iterate(entrysteps=nevts, keycache=self.cache)
-            self.branches = self.gen.next()
+#             self.branches = self.gen.next()
+            self.branches = next(self.gen) # python 3.X and 2.X
         endTime = time.time()
         self.idx += nevts
         if self.verbose:
