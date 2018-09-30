@@ -470,6 +470,8 @@ class DataReader(object):
         self.chunk_idx = self.chunk_idx + 1
 
         for idx, key in enumerate(sorted(self.flat_keys())):
+            if sys.version.startswith('3.') and isinstance(key, str):
+                key = key.encode('ascii') # convert string to binary
             xdf[idx] = self.normalize(key, rec[key])
             if hg and self.hists:
                 self.hdict['%s_orig' % key].fill(rec[key])
