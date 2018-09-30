@@ -97,7 +97,7 @@ class DataGenerator(object):
         return self.next()
 
     def read_data(self, start=0, stop=100, verbose=0):
-	"Helper function to read ROOT data via uproot reader"
+        "Helper function to read ROOT data via uproot reader"
         if stop == -1:
             for _ in range(self.reader.nrows):
                 xdf, mask = self.reader.next(verbose=verbose)
