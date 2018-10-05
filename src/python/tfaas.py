@@ -83,10 +83,12 @@ class DataGenerator(object):
         if self.start_idx >= self.reader.nrows: # reset our indicies
             self.start_idx = 0
             self.stop_idx = self.nevts
-        data = np.array([xdf for xdf in gen])
-        if self.verbose:
-            print("read data chunk {}".format(np.shape(data)))
-        return data
+        data = []
+        mask = []
+        for (xdf, mdf) in gen:
+            data.append(xdf)
+            mask.append(mdf)
+        return np.array(data), np.array(mask)
 
     def __iter__(self):
         "Provide iterator capabilities to the class"
@@ -101,11 +103,11 @@ class DataGenerator(object):
         if stop == -1:
             for _ in range(self.reader.nrows):
                 xdf, mask = self.reader.next(verbose=verbose)
-                yield xdf
+                yield (xdf, mask)
         else:
             for _ in range(start, stop):
                 xdf, mask = self.reader.next(verbose=verbose)
-                yield xdf
+                yield (xdf, mask)
 
 class Trainer(object):
     def __init__(self, model, verbose=0):
@@ -166,7 +168,7 @@ def test(files, params=None, specs=None):
         shuffle = specs.get('shuffle', True)
         split = specs.get('split', 0.3)
         trainer = False
-        for x_train in gen:
+        for (x_train, _mask) in gen:
             if not trainer:
                 input_shape = (np.shape(x_train)[-1],) # read number of attributes we have
                 print("### input data: {}".format(input_shape))
@@ -181,6 +183,45 @@ def test(files, params=None, specs=None):
             print("y_train {} chunk of {} shape".format(y_train, np.shape(y_train)))
             trainer.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, shuffle=shuffle, split=split)
 
+def testPyTorch(files, params=None, specs=None):
+    """
+    Test function demonstrates workflow of setting up data generator and train
+    PyTorch model over given set of files
+    """
+    from jarray.torch import JaggedArrayLinear
+    import torch
+    if not params:
+        params = {}
+    if not specs:
+        specs = {}
+    for fin in files:
+        fin = xfile(fin)
+        print("Reading %s" % fin)
+        gen = DataGenerator(fin, params, specs)
+        epochs = specs.get('epochs', 10)
+        batch_size = specs.get('batch_size', 50)
+        shuffle = specs.get('shuffle', True)
+        split = specs.get('split', 0.3)
+        model = False
+        for (x_train, x_mask) in gen:
+            if not model:
+                input_shape = np.shape(x_train)[-1] # read number of attributes we have
+                print("### input data: {}".format(input_shape))
+                model = torch.nn.Sequential(
+                    JaggedArrayLinear(input_shape, 5),
+                    torch.nn.ReLU(),
+                    torch.nn.Linear(5, 1),
+                )
+                print(model)
+            print("x_train chunk of {} shape".format(np.shape(x_train)))
+            print("x_mask chunk of {} shape".format(np.shape(x_mask)))
+            if np.shape(x_train)[0] == 0:
+                print("received empty x_train chunk")
+                break
+            data = np.array([x_train, x_mask])
+            preds = model(data).data.numpy()
+            print("preds {} chunk of {} shape".format(preds, np.shape(preds)))
+
 def main():
     "Main function"
     optmgr  = OptionParser()
@@ -194,7 +235,8 @@ def main():
         files = [f.replace('\n', '') for f in open(opts.files).readlines() if not f.startswith('#')]
     else:
         files = opts.files.split(',')
-    test(files, params, specs)
+    testPyTorch(files, params, specs)
+#     test(files, params, specs)
 
 if __name__ == '__main__':
     main()
