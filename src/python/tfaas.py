@@ -188,7 +188,7 @@ def testPyTorch(files, params=None, specs=None):
     Test function demonstrates workflow of setting up data generator and train
     PyTorch model over given set of files
     """
-    from jarray.torch import JaggedArrayLinear
+    from jarray.pytorch import JaggedArrayLinear
     import torch
     if not params:
         params = {}
