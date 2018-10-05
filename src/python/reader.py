@@ -69,7 +69,7 @@ class OptionParser():
         self.parser.add_argument("--fout", action="store",
             dest="fout", default="", help="Output file name to write ROOT specs")
         self.parser.add_argument("--nan", action="store",
-            dest="nan", default=0, help="NaN value (default 0)")
+            dest="nan", default=np.nan, help="NaN value (default np.nan)")
         self.parser.add_argument("--branch", action="store",
             dest="branch", default="Events", help="Input ROOT file branch (default Events)")
         self.parser.add_argument("--identifier", action="store",
@@ -473,7 +473,7 @@ class DataReader(object):
             xdf[idx] = self.normalize(key, rec[key])
             if hg and self.hists:
                 self.hdict['%s_orig' % key].fill(rec[key])
-                if xdf[idx] > self.nan:
+                if xdf[idx] != self.nan:
                     self.hdict['%s_norm' % key].fill(xdf[idx])
             mask[idx] = 1
             if self.verbose:
@@ -492,7 +492,7 @@ class DataReader(object):
                 xdf[idx] = self.normalize(key, val)
                 if hg and self.hists:
                     self.hdict['%s_orig' % key].fill(val)
-                    if xdf[idx] > self.nan:
+                    if xdf[idx] != self.nan:
                         self.hdict['%s_norm' % key].fill(xdf[idx])
                 if np.isnan(val):
                     mask[idx] = 0
