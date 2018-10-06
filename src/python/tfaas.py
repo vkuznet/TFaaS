@@ -66,8 +66,8 @@ class DataGenerator(object):
         redirector = params.get('redirector', 'root://cms-xrd-global.cern.ch')
 
         if verbose:
-            msg = '\n{}'.format(self)
-            print(timestamp(msg))
+            print('\n')
+            print(timestamp('{}'.format(self)))
             print("model parameters: {}".format(json.dumps(params)))
 
         if exclude_branches and not isinstance(exclude_branches, list):
@@ -76,7 +76,8 @@ class DataGenerator(object):
                         [r.replace('\n', '') for r in open(exclude_branches).readlines()]
             else:
                 exclude_branches = exclude_branches.split(',')
-            print("exclude branches", exclude_branches)
+            if verbose:
+                print("exclude branches", exclude_branches)
 
         # if no specs is given try to read them from local area
         if not specs:
@@ -209,7 +210,6 @@ def testKeras(files, params=None, specs=None):
         for (x_train, _mask) in gen:
             if not trainer:
                 input_shape = (np.shape(x_train)[-1],) # read number of attributes we have
-                print("### input data: {}".format(input_shape))
                 trainer = Trainer(testModel(input_shape), verbose=params.get('verbose', 0))
             print("x_train {} chunk of {} shape".format(x_train, np.shape(x_train)))
             if np.shape(x_train)[0] == 0:
