@@ -116,7 +116,7 @@ class DataGenerator(object):
 
     def next(self):
         "Return next batch of events"
-        msg = "\nTFaaS read from {} to {}".format(self.start_idx, self.stop_idx))
+        msg = "\nTFaaS read from {} to {}".format(self.start_idx, self.stop_idx)
         gen = self.read_data(self.start_idx, self.stop_idx)
         # advance start and stop indecies
         self.start_idx = self.stop_idx
