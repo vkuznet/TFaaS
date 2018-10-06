@@ -1,0 +1,10 @@
+*.pyc
+specs*.json
+files*.txt
+*.patch
+*.go-e
+*.bin
+*.msg
+*.proto
+*.pbtxt
+log

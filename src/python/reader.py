@@ -67,25 +67,26 @@ class OptionParser():
         self.parser.add_argument("--fin", action="store",
             dest="fin", default="", help="Input ROOT file")
         self.parser.add_argument("--fout", action="store",
-            dest="fout", default="", help="Output file name to write ROOT specs")
+            dest="fout", default="", help="Output file name for ROOT specs")
         self.parser.add_argument("--nan", action="store",
-            dest="nan", default=np.nan, help="NaN value (default np.nan)")
+            dest="nan", default=np.nan, help="NaN value for padding, default np.nan")
         self.parser.add_argument("--branch", action="store",
-            dest="branch", default="Events", help="Input ROOT file branch (default Events)")
+            dest="branch", default="Events", help="Input ROOT file branch, default Events")
         self.parser.add_argument("--identifier", action="store",
-            dest="identifier", default="run,event,luminosityBlock", help="Event identifier (default run,event,luminosityBlock)")
+            dest="identifier", default="run,event,luminosityBlock", help="Event identifier, default run,event,luminosityBlock")
         self.parser.add_argument("--branches", action="store",
-            dest="branches", default="", help="Comma separated list of branches to read (default all)")
+            dest="branches", default="", help="Comma separated list of branches to read, default all")
         self.parser.add_argument("--exclude-branches", action="store",
-            dest="exclude_branches", default="", help="Comma separated list of branches to exclude (default None)")
+            dest="exclude_branches", default="", help="Comma separated list of branches to exclude, default None")
         self.parser.add_argument("--nevts", action="store",
-            dest="nevts", default=5, help="number of events to parse (default 5, use -1 to read all events)")
+            dest="nevts", default=5, help="number of events to parse, default 5, use -1 to read all events)")
         self.parser.add_argument("--chunk-size", action="store",
-            dest="chunk_size", default=1000, help="Chunk size to use (default 1000)")
+            dest="chunk_size", default=1000, help="Chunk size to use, default 1000")
         self.parser.add_argument("--specs", action="store",
             dest="specs", default=None, help="Input specs file")
-        self.parser.add_argument("--offset", action="store",
-            dest="offset", default=1e-3, help="Offset value to shift from nan (default 1e-3)")
+        self.parser.add_argument("--redirector", action="store",
+            dest="redirector", default='root://cms-xrd-global.cern.ch',
+            help="XrootD redirector, default root://cms-xrd-global.cern.ch")
         self.parser.add_argument("--info", action="store_true",
             dest="info", default=False, help="Provide info about ROOT tree")
         self.parser.add_argument("--hists", action="store_true",
@@ -190,16 +191,19 @@ class DataReader(object):
     and APIs to access its data. It uses two-pass procedure
     unless specs file is provided. The first pass parse entire
     file and identifies flat/jagged keys, their dimensionality
-    and min/max values. All of them are formed the file specs.
+    and min/max values. All of them are stored in a file specs.
     The second pass uses specs to convert jagged structure of
     ROOT file into flat DataFrame format.
     """
     def __init__(self, fin, branch='Events', selected_branches=None,
             exclude_branches=None, identifier=['run', 'event', 'luminosityBlock'],
-            chunk_size=1000, nevts=-1,
-            specs=None, nan=np.nan, offset=1e-3, histograms=False, verbose=0):
-        self.root = fin
-        self.istream = uproot.open(fin)
+            chunk_size=1000, nevts=-1, specs=None, nan=np.nan, histograms=False,
+            redirector='root://cms-xrd-global.cern.ch', verbose=0):
+        self.fin = xfile(fin, redirector)
+        self.verbose = verbose
+        if verbose:
+            print("Reading {}".format(self.fin))
+        self.istream = uproot.open(self.fin)
         self.branches = {}
         self.gen = None
         self.out_branches = []
@@ -211,14 +215,14 @@ class DataReader(object):
         self.chunk_idx = 0
         self.lastIdx = -1
         self.chunk_size = chunk_size if chunk_size < self.nrows else self.nrows
+        self.nan = float(nan)
+        self.attrs = []
+        self.shape = None
+        self.cache = {}
+        self.hdict = {}
+        self.hists = histograms
         if specs:
-            specs = json.load(open(specs))
-            self.jdim = specs['jdim']
-            self.minv = specs['minv']
-            self.maxv = specs['maxv']
-            self.jkeys = specs['jkeys']
-            self.fkeys = specs['fkeys']
-            self.nans = specs['nans']
+            self.load_specs(specs)
         else:
             self.jdim = {}
             self.minv = {}
@@ -226,17 +230,12 @@ class DataReader(object):
             self.jkeys = []
             self.fkeys = []
             self.nans = {}
-        self.nan = float(nan)
-        self.offset = float(offset)
-        self.verbose = verbose
-        self.attrs = []
-        self.shape = None
-        self.cache = {}
-        self.hdict = {}
-        self.hists = histograms
 
         # perform initialization
+        time0 = time.time()
         self.init()
+        if self.verbose:
+            print("{} init is complete in {} sec".format(self, time.time()-time0))
 
         if selected_branches:
 #             self.out_branches = [a for b in selected_branches for a in self.attrs if a.startswith(b)]
@@ -278,12 +277,28 @@ class DataReader(object):
         # declare histograms for original and normilized values
         if hg and self.hists:
             for key in self.attrs:
-                low = self.minv[key] - self.offset
+                low = self.minv[key]
                 high = self.maxv[key]
                 self.hdict['%s_orig' % key] = \
                         hg.Bin(num=100, low=low, high=high, quantity=lambda x: x, value=hg.Count())
                 self.hdict['%s_norm' % key] = \
-                        hg.Bin(num=100, low=0-self.offset, high=1, quantity=lambda x: x, value=hg.Count())
+                        hg.Bin(num=100, low=0, high=1, quantity=lambda x: x, value=hg.Count())
+
+
+    def load_specs(self, specs):
+        "load given specs"
+        if not isinstance(specs, dict):
+            if self.verbose:
+                print("load specs from {}".format(specs))
+            specs = json.load(open(specs))
+        if self.verbose > 1:
+            print("ROOT specs: {}".format(json.dumps(specs)))
+        self.jdim = specs['jdim']
+        self.minv = specs['minv']
+        self.maxv = specs['maxv']
+        self.jkeys = specs['jkeys']
+        self.fkeys = specs['fkeys']
+        self.nans = specs['nans']
 
     def fetch_data(self, key):
         "fetch data for given key from underlying ROOT tree"
@@ -303,7 +318,6 @@ class DataReader(object):
                 self.gen = self.tree.iterate(entrysteps=nevts, keycache=self.cache)
         self.branches = {} # start with fresh dict
         try:
-#             self.branches = self.gen.next() # python 2.X
             self.branches = next(self.gen) # python 3.X and 2.X
         except StopIteration:
             if self.out_branches:
@@ -311,7 +325,6 @@ class DataReader(object):
                         entrysteps=nevts, keycache=self.cache)
             else:
                 self.gen = self.tree.iterate(entrysteps=nevts, keycache=self.cache)
-#             self.branches = self.gen.next()
             self.branches = next(self.gen) # python 3.X and 2.X
         endTime = time.time()
         self.idx += nevts
@@ -344,10 +357,11 @@ class DataReader(object):
         "Initialize class data members by scaning ROOT tree"
         if self.jdim and self.minv and self.maxv:
             self.attrs = sorted(self.flat_keys()) + sorted(self.jagged_keys())
-            self.shape = (len(self.flat_keys()) + sum(self.jdim.values()), )
-            msg = "First pass: %s events, shape %s branches: %s flat %s jagged" \
-                    % (self.nrows, self.shape, len(self.flat_keys()), len(self.jagged_keys()))
-            print(msg)
+            self.shape = len(self.flat_keys()) + sum(self.jdim.values())
+            msg = "+++ first pass: %s events, (%s-flat, %s-jagged) branches, %s attrs" \
+                    % (self.nrows, len(self.flat_keys()), len(self.jagged_keys()), self.shape)
+            if self.verbose:
+                print(msg)
             self.idx = -1
             return
 
@@ -365,8 +379,6 @@ class DataReader(object):
         for chunk in steps(self.nrows, self.chunk_size):
             nevts = len(chunk) # chunk here contains event indexes
             tot += nevts
-            if self.nevts > 0 and tot >= self.nevts:
-                break
             self.read_chunk(nevts, set_branches=set_branches, set_min_max=set_min_max)
             set_branches = False # we do it once
             for key in self.jkeys:
@@ -375,6 +387,8 @@ class DataReader(object):
                 dim = dim_jarr(self.fetch_data(key))
                 if dim > self.jdim.get(key, 0):
                     self.jdim[key] = dim
+            if self.nevts > 0 and tot > self.nevts:
+                break
 
         self.nevts = tot
 
@@ -397,10 +411,11 @@ class DataReader(object):
             print("\n### min/max values")
             for key, val in self.minv.items():
                 print(key, val, self.maxv[key])
-        self.shape = (len(self.flat_keys()) + sum(self.jdim.values()), )
-        msg = "First pass: %s events, %s sec, shape %s %s branches: flat %s jagged" \
-                % (tot, time.time()-time0, self.shape, len(self.flat_keys()), len(self.jagged_keys()))
-        print(msg)
+        self.shape = len(self.flat_keys()) + sum(self.jdim.values())
+        msg = "--- first pass: %s events, (%s-flat, %s-jagged) branches, %s attrs" \
+                % (self.nrows, len(self.flat_keys()), len(self.jagged_keys()), self.shape)
+        if self.verbose:
+            print(msg)
         if psutil and self.verbose:
             vmem1 = psutil.virtual_memory()
             swap1 = psutil.swap_memory()
@@ -412,6 +427,8 @@ class DataReader(object):
         out['fkeys'] = self.flat_keys()
         out['jkeys'] = self.jagged_keys()
         out['nans'] = self.nans
+        if self.verbose:
+            print("write specs {}".format(fout))
         with open(fout, 'w') as ostream:
             ostream.write(json.dumps(out))
 
@@ -424,9 +441,7 @@ class DataReader(object):
         for key in sorted(self.jagged_keys()):
             shape += self.jdim[key]
         xdf = np.ndarray(shape=(shape,))
-        mask = np.ndarray(shape=self.shape, dtype=np.int)
-        if self.verbose:
-            ndf = np.ndarray(shape=self.shape)
+        mask = np.ndarray(shape=(shape,), dtype=np.int)
 
         # read new chunk of records if necessary
         if not self.idx % self.chunk_size:
@@ -467,6 +482,7 @@ class DataReader(object):
         # advance chunk index since we read the record
         self.chunk_idx = self.chunk_idx + 1
 
+        idx = 0
         for idx, key in enumerate(sorted(self.flat_keys())):
             if sys.version.startswith('3.') and isinstance(key, str):
                 key = key.encode('ascii') # convert string to binary
@@ -476,8 +492,6 @@ class DataReader(object):
                 if xdf[idx] != self.nan:
                     self.hdict['%s_norm' % key].fill(xdf[idx])
             mask[idx] = 1
-            if self.verbose:
-                ndf[idx] = rec[key]
         if idx: # only advance position if we read something from flat_keys
             pos = idx + 1 # position in xdf for jagged branches
         else:
@@ -498,11 +512,9 @@ class DataReader(object):
                     mask[idx] = 0
                 else:
                     mask[idx] = 1
-                if self.verbose:
-                    ndf[idx] = val
             pos = idx + 1
 
-        if verbose:
+        if verbose > 1:
             print("# idx=%s event=%s shape=%s proc.time=%s" % (
                 self.idx, event, np.shape(xdf), (time.time()-time0)))
             if self.idx < 3:
@@ -518,7 +530,6 @@ class DataReader(object):
                             print("+ branch=%s, row %s, position %s:%s, min=%s max=%s" \
                                     % (key, self.idx, startIdx, endIdx, self.minv[key], self.maxv[key]))
                             print("+ xdf", xdf[startIdx:endIdx])
-                            print("+ ndf", ndf[startIdx:endIdx])
                             print(data)
                     except:
                         print("arrIdx=%s, len(jagged_keys)=%s" % (arrIdx, len(self.jagged_keys())))
@@ -587,7 +598,6 @@ class DataReader(object):
         minv = float(self.minv.get(key, 0))
         maxv = float(self.maxv.get(key, 1))
         return val*(maxv-minv)+minv
-#         return (val-self.offset)*(maxv-minv)+minv
 
     def info(self):
         "Provide human readable form of ROOT branches"
@@ -676,6 +686,14 @@ def write(reader, nevts, verbose, fout):
         print("Read %s evts, %s Hz, total time %s" % (
             count, count/totTime, totTime))
 
+def xfile(fin, redirector='root://cms-xrd-global.cern.ch'):
+    "Test if file is local or remote and setup proper prefix"
+    if fin.startswith(redirector):
+        return fin
+    if os.path.exists(fin):
+        return fin
+    return "%s/%s" % (redirector, fin)
+
 def main():
     "Main function"
     optmgr  = OptionParser()
@@ -697,13 +715,12 @@ def main():
                     [r.replace('\n', '') for r in open(opts.exclude_branches).readlines()]
         else:
             exclude_branches = opts.exclude_branches.split(',')
-    offset = float(opts.offset)
     hists = opts.hists
     identifier = [k.strip() for k in opts.identifier.split(',')]
     reader = DataReader(fin, branch=branch, selected_branches=branches,
             identifier=identifier, exclude_branches=exclude_branches, histograms=hists,
-            nan=nan, offset=offset, chunk_size=chunk_size,
-            nevts=nevts, specs=specs, verbose=verbose)
+            nan=nan, chunk_size=chunk_size,
+            nevts=nevts, specs=specs, redirector=opts.redirector, verbose=verbose)
     if opts.info:
         reader.info()
     else:

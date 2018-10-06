@@ -11,6 +11,7 @@ Description: TFaaS APIs for remote access of HEP data via uproot
 import os
 import sys
 import json
+import time
 import argparse
 import traceback
 
@@ -21,7 +22,7 @@ import numpy as np
 import uproot
 
 # uproot reader
-from reader import DataReader, make_plot, object_size, size_format
+from reader import DataReader, xfile, make_plot, object_size, size_format
 
 class OptionParser():
     def __init__(self):
@@ -30,15 +31,27 @@ class OptionParser():
         self.parser.add_argument("--fin", action="store",
             dest="fin", default="", help="Input ROOT file")
         self.parser.add_argument("--params", action="store",
-            dest="params", default="model.json", help="Input model parameters (default model.json)")
+            dest="params", default="model.json",
+            help="Input model parameters (default model.json)")
         self.parser.add_argument("--specs", action="store",
             dest="specs", default=None, help="Input specs file")
         self.parser.add_argument("--files", action="store",
-            dest="files", default=None, help="either input file with files names or comma separate list of files")
+            dest="files", default=None,
+            help="either input file with files names or comma separate list of files")
+        self.parser.add_argument("--test", action="store",
+            dest="test", default='pytorch',
+            help="test given model (pytorch, keras, tensorflow), default pytorch")
+
+def timestamp(msg='TFaaS'):
+    "Return timestamp in pre-defined format"
+    tst = time.localtime()
+    tstamp = time.strftime('[%d/%b/%Y:%H:%M:%S]', tst)
+    return '%s %s %s' % (msg.strip(), tstamp, time.mktime(tst))
 
 class DataGenerator(object):
     def __init__(self, fin, params=None, specs=None):
         "Initialization function for Data Generator"
+        time0 = time.time()
         if not params:
             params = {}
         # parse given parameters
@@ -48,10 +61,14 @@ class DataGenerator(object):
         verbose = params.get('verbose', 0)
         branch = params.get('branch', 'Events')
         branches = params.get('selected_branches', [])
-        offset = params.get('offset', 1e-3)
         chunk_size = params.get('chunk_size', 1000)
         exclude_branches = params.get('exclude_branches', [])
-        specs = params.get('specs', specs)
+        redirector = params.get('redirector', 'root://cms-xrd-global.cern.ch')
+
+        if verbose:
+            msg = '\n{}'.format(self)
+            print(timestamp(msg))
+            print("model parameters: {}".format(json.dumps(params)))
 
         if exclude_branches and not isinstance(exclude_branches, list):
             if os.path.isfile(exclude_branches):
@@ -61,14 +78,37 @@ class DataGenerator(object):
                 exclude_branches = exclude_branches.split(',')
             print("exclude branches", exclude_branches)
 
+        # if no specs is given try to read them from local area
+        if not specs:
+            fbase = fin.split('/')[-1].replace('.root', '')
+            sname = 'specs-{}.json'.format(fbase)
+            if os.path.isfile(sname):
+                if verbose:
+                    print("loading specs {}".format(sname))
+                specs = json.load(open(sname))
+
         self.reader = DataReader(fin, branch=branch, selected_branches=branches,
-            exclude_branches=exclude_branches, nan=nan, offset=offset,
-            chunk_size=chunk_size, nevts=nevts, specs=specs, verbose=verbose)
+            exclude_branches=exclude_branches, nan=nan,
+            chunk_size=chunk_size, nevts=0, specs=specs,
+            redirector=redirector, verbose=verbose)
         self.start_idx = 0
         self.nevts = nevts if nevts != -1 else self.reader.nrows
-        self.stop_idx = params.get('nevts_chunk_size', 1000)
+        self.chunk_size = chunk_size
+        self.stop_idx = chunk_size
         self.batch_size = batch_size
         self.verbose = verbose
+
+        # since no specs were found or given we'll produce them and add them to the reader
+        if not specs:
+            fbase = fin.split('/')[-1].replace('.root', '')
+            sname = 'specs-{}.json'.format(fbase)
+            if not os.path.isfile(sname):
+                if verbose:
+                    print("writing specs {}".format(sname))
+                self.reader.write_specs(sname)
+            self.reader.load_specs(sname)
+
+        print("init DataReader in {} sec".format(time.time()-time0))
 
     def __len__(self):
         "Return total number of batches this generator can deliver"
@@ -76,13 +116,18 @@ class DataGenerator(object):
 
     def next(self):
         "Return next batch of events"
-        if self.verbose:
-            print("reading from {} to {}".format(self.start_idx, self.stop_idx))
+        msg = "\nTFaaS read from {} to {}".format(self.start_idx, self.stop_idx))
         gen = self.read_data(self.start_idx, self.stop_idx)
-        self.start_idx += self.stop_idx
-        if self.start_idx >= self.reader.nrows: # reset our indicies
+        # advance start and stop indecies
+        self.start_idx = self.stop_idx
+        self.stop_idx = self.start_idx+self.chunk_size
+        if self.start_idx > self.nevts or self.start_idx > self.reader.nrows:
+            # we reached the limit of the reader
             self.start_idx = 0
-            self.stop_idx = self.nevts
+            self.stop_idx = self.chunk_size
+            raise StopIteration
+        if self.verbose:
+            print(msg)
         data = []
         mask = []
         for (xdf, mdf) in gen:
@@ -127,12 +172,6 @@ class Trainer(object):
         "Predict function of the trainer"
         pass
 
-def xfile(fin):
-    "Test if file is local or remote and setup proper prefix"
-    if os.path.exists(fin):
-        return fin
-    return "root://cms-xrd-global.cern.ch/%s" % fin
-
 def testModel(input_shape):
     "Simple ANN model for testing purposes"
     from keras.models import Sequential
@@ -149,7 +188,7 @@ def testModel(input_shape):
                   metrics=['accuracy'])
     return model
 
-def test(files, params=None, specs=None):
+def testKeras(files, params=None, specs=None):
     """
     Test function demonstrates workflow of setting up data generator and train the model
     over given set of files
@@ -161,7 +200,6 @@ def test(files, params=None, specs=None):
         specs = {}
     for fin in files:
         fin = xfile(fin)
-        print("Reading %s" % fin)
         gen = DataGenerator(fin, params, specs)
         epochs = specs.get('epochs', 10)
         batch_size = specs.get('batch_size', 50)
@@ -196,7 +234,6 @@ def testPyTorch(files, params=None, specs=None):
         specs = {}
     for fin in files:
         fin = xfile(fin)
-        print("Reading %s" % fin)
         gen = DataGenerator(fin, params, specs)
         epochs = specs.get('epochs', 10)
         batch_size = specs.get('batch_size', 50)
@@ -220,7 +257,7 @@ def testPyTorch(files, params=None, specs=None):
                 break
             data = np.array([x_train, x_mask])
             preds = model(data).data.numpy()
-            print("preds {} chunk of {} shape".format(preds, np.shape(preds)))
+            print("preds chunk of {} shape".format(np.shape(preds)))
 
 def main():
     "Main function"
@@ -229,14 +266,18 @@ def main():
     fin = opts.fin
     params = json.load(open(opts.params))
     specs = json.load(open(opts.specs)) if opts.specs else None
-#     gen = DataGenerator(fin, params, specs)
-#     print("Input source: %s, read %s events, can deliver %s batches" % (fin, gen.nevts, len(gen)))
     if os.path.isfile(opts.files):
         files = [f.replace('\n', '') for f in open(opts.files).readlines() if not f.startswith('#')]
     else:
         files = opts.files.split(',')
-    testPyTorch(files, params, specs)
-#     test(files, params, specs)
+    if opts.test.lower() == 'pytorch':
+        # test PyTorch model training with HEP ROOT I/O
+        testPyTorch(files, params, specs)
+    elif opts.test.lower() == 'keras':
+        # test Keras model training with HEP ROOT I/O
+        testKeras(files, params, specs)
+    elif opts.test.lower() == 'tensorflow':
+        raise NotImplemented
 
 if __name__ == '__main__':
     main()
