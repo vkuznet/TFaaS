@@ -162,12 +162,15 @@ class Trainer(object):
         if self.verbose:
             print(self.model.summary())
 
-    def fit(self, x_train, y_train, epochs, batch_size, shuffle=True, split=0.3):
+    def fit(self, data, y_train, **kwds):
         "Fit implementation of the trainer"
+        xdf, mask = data[0], data[1]
+        # cast values in data vector according to the mask
+        xdf[np.isnan(mask)] = 0
         if self.verbose:
-            print("Perform fit on {} data with {} epochs, {} batch_size, {} split"\
-                    .format(np.shape(x_train), epochs, batch_size, split))
-        self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, shuffle=shuffle, validation_split=split, verbose=self.verbose)
+            print("Perform fit on {} data with {}"\
+                    .format(np.shape(xdf), kwds))
+        self.model.fit(xdf, y_train, verbose=self.verbose, **kwds)
 
     def predict(self):
         "Predict function of the trainer"
@@ -207,7 +210,8 @@ def testKeras(files, params=None, specs=None):
         shuffle = specs.get('shuffle', True)
         split = specs.get('split', 0.3)
         trainer = False
-        for (x_train, _mask) in gen:
+        for data in gen:
+            x_train = np.array(data[0])
             if not trainer:
                 input_shape = (np.shape(x_train)[-1],) # read number of attributes we have
                 trainer = Trainer(testModel(input_shape), verbose=params.get('verbose', 0))
@@ -219,7 +223,8 @@ def testKeras(files, params=None, specs=None):
             y_train = np.random.randint(2, size=np.shape(x_train)[0])
             y_train = to_categorical(y_train) # convert labesl to categorical values
             print("y_train {} chunk of {} shape".format(y_train, np.shape(y_train)))
-            trainer.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, shuffle=shuffle, split=split)
+            kwds = {'epochs':epochs, 'batch_size': batch_size, 'shuffle': shuffle, 'validation_split': split}
+            trainer.fit(data, y_train, **kwds)
 
 def testPyTorch(files, params=None, specs=None):
     """
