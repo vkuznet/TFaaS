@@ -498,7 +498,11 @@ class DataReader(object):
             pos = 0
 
         for key in sorted(self.jagged_keys()):
-            vals = rec.get(key, [])
+            # check if key in our record
+            if key in rec.keys():
+                vals = rec.get(key, [])
+            else: # if not convert key to bytes key and use it to look-up a value
+                vals = rec.get(key.encode('utf-8'), [])
             for jdx in range(self.jdim[key]):
                 # assign np.nan in case if we get empty array
                 val = vals[jdx] if len(vals) > jdx else np.nan
