@@ -15,7 +15,9 @@ install:
   - tar xfz $TFLIB
   - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
   - LIBRARY_PATH=$PWD/lib
-  - go get github.com/tensorflow/tensorflow/tensorflow/go
+  - cd $GOPATH/src/github.com/tensorflow/tensorflow/tensorflow/go
+  - git checkout r1.11
+    #- go get github.com/tensorflow/tensorflow/tensorflow/go
   - go get github.com/tensorflow/tensorflow/tensorflow/go/op
   - git clone https://github.com/google/protobuf.git
   - cd protobuf
