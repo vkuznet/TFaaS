@@ -1,11 +1,11 @@
 language: go
 sudo: false
 go:
-  - 1.9
+  - 1.11
 
 env:
   global:
-    - TFLIB=libtensorflow-cpu-linux-x86_64-1.6.0.tar.gz
+    - TFLIB=libtensorflow-cpu-linux-x86_64-1.11.0.tar.gz
     - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TRAVIS_BUILD_DIR/lib
     - LIBRARY_PATH=$TRAVIS_BUILD_DIR/lib
 
