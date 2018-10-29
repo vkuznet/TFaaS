@@ -18,7 +18,8 @@ install:
   - WDIR=$PWD
   - mkdir -p $GOPATH/src/github.com/tensorflow
   - cd $GOPATH/src/github.com/tensorflow
-  - git clone git@github.com:tensorflow/tensorflow.git
+    #- git clone git@github.com:tensorflow/tensorflow.git
+  - git clone https://github.com/tensorflow/tensorflow.git
   - cd tensorflow
   - git checkout r1.11
   - cd $WDIR
