@@ -3,6 +3,8 @@ This folder contains code for MLaaS layers:
 - data streaming layer to handle remote data
 - data training layer to train ML model for given HEP data
 - data inference layer (TFaaS client).
+The general architecture looks like this:
+![BigData-ContiniousNN-MLaaS](https://github.com/vkuznet/TFaaS/blob/master/images/BigData-ContiniousNN-MLaaS.png)
 
 ### How to train ML model on HEP data
 The HEP data are presented in [ROOT](https://root.cern.ch/) data-format.
