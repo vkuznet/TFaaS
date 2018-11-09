@@ -60,4 +60,3 @@ page.
 - [Install instructions](https://github.com/vkuznet/TFaaS/blob/master/doc/INSTALL.md) to build TFaaS from source code
 - [End-to-end example of serving TF model in Go-server](https://github.com/vkuznet/TFaaS/blob/master/doc/workflow.md)
 - [Demo](https://github.com/vkuznet/TFaaS/blob/master/doc/DEMO.md)
-- [CMS experiment use-case](https://github.com/vkuznet/TFaaS/blob/master/doc/CMS.md)
