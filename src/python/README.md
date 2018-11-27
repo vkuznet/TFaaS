@@ -21,16 +21,21 @@ url=http://localhost:8083
     "params":"/path/params.json"
 }
 
-# The model parameters json file should include
-# - model name (should match the one in upload.json file)
-# - model file name (no full path is needed)
-# - model labels file name (no full path is needed)
+# The model parameters json file is used on a TFaaS server side. It context
+# should be the following:
+# - model name (how your model will be named in TFaaS server,
+#               usually match the one from upload.json file)
+# - model file name (name of your model file will be used in TFaaS server,
+#                    usually match the one from upload.json file)
+# - model labels file name (similar to model file name but used for labels file)
+# - description string (provide details about your model)
 # - inputNode of your TF model (can be found by inspecting pbtxt)
 # - outputNode of your TF model (can be found by inspecting pbtxt)
 # For example:
 {
     "name": "model_name",
     "model": "model.pb",
+    "description": "my model description",
     "labels": "labels.txt",
     "inputNode": "dense_1_input",
     "outputNode": "output_node0"
