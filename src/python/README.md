@@ -9,16 +9,31 @@ description of available APIs:
 url=http://localhost:8083
 
 # create upload json file, which should include
-# fully qualified model file name
-# fully qualified labels file name
-# model name you want to assign to your model file
-# fully qualified parameters json file name
+# - fully qualified model file name
+# - fully qualified labels file name
+# - model name you want to assign to your model file
+# - fully qualified model parameters json file name
 # For example, here is a sample of upload json file
 {
-    "model": "/path/model_0228.pb",
+    "model": "/path/model.pb",
     "labels": "/path/labels.txt",
     "name": "model_name",
     "params":"/path/params.json"
+}
+
+# The model parameters json file should include
+# - model name (should match the one in upload.json file)
+# - model file name (no full path is needed)
+# - model labels file name (no full path is needed)
+# - inputNode of your TF model (can be found by inspecting pbtxt)
+# - outputNode of your TF model (can be found by inspecting pbtxt)
+# For example:
+{
+    "name": "model_name",
+    "model": "model.pb",
+    "labels": "labels.txt",
+    "inputNode": "dense_1_input",
+    "outputNode": "output_node0"
 }
 
 # upload given model to the server
