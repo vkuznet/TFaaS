@@ -5,7 +5,7 @@ go:
 
 env:
   global:
-    - TFLIB=libtensorflow-cpu-linux-x86_64-1.11.0.tar.gz
+    - TFLIB=libtensorflow-cpu-linux-x86_64-1.12.0.tar.gz
     - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TRAVIS_BUILD_DIR/lib
     - LIBRARY_PATH=$TRAVIS_BUILD_DIR/lib
 
@@ -21,7 +21,7 @@ install:
     #- git clone git@github.com:tensorflow/tensorflow.git
   - git clone https://github.com/tensorflow/tensorflow.git
   - cd tensorflow
-  - git checkout r1.11
+  - git checkout r1.12
   - cd $WDIR
   - go get github.com/tensorflow/tensorflow/tensorflow/go
   - go get github.com/tensorflow/tensorflow/tensorflow/go/op
