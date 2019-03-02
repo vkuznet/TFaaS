@@ -36,5 +36,5 @@ install:
   - go get github.com/shirou/gopsutil
   - go get github.com/sirupsen/logrus
   - mkdir -p $GOPATH/src/github.com/vkuznet
-  - cd $GOPATH/src/github.com/vkuznet/TFaaS
+  - cd $GOPATH/src/github.com/vkuznet/TFaaS/src/Go
   - make
