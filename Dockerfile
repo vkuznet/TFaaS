@@ -33,7 +33,7 @@ RUN go get github.com/shirou/gopsutil
 
 # download and insta TensorFlow libraries
 # https://www.tensorflow.org/versions/master/install/install_go
-ENV TF_LIB="libtensorflow-cpu-linux-x86_64-1.6.0.tar.gz"
+ENV TF_LIB="libtensorflow-cpu-linux-x86_64-1.12.0.tar.gz"
 RUN curl -k -L -O "https://storage.googleapis.com/tensorflow/libtensorflow/${TF_LIB}"
 RUN tar xfz $TF_LIB
 ENV LIBRARY_PATH="${LIBRARY_PATH}:${WDIR}/lib"
