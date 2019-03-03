@@ -13,8 +13,6 @@ install:
   - mkdir -p $TRAVIS_BUILD_DIR/lib
   - wget https://storage.googleapis.com/tensorflow/libtensorflow/$TFLIB
   - tar xfz $TFLIB
-  - cp lib/* $TRAVIS_BUILD_DIR/lib
-  - ls $TRAVIS_BUILD_DIR/lib
   - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
   - LIBRARY_PATH=$PWD/lib
   - WDIR=$PWD
@@ -41,6 +39,11 @@ install:
   - rm -rf TFaaS
   - git clone https://github.com/vkuznet/TFaaS
   - cd TFaaS
+  - mkdir -p $TRAVIS_BUILD_DIR/lib
+  - wget https://storage.googleapis.com/tensorflow/libtensorflow/$TFLIB
+  - tar xfz $TFLIB
+  - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
+  - LIBRARY_PATH=$PWD/lib
   - ls
   - cp -r src/Go/tfaaspb $GOPATH/src/
   - cd src/Go
