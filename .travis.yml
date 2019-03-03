@@ -13,7 +13,7 @@ install:
   - mkdir -p $TRAVIS_BUILD_DIR/lib
   - wget https://storage.googleapis.com/tensorflow/libtensorflow/$TFLIB
   - tar xfz $TFLIB
-  - cp $TFLIB/lib/* $TRAVIS_BUILD_DIR/lib
+  - cp lib/* $TRAVIS_BUILD_DIR/lib
   - ls $TRAVIS_BUILD_DIR/lib
   - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
   - LIBRARY_PATH=$PWD/lib
