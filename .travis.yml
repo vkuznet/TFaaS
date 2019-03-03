@@ -40,3 +40,4 @@ install:
   - git clone https://github.com/vkuznet/TFaaS
   - cd TFaaS
   - ls
+  - cp src/Go/tfaaspb $GOPATH/src/
