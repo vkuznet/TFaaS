@@ -35,5 +35,8 @@ install:
   - go get github.com/vkuznet/x509proxy
   - go get github.com/shirou/gopsutil
   - go get github.com/sirupsen/logrus
-  - cd $GOPATH/src/github.com/vkuznet/TFaaS
+  - cd $GOPATH/src/github.com/vkuznet
+  - rm -rf TFaaS
+  - git clone https://github.com/vkuznet/TFaaS
+  - cd TFaaS
   - ls
