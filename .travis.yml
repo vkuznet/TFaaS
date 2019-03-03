@@ -48,3 +48,5 @@ install:
   - cp -r src/Go/tfaaspb $GOPATH/src/
   - cd src/Go
   - make
+  - make cleanup
+  - ls
