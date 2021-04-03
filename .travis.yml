@@ -1,11 +1,11 @@
 language: go
 sudo: false
 go:
-  - 1.11
+  - 1.9
 
 env:
   global:
-    - TFLIB=libtensorflow-cpu-linux-x86_64-1.11.0.tar.gz
+    - TFLIB=libtensorflow-cpu-linux-x86_64-1.12.0.tar.gz
     - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$TRAVIS_BUILD_DIR/lib
     - LIBRARY_PATH=$TRAVIS_BUILD_DIR/lib
 
@@ -21,7 +21,7 @@ install:
     #- git clone git@github.com:tensorflow/tensorflow.git
   - git clone https://github.com/tensorflow/tensorflow.git
   - cd tensorflow
-  - git checkout r1.11
+  - git checkout r1.12
   - cd $WDIR
   - go get github.com/tensorflow/tensorflow/tensorflow/go
   - go get github.com/tensorflow/tensorflow/tensorflow/go/op
@@ -35,3 +35,18 @@ install:
   - go get github.com/vkuznet/x509proxy
   - go get github.com/shirou/gopsutil
   - go get github.com/sirupsen/logrus
+  - cd $GOPATH/src/github.com/vkuznet
+  - rm -rf TFaaS
+  - git clone https://github.com/vkuznet/TFaaS
+  - cd TFaaS
+  - mkdir -p $TRAVIS_BUILD_DIR/lib
+  - wget https://storage.googleapis.com/tensorflow/libtensorflow/$TFLIB
+  - tar xfz $TFLIB
+  - LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
+  - LIBRARY_PATH=$PWD/lib
+  - ls
+  - cp -r src/Go/tfaaspb $GOPATH/src/
+  - cd src/Go
+  - make
+  - make cleanup
+  - ls
