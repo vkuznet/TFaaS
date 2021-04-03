@@ -4,12 +4,14 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
 	"time"
 
-	logs "github.com/sirupsen/logrus"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 )
 
 // VERBOSE controls verbosity of the server
@@ -26,25 +28,45 @@ var (
 	_header, _footer, _tmplDir string
 )
 
+// helper function to produce UTC time prefixed output
+func utcMsg(data []byte) string {
+	//     return fmt.Sprintf("[" + time.Now().String() + "] " + string(data))
+	s := string(data)
+	v, e := url.QueryUnescape(s)
+	if e == nil {
+		return v
+	}
+	return s
+}
+
+// custom rotate logger
+type rotateLogWriter struct {
+	RotateLogs *rotatelogs.RotateLogs
+}
+
+func (w rotateLogWriter) Write(data []byte) (int, error) {
+	return w.RotateLogs.Write([]byte(utcMsg(data)))
+}
+
 // Configuration stores dbs configuration parameters
 type Configuration struct {
-	Port         int    `json:"port"`         // dbs port number
-	Auth         string `json:"auth"`         // use authentication or not
-	ModelDir     string `json:"modelDir"`     // location of model directory
-	StaticDir    string `json:"staticDir"`    // speficy static dir location
-	ConfigProto  string `json:"configProto"`  // TF config proto file to use
-	Base         string `json:"base"`         // dbs base path
-	LogFormatter string `json:"logFormatter"` // log formatter
-	Verbose      int    `json:"verbose"`      // verbosity level
-	ServerKey    string `json:"serverKey"`    // server key for https
-	ServerCrt    string `json:"serverCrt"`    // server certificate for https
-	UpdateDNs    int    `json:"updateDNs"`    // interval in minutes to update user DNs
-	CacheLimit   int    `json:"cacheLimit"`   // number of TFModels to keep in cache
+	Port        int    `json:"port"`        // dbs port number
+	Auth        string `json:"auth"`        // use authentication or not
+	ModelDir    string `json:"modelDir"`    // location of model directory
+	StaticDir   string `json:"staticDir"`   // speficy static dir location
+	ConfigProto string `json:"configProto"` // TF config proto file to use
+	Base        string `json:"base"`        // dbs base path
+	LogFile     string `json:"logFile"`     // log file
+	Verbose     int    `json:"verbose"`     // verbosity level
+	ServerKey   string `json:"serverKey"`   // server key for https
+	ServerCrt   string `json:"serverCrt"`   // server certificate for https
+	UpdateDNs   int    `json:"updateDNs"`   // interval in minutes to update user DNs
+	CacheLimit  int    `json:"cacheLimit"`  // number of TFModels to keep in cache
 }
 
 // String returns string representation of server configuration
 func (c *Configuration) String() string {
-	return fmt.Sprintf("<Config port=%d modelDir=%s staticDir=%s base=%s auth=%s configProt=%s verbose=%d log=%s crt=%s key=%s>", c.Port, c.ModelDir, c.StaticDir, c.Base, c.Auth, c.ConfigProto, c.Verbose, c.LogFormatter, c.ServerCrt, c.ServerKey)
+	return fmt.Sprintf("<Config port=%d modelDir=%s staticDir=%s base=%s auth=%s configProt=%s verbose=%d log=%s crt=%s key=%s>", c.Port, c.ModelDir, c.StaticDir, c.Base, c.Auth, c.ConfigProto, c.Verbose, c.LogFile, c.ServerCrt, c.ServerKey)
 }
 
 // helper function to return current version
@@ -86,9 +108,27 @@ func main() {
 	_client = httpClient()
 	err = parseConfig(config)
 	if err != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-		}).Fatal("Unable to parse config")
+		log.Println("unable to parse config", err)
+	}
+
+	// setup config
+	if _config.LogFile != "" {
+		logName := _config.LogFile + "-%Y%m%d"
+		hostname, err := os.Hostname()
+		if err == nil {
+			logName = _config.LogFile + "-" + hostname + "-%Y%m%d"
+		}
+		rl, err := rotatelogs.New(logName)
+		if err == nil {
+			rotlogs := rotateLogWriter{RotateLogs: rl}
+			log.SetOutput(rotlogs)
+			log.SetFlags(log.LstdFlags | log.Lshortfile)
+		} else {
+			log.SetFlags(log.LstdFlags | log.Lshortfile)
+		}
+	} else {
+		// log time, filename, and line number
+		log.SetFlags(log.LstdFlags | log.Lshortfile)
 	}
 
 	// create session options from given config TF proto file
@@ -145,7 +185,7 @@ func main() {
 						interval = 60
 					}
 					d := time.Duration(interval) * time.Minute
-					logs.WithFields(logs.Fields{"Time": time.Now(), "Duration": d}).Info("userDNs are updated")
+					log.Println("userDNs are updated", time.Now())
 					time.Sleep(d) // sleep for next iteration
 					_userDNs = UserDNs{DNs: userDNs(), Time: time.Now()}
 				}
@@ -159,26 +199,18 @@ func main() {
 			},
 		}
 		if _, err := os.Open(_config.ServerKey); err != nil {
-			logs.WithFields(logs.Fields{
-				"Error": err,
-				"File":  _config.ServerKey,
-			}).Error("unable to open server key file")
+			log.Println("unable to open server key file", _config.ServerKey, err)
 		}
 		if _, err := os.Open(_config.ServerCrt); err != nil {
-			logs.WithFields(logs.Fields{
-				"Error": err,
-				"File":  _config.ServerCrt,
-			}).Error("unable to open server cert file")
+			log.Println("unable to open server cert file", _config.ServerCrt, err)
 		}
-		logs.WithFields(logs.Fields{"Addr": addr}).Info("Starting HTTPs server")
+		log.Println("starting HTTPs server", addr)
 		err = server.ListenAndServeTLS(_config.ServerCrt, _config.ServerKey)
 	} else {
-		logs.WithFields(logs.Fields{"Addr": addr}).Info("Starting HTTP server")
+		log.Println("starting HTTP server", addr)
 		err = http.ListenAndServe(addr, nil)
 	}
 	if err != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-		}).Fatal("ListenAndServe: ")
+		log.Fatal(err)
 	}
 }

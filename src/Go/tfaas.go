@@ -6,15 +6,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"sort"
 	"time"
 
-	tf "github.com/tensorflow/tensorflow/tensorflow/go"
-	"github.com/tensorflow/tensorflow/tensorflow/go/op"
-
-	logs "github.com/sirupsen/logrus"
+	tf "github.com/galeone/tensorflow/tensorflow/go"
+	"github.com/galeone/tensorflow/tensorflow/go/op"
+	tg "github.com/galeone/tfgo"
 )
+
+// tfCache represent cache for TF 2.X models
+var tfCache map[string]*tg.Model
 
 // ClassifyResult structure represents result of our TF model classification
 type ClassifyResult struct {
@@ -71,10 +74,7 @@ func (m *TFModel) loadModel() error {
 	modelPath := fmt.Sprintf("%s/%s/%s", _config.ModelDir, m.Params.Name, m.Params.Model)
 	modelLabels := fmt.Sprintf("%s/%s/%s", _config.ModelDir, m.Params.Name, m.Params.Labels)
 	if VERBOSE > 0 {
-		logs.WithFields(logs.Fields{
-			"Path":   modelPath,
-			"Labels": modelLabels,
-		}).Info("load to cache")
+		log.Println("load to cache", modelPath, modelLabels)
 	}
 	graph, labels, err := loadModel(modelPath, modelLabels)
 	if err != nil {
@@ -102,15 +102,11 @@ func (c *TFCache) add(name string) error {
 	if _, ok := c.Models[name]; ok {
 		return nil
 	}
-	logs.WithFields(logs.Fields{
-		"Model": name,
-	}).Info("load to cache")
+	log.Println("load to cache", name)
 	path := fmt.Sprintf("%s/%s", _config.ModelDir, name)
 	fname := fmt.Sprintf("%s/params.json", path)
 	if VERBOSE > 0 {
-		logs.WithFields(logs.Fields{
-			"File": fname,
-		}).Info("add to TFCache")
+		log.Println("add to TFCache", fname)
 	}
 	file, err := os.Open(fname)
 	defer file.Close()
@@ -125,24 +121,18 @@ func (c *TFCache) add(name string) error {
 		params.TimeStamp = time.Now().String()
 	}
 	if VERBOSE > 0 {
-		logs.WithFields(logs.Fields{
-			"params": params,
-		}).Info("add to TFCache")
+		log.Println("add to TFCache", params)
 	}
 	tfm := TFModel{Params: params}
 	err = tfm.loadModel()
 	if err == nil {
 		c.Models[params.Name] = TFCacheEntry{TFModel: tfm, Time: time.Now()}
 	} else {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-		}).Error("Unable to load TF model")
+		log.Println("unable to load TF model", err)
 
 	}
 	if VERBOSE > 0 {
-		logs.WithFields(logs.Fields{
-			"TFCache": c,
-		}).Info("add to TFCache")
+		log.Println("add to TFCache", c)
 	}
 	return err
 }
@@ -197,9 +187,7 @@ func readConfigProto(fname string) *tf.SessionOptions {
 		if err == nil {
 			session = tf.SessionOptions{Config: body}
 		} else {
-			logs.WithFields(logs.Fields{
-				"Error": err,
-			}).Error("Unable to read TF config proto file")
+			log.Println("unable to read TF config proto file", err)
 		}
 	}
 	return &session
@@ -215,10 +203,7 @@ func loadModel(fname, flabels string) (*tf.Graph, []string, error) {
 		return graph, labels, err
 	}
 	if err := graph.Import(model, ""); err != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-			"File":  fname,
-		}).Error("Unable to import graph model")
+		log.Println("unable to import graph model", fname, err)
 		return graph, labels, err
 	}
 	// Load labels
@@ -235,16 +220,81 @@ func loadModel(fname, flabels string) (*tf.Graph, []string, error) {
 	if err := scanner.Err(); err != nil {
 		return graph, labels, err
 	}
-	logs.WithFields(logs.Fields{
-		"Model":  fname,
-		"Labels": flabels,
-	}).Info("load TF model")
+	log.Println("load TF model", fname, flabels)
 	return graph, labels, nil
 }
 
 // helper function to generate predictions based on given row values
-// influenced by: https://pgaleone.eu/tensorflow/go/2017/05/29/understanding-tensorflow-using-go/
+// either TF 2.X models via tfgo or TF 1.X models via graph loading
 func makePredictions(row *Row) ([]float32, error) {
+	name := _params.Name
+	if row.Model != "" {
+		name = row.Model
+	}
+	// if model area has assets, variables and saved_model.pb
+	// we will use TF 2.X approach based on tfgo
+	path := fmt.Sprintf("%s/%s", _config.ModelDir, name)
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return []float32{}, err
+	}
+	var fnames []string
+	for _, file := range files {
+		fnames = append(fnames, file.Name())
+	}
+	if InList("assets", fnames) && InList("variables", fnames) && InList("saved_model.pb", fnames) {
+		return makePredictions2(row)
+	}
+	return makePredictions1(row)
+}
+
+// helper function to generate predictions based on given row values
+// based on tfgo
+func makePredictions2(row *Row) ([]float32, error) {
+	// our input is a vector, we wrap it into matrix ([ [1,1,...], [], ...])
+	matrix := [][]float32{row.Values}
+	// create tensor vector for our computations
+	tensor, err := tf.NewTensor(matrix)
+	if err != nil {
+		return nil, err
+	}
+
+	// load TF model, saved as keras with the following dir structure
+	// assets saved_model.pb variables
+	name := _params.Name
+	if row.Model != "" {
+		name = row.Model
+	}
+	// look-up model from out cache
+	if tfCache == nil {
+		tfCache = make(map[string]*tg.Model)
+	}
+	var model *tg.Model
+	var ok bool
+	model, ok = tfCache[name]
+	if !ok {
+		path := fmt.Sprintf("%s/%s", _config.ModelDir, name)
+		model = tg.LoadModel(path, []string{"serve"}, nil)
+		tfCache[name] = model
+	}
+
+	//     path := fmt.Sprintf("%s/%s", _config.ModelDir, name)
+	//     model := tg.LoadModel(path, []string{"serve"}, nil)
+	results := model.Exec([]tf.Output{
+		model.Op("StatefulPartitionedCall", 0),
+	}, map[tf.Output]*tf.Tensor{
+		model.Op("serving_default_inputs_input", 0): tensor,
+	})
+	probs := results[0]
+	value := probs.Value() // returns [][]float32 vector
+	vals := value.([][]float32)
+	return vals[0], nil
+}
+
+// helper function to generate predictions based on given row values
+// based on TF 1.X models
+// influenced by: https://pgaleone.eu/tensorflow/go/2017/05/29/understanding-tensorflow-using-go/
+func makePredictions1(row *Row) ([]float32, error) {
 	// our input is a vector, we wrap it into matrix ([ [1,1,...], [], ...])
 	matrix := [][]float32{row.Values}
 	// create tensor vector for our computations
@@ -260,10 +310,7 @@ func makePredictions(row *Row) ([]float32, error) {
 	}
 	tfm, err := _cache.get(model)
 	if err != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-			"Model": model,
-		}).Error("Unable to get model from the cache")
+		log.Println("unable to get model from cache", model, err)
 		return nil, err
 	}
 

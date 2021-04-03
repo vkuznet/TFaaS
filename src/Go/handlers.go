@@ -2,11 +2,13 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"runtime"
@@ -15,13 +17,11 @@ import (
 	"tfaaspb"
 	"time"
 
+	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"github.com/golang/protobuf/proto"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
-	tf "github.com/tensorflow/tensorflow/tensorflow/go"
-
-	logs "github.com/sirupsen/logrus"
 )
 
 // TotalGetRequests counts total number of GET requests received by the server
@@ -32,10 +32,7 @@ var TotalPostRequests uint64
 
 // helper function to provide response
 func responseError(w http.ResponseWriter, msg string, err error, code int) {
-	logs.WithFields(logs.Fields{
-		"Message": msg,
-		"Error":   err,
-	}).Error(msg)
+	log.Println("message", msg, "error", err)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(map[string]string{"error": msg})
@@ -122,13 +119,9 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	if VERBOSE > 0 {
 		devices, err := session.ListDevices()
 		if err == nil {
-			logs.WithFields(logs.Fields{
-				"Devices": devices,
-			}).Info("node availbility")
+			log.Println("devices", devices)
 		} else {
-			logs.WithFields(logs.Fields{
-				"Error": err,
-			}).Info("node availbility")
+			log.Println("node availability", err)
 		}
 	}
 	output, err := session.Run(
@@ -160,9 +153,7 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 // PredictProtobufHandler send prediction from TF ML model
 func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "POST") {
-		logs.WithFields(logs.Fields{
-			"Method": r.Method,
-		}).Error("call PredictHandler with")
+		log.Println("call PredictHandler with", r.Method)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		responseError(w, fmt.Sprintf("wrong method: %v", r.Method), nil, http.StatusMethodNotAllowed)
 		return
@@ -180,9 +171,7 @@ func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if VERBOSE > 0 {
-		logs.WithFields(logs.Fields{
-			"Data": recs,
-		}).Info("received")
+		log.Println("received", recs)
 	}
 
 	// convert tfaaspb.Row into Row
@@ -204,10 +193,7 @@ func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if VERBOSE > 0 {
-		logs.WithFields(logs.Fields{
-			"Inputs": records,
-			"Probs":  probs,
-		}).Info("respose")
+		log.Println("response inputs", records, "probs", probs)
 	}
 
 	// wrap our probabilities into Predictions class
@@ -228,9 +214,7 @@ func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
 // PredictHandler send prediction from TF ML model
 func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "POST") {
-		logs.WithFields(logs.Fields{
-			"Method": r.Method,
-		}).Error("call PredictHandler with")
+		log.Println("call PredictHandler with", r.Method)
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		responseError(w, fmt.Sprintf("wrong method: %v", r.Method), nil, http.StatusMethodNotAllowed)
 		return
@@ -248,9 +232,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if VERBOSE > 0 {
-		logs.WithFields(logs.Fields{
-			"Data": recs,
-		}).Info("received")
+		log.Println("received", recs)
 	}
 
 	// generate predictions
@@ -263,6 +245,61 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST methods
+// GzipReader struct to handle GZip'ed content of HTTP requests
+type GzipReader struct {
+	*gzip.Reader
+	io.Closer
+}
+
+// helper function to close gzip reader
+func (gz GzipReader) Close() error {
+	return gz.Closer.Close()
+}
+
+// UploadBundleHandler uploads TF models into the server
+func UploadBundleHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	var err error
+	var bundle []byte
+	defer r.Body.Close()
+	if r.Header.Get("Content-Encoding") == "gzip" {
+		r.Header.Del("Content-Length")
+		reader, err := gzip.NewReader(r.Body)
+		if err != nil {
+			log.Println("unable to get gzip reader", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		body := GzipReader{reader, r.Body}
+		bundle, err = ioutil.ReadAll(body)
+	} else {
+		bundle, err = ioutil.ReadAll(r.Body)
+	}
+	if err != nil {
+		log.Println("unable to read body", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	//     fname := fmt.Sprintf("/tmp/bundle.tar")
+	fname := fmt.Sprintf("%s/bundle.tar", os.TempDir())
+	defer os.Remove(fname)
+	err = ioutil.WriteFile(fname, bundle, 0600)
+	if err != nil {
+		log.Println("unable to write fname", fname, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	err = Untar(fname, _config.ModelDir)
+	if err != nil {
+		log.Println("unable to untar", fname, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
 
 // UploadHandler uploads TF models into the server
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
@@ -273,9 +310,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	if VERBOSE > 0 {
-		logs.WithFields(logs.Fields{
-			"Header": r.Header,
-		}).Info("UploadHandler")
+		log.Println("UploadHandler", r.Header)
 	}
 	ctype := r.Header.Get("Content-Encoding")
 	var mkey, path string
@@ -312,9 +347,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		if name == "params" && fname != "params.json" {
 			fname = "params.json"
 			msg := fmt.Sprintf("store as %s", fname)
-			logs.WithFields(logs.Fields{
-				"FileName": header.Filename,
-			}).Info(msg)
+			log.Println("file", header.Filename, msg)
 		}
 		fileName := fmt.Sprintf("%s/%s", path, fname)
 
@@ -340,9 +373,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 				responseError(w, msg, err, http.StatusInternalServerError)
 				return
 			}
-			logs.WithFields(logs.Fields{
-				"params": params.String(),
-			}).Info("TF model parameters")
+			log.Println("TF model parameters", params.String())
 		}
 
 		if ctype == "base64" && name == "model" {
@@ -366,9 +397,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		logs.WithFields(logs.Fields{
-			"File": fileName,
-		}).Info("Uploaded")
+		log.Println("Uploaded", fileName)
 	}
 	// set current parameters set
 	_params = params
@@ -381,9 +410,7 @@ func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		data, err := json.Marshal(_params)
 		if err != nil {
-			logs.WithFields(logs.Fields{
-				"Error": err,
-			}).Error("ParamsHandler unable to marshal")
+			log.Println("ParamsHandler unable to marshal", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -394,15 +421,11 @@ func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	var params TFParams
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err,
-		}).Error("ParamsHandler unable to marshal")
+		log.Println("ParamsHandler unable to decode", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	logs.WithFields(logs.Fields{
-		"Params": params,
-	}).Info("update TF parameters")
+	log.Println("update TF parameters", params)
 	if !strings.HasPrefix(params.Labels, "/") {
 		params.Labels = fmt.Sprintf("%s/%s", _config.ModelDir, params.Labels)
 	}
@@ -466,6 +489,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	switch path {
 	case "upload":
 		UploadHandler(w, r)
+	case "bundle":
+		UploadBundleHandler(w, r)
 	case "delete":
 		DeleteHandler(w, r)
 	case "data":
@@ -546,9 +571,7 @@ func NetronHandler(w http.ResponseWriter, r *http.Request) {
 	//     fmt.Println("ifile", ifile)
 	page, err := ioutil.ReadFile(ifile)
 	if err != nil {
-		logs.WithFields(logs.Fields{
-			"Path": r.URL.Path,
-		}).Error("unable to load")
+		log.Println("unable to load", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

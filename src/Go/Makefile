@@ -1,7 +1,7 @@
-TMPDIR:=$(PWD)/tmp
-GOPATH:=$(TMPDIR):${GOPATH}
-OLDPWD:=$(PWD)
-export GOPATH
+# TMPDIR:=$(PWD)/tmp
+# GOPATH:=$(TMPDIR):${GOPATH}
+# OLDPWD:=$(PWD)
+# export GOPATH
 OS := $(shell uname)
 ifeq ($(OS),Darwin)
 flags=-ldflags="-s -w"
@@ -13,7 +13,7 @@ flags=-ldflags="-s -w"
 endif
 TAG := $(shell git tag | sort -r | head -n 1)
 
-all: prepare build cleanup
+all: build
 
 prepare: cleanup
 	mkdir -p $(TMPDIR)/src

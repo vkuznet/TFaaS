@@ -1,16 +1,19 @@
 package main
 
 import (
+	"archive/tar"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"os/user"
+	"path/filepath"
 	"time"
 
-	logs "github.com/sirupsen/logrus"
 	"github.com/vkuznet/x509proxy"
 )
 
@@ -48,7 +51,7 @@ func tlsCerts() ([]tls.Certificate, error) {
 	}
 	if uproxy == "" && uckey == "" { // user doesn't have neither proxy or user certs
 		if Auth == "true" {
-			logs.Fatal("Neither proxy or user certs are found, use X509_USER_PROXY/X509_USER_KEY/X509_USER_CERT to set them up or run with -auth false")
+			log.Fatal("Neither proxy or user certs are found, use X509_USER_PROXY/X509_USER_KEY/X509_USER_CERT to set them up or run with -auth false")
 		}
 		return nil, nil
 	}
@@ -74,7 +77,7 @@ func httpClient() *http.Client {
 	// get X509 certs
 	certs, err := tlsCerts()
 	if err != nil {
-		logs.Warn(err.Error())
+		log.Println(err.Error())
 		return &http.Client{}
 	}
 	if len(certs) == 0 {
@@ -92,33 +95,25 @@ func userDNs() []string {
 	rurl := "https://cmsweb.cern.ch/sitedb/data/prod/people"
 	req, err1 := http.NewRequest("GET", rurl, nil)
 	if err1 != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err1,
-		}).Error("Unable to make GET request")
+		log.Println("Unable to make GET request", err1)
 		return out
 	}
 	req.Header.Add("Accept", "*/*")
 	resp, err2 := _client.Do(req)
 	if err2 != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err2,
-		}).Error("Unable to place HTTP request")
+		log.Println("Unable to place HTTP request", err2)
 		return out
 	}
 	defer resp.Body.Close()
 	data, err3 := ioutil.ReadAll(resp.Body)
 	if err3 != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err3,
-		}).Error("Unable to make GET request")
+		log.Println("Unable to make GET request", err3)
 		return out
 	}
 	var rec map[string]interface{}
 	err4 := json.Unmarshal(data, &rec)
 	if err4 != nil {
-		logs.WithFields(logs.Fields{
-			"Error": err4,
-		}).Error("Unable to unmarshal response")
+		log.Println("Unable to unmarshal response", err4)
 		return out
 	}
 	desc := rec["desc"].(map[string]interface{})
@@ -145,15 +140,15 @@ func userDNs() []string {
 func parseConfig(configFile string) error {
 	data, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		logs.WithFields(logs.Fields{"configFile": configFile}).Fatal("Unable to read", err)
+		log.Println("configFile", configFile, err)
 		return err
 	}
 	err = json.Unmarshal(data, &_config)
 	if err != nil {
-		logs.WithFields(logs.Fields{"configFile": configFile}).Fatal("Unable to parse", err)
+		log.Println("configFile", configFile, err)
 		return err
 	}
-	logs.Info(_config.String())
+	log.Println(_config.String())
 	return nil
 }
 
@@ -191,9 +186,7 @@ func auth(r *http.Request) bool {
 	userDN := UserDN(r)
 	match := InList(userDN, _userDNs.DNs)
 	if !match {
-		logs.WithFields(logs.Fields{
-			"User DN": userDN,
-		}).Error("Auth userDN not found in SiteDB")
+		log.Println("userDN not found in SiteDB", userDN)
 	}
 	return match
 }
@@ -226,4 +219,43 @@ func TFModels() ([]TFParams, error) {
 		}
 	}
 	return models, nil
+}
+
+// https://golangdocs.com/tar-gzip-in-golang
+func Untar(tarball, target string) error {
+	reader, err := os.Open(tarball)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+	tarReader := tar.NewReader(reader)
+
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+
+		path := filepath.Join(target, header.Name)
+		info := header.FileInfo()
+		if info.IsDir() {
+			if err = os.MkdirAll(path, info.Mode()); err != nil {
+				return err
+			}
+			continue
+		}
+
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, info.Mode())
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		_, err = io.Copy(file, tarReader)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
