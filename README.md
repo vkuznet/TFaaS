@@ -12,11 +12,12 @@ favorite TF models via HTTP interface. The TFaaS supports JSON and ProtoBuffer
 data-formats.
 
 The following set of APIs is provided:
-- ![#c5f015](https://placehold.it/15/c5f015/000000?text=+) `/upload` to push your favorite TF model to TFaaS server
-- ![#f03c15](https://placehold.it/15/f03c15/000000?text=+) `/delete` to delete your TF model from TFaaS server
-- ![#1589F0](https://placehold.it/15/1589F0/000000?text=+) `/models` to view existing TF models on TFaaS server
-- ![#521b92](https://placehold.it/15/521b92/000000?text=+) `/json` to serve TF model predictions in JSON data-format
-- ![#9437ff](https://placehold.it/15/9437ff/000000?text=+) `/proto` to serve TF model predictions in ProtoBuffer data-format
+- `/upload` to push your favorite TF model to TFaaS server
+- `/bundle` to push your favorite TF model bundle (tar-ball) to TFaaS server
+- `/delete` to delete your TF model from TFaaS server
+- `/models` to view existing TF models on TFaaS server
+- `/json` to serve TF model predictions in JSON data-format
+- `/proto` to serve TF model predictions in ProtoBuffer data-format
 
 ### From deployment to production
 #### &#10112; install docker image (TFaaS port is 8083)
@@ -26,14 +27,39 @@ docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
 
 #### &#10113; upload your TF model to TFaaS server
 ```
+# example of image based model upload
 curl -X POST http://localhost:8083/upload
 -F 'name=ImageModel' -F 'params=@/path/params.json'
 -F 'model=@/path/tf_model.pb' -F 'labels=@/path/labels.txt'
+
+# example of TF pb file upload
+curl -s -X POST http:/localhost:8083/upload \
+    -F 'name=vk' -F 'params=@/path/params.json' \
+    -F 'model=@/path/model.pb' -F 'labels=@/path/labels.txt'
+
+# example of bundle upload produce with Keras TF
+# here is our saved model area
+ls model
+assets         saved_model.pb variables
+# we can create tarball and upload it to TFaaS via bundle end-point
+tar cfz model.tar.gz model
+curl -X POST -H "Content-Encoding: gzip" \
+             -H "content-type: application/octet-stream" \
+             --data-binary @/tmp/models.tar.gz http://localhost:8083/bundle
 ```
 
 #### &#10114; get your predictions
 ```
+# obtain predictions from your ImageModel
 curl https://localhost:8083/image -F 'image=@/path/file.png' -F 'model=ImageModel'
+
+# obtain predictions from your TF based model
+cat input.json
+{"keys": [...], "values": [...], "model":"model"}
+
+# call to get predictions from /json end-point using input.json
+curl -s -X POST -H "Content-type: application/json" \
+    -d@/path/input.json http://localhost:8083/json
 ```
 
 Fore more information please visit [curl client](https://github.com/vkuznet/TFaaS/blob/master/doc/curl_client.md) page.
