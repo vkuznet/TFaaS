@@ -285,8 +285,7 @@ func UploadBundleHandler(w http.ResponseWriter, r *http.Request) {
 			responseError(w, msg, err, http.StatusInternalServerError)
 			return
 		}
-		body := GzipReader{reader, r.Body}
-		bundle, err = ioutil.ReadAll(body)
+		bundle, err = ioutil.ReadAll(GzipReader{reader, r.Body})
 	} else {
 		bundle, err = ioutil.ReadAll(r.Body)
 	}
@@ -549,7 +548,7 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	tmplData["postRequests"] = TotalPostRequests
 	data, err := json.Marshal(tmplData)
 	if err != nil {
-		msg := "unabel to marshal data"
+		msg := "unable to marshal data"
 		responseError(w, msg, err, http.StatusMethodNotAllowed)
 		return
 	}
