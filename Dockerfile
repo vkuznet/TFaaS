@@ -39,5 +39,5 @@ ENV LD_LIBRARY_PATH="${WDIR}/lib"
 ENV PATH="${WDIR}:${PATH}"
 
 # run the service
-RUN mkdir models
+WORKDIR ${WDIR}
 CMD ["tfaas",  "-config", "config.json"]
