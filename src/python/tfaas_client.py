@@ -42,6 +42,8 @@ class OptionParser():
             dest="url", default="", help="TFaaS URL")
         self.parser.add_argument("--upload", action="store",
             dest="upload", default="", help="upload model to TFaaS")
+        self.parser.add_argument("--bundle", action="store",
+            dest="bundle", default="", help="upload bundle ML files to TFaaS")
         self.parser.add_argument("--predict", action="store",
             dest="predict", default="", help="fetch prediction from TFaaS")
         self.parser.add_argument("--image", action="store",
@@ -223,6 +225,13 @@ def delete(host, model, verbose=None, ckey=None, cert=None, capath=None):
     headers['Content-length'] = len(edata)
     headers['Content-Type'] = form.get_content_type()
     return getdata(url, headers, edata, ckey, cert, capath, verbose, method='DELETE')
+
+def bundle(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
+    "bundle API uploads given bundle model files to TFaaS server"
+    url = host + '/bundle'
+    client = '%s (%s)' % (TFAAS_CLIENT, os.environ.get('USER', ''))
+    headers = {"User-Agent": client, "Content-Encoding": "gzip", "Content-Type": "application/octet-stream"}
+    return getdata(url, headers, edata, ckey, cert, capath, verbose)
 
 def upload(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
     "upload API uploads given model to TFaaS server"
