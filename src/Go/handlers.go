@@ -241,6 +241,7 @@ func PredictHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST methods
+
 // GzipReader struct to handle GZip'ed content of HTTP requests
 type GzipReader struct {
 	*gzip.Reader
@@ -591,6 +592,7 @@ func NetronHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // DELETE APIs
+
 // DeleteHandler authenticate incoming requests and route them to appropriate handler
 func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "DELETE" {

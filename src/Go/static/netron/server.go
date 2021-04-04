@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// RequestHandler provides HTTP request handler
 func RequestHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusMethodNotAllowed)

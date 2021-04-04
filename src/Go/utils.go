@@ -221,7 +221,8 @@ func TFModels() ([]TFParams, error) {
 	return models, nil
 }
 
-// https://golangdocs.com/tar-gzip-in-golang
+// Untar helper function to untar given tarball into target destination
+// based on https://golangdocs.com/tar-gzip-in-golang
 func Untar(tarball, target string) error {
 	reader, err := os.Open(tarball)
 	if err != nil {
