@@ -13,7 +13,6 @@ import (
 	"os"
 	"runtime"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	tf "github.com/galeone/tensorflow/tensorflow/go"
@@ -72,10 +71,6 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 
 // ImageHandler send prediction from TF ML model
 func ImageHandler(w http.ResponseWriter, r *http.Request) {
-	if !(r.Method == "POST") {
-		responseError(w, fmt.Sprintf("wrong HTTP method: %v", r.Method), nil, http.StatusMethodNotAllowed)
-		return
-	}
 	model := r.FormValue("model")
 	if model == "" {
 		msg := fmt.Sprintf("unable to read %s model", model)
@@ -152,10 +147,6 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 
 // PredictProtobufHandler send prediction from TF ML model
 func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
-	if !(r.Method == "POST") {
-		responseError(w, fmt.Sprintf("wrong HTTP method: %v", r.Method), nil, http.StatusMethodNotAllowed)
-		return
-	}
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -211,10 +202,6 @@ func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
 
 // PredictHandler send prediction from TF ML model
 func PredictHandler(w http.ResponseWriter, r *http.Request) {
-	if !(r.Method == "POST") {
-		responseError(w, fmt.Sprintf("wrong HTTP method: %v", r.Method), nil, http.StatusMethodNotAllowed)
-		return
-	}
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -255,10 +242,6 @@ func (gz GzipReader) Close() error {
 
 // UploadHandler uploads TF models into the server
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
 	if r.FormValue("model") == "model" {
 		// we received request for upload via form values
 		UploadFormHandler(w, r)
@@ -269,11 +252,6 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 
 // UploadBundleHandler uploads TF models into the server
 func UploadBundleHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		msg := "wrong HTTP method"
-		responseError(w, msg, nil, http.StatusMethodNotAllowed)
-		return
-	}
 	var err error
 	var bundle []byte
 	defer r.Body.Close()
@@ -314,11 +292,6 @@ func UploadBundleHandler(w http.ResponseWriter, r *http.Request) {
 
 // UploadFormHandler uploads TF models into the server via form key-value pairs
 func UploadFormHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		msg := "wrong HTTP method"
-		responseError(w, msg, nil, http.StatusMethodNotAllowed)
-		return
-	}
 	defer r.Body.Close()
 
 	if VERBOSE > 0 {
@@ -455,6 +428,7 @@ func ModelsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		msg := fmt.Sprintf("Unable to get TF models")
 		responseError(w, msg, err, http.StatusInternalServerError)
+		return
 	}
 	responseJSON(w, models)
 }
@@ -473,63 +447,8 @@ func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(_header + main + _footer))
 }
 
-// AuthHandler authenticate incoming requests and route them to appropriate handler
-func AuthHandler(w http.ResponseWriter, r *http.Request) {
-	// check if server started with hkey file (auth is required)
-	if Auth == "true" {
-		status := auth(r)
-		if !status {
-			msg := "not allowed access this resource"
-			responseError(w, msg, nil, http.StatusForbidden)
-			return
-		}
-	}
-	// increment GET/POST counters
-	if r.Method == "GET" {
-		atomic.AddUint64(&TotalGetRequests, 1)
-	}
-	if r.Method == "POST" {
-		atomic.AddUint64(&TotalPostRequests, 1)
-	}
-	path := r.URL.Path
-	if _config.Base != "" {
-		path = strings.Replace(path, _config.Base, "", 1)
-	}
-	arr := strings.Split(path, "/")
-	path = arr[1]
-	switch path {
-	case "upload":
-		UploadHandler(w, r)
-	case "delete":
-		DeleteHandler(w, r)
-	case "data":
-		DataHandler(w, r)
-	case "json":
-		PredictHandler(w, r)
-	case "proto":
-		PredictProtobufHandler(w, r)
-	case "image":
-		ImageHandler(w, r)
-	case "params":
-		ParamsHandler(w, r)
-	case "models":
-		ModelsHandler(w, r)
-	case "status":
-		StatusHandler(w, r)
-	case "netron":
-		NetronHandler(w, r)
-	default:
-		DefaultHandler(w, r)
-	}
-}
-
 // StatusHandler handlers Status requests
 func StatusHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		msg := "wrong HTTP method"
-		responseError(w, msg, nil, http.StatusMethodNotAllowed)
-		return
-	}
 	// get cpu and mem profiles
 	m, _ := mem.VirtualMemory()
 	s, _ := mem.SwapMemory()
@@ -560,11 +479,6 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 // NetronHandler provides hook to netron visualization library for graphs,
 // see https://github.com/lutzroeder/Netron
 func NetronHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		msg := "wrong HTTP method"
-		responseError(w, msg, nil, http.StatusMethodNotAllowed)
-		return
-	}
 	var endPoint string
 	base := strings.TrimLeft(_config.Base, "/")
 	for _, v := range strings.Split(r.URL.Path, "/") {
@@ -575,17 +489,31 @@ func NetronHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var ifile string
 	endPoint = strings.TrimLeft(endPoint, "/")
-	if endPoint == "" || endPoint == "netron" {
-		ifile = fmt.Sprintf("%s/netron/%s", _config.StaticDir, "view-browser.html")
-	} else {
-		ifile = fmt.Sprintf("%s/netron/%s", _config.StaticDir, endPoint)
+	sdir := _config.StaticDir
+	if sdir == "" {
+		sdir = "static"
 	}
-	//     fmt.Println("ifile", ifile)
+	if endPoint == "" || endPoint == "netron" {
+		ifile = fmt.Sprintf("%s/netron/%s", sdir, "view-browser.html")
+	} else {
+		ifile = fmt.Sprintf("%s/netron/%s", sdir, endPoint)
+	}
+	//     log.Println("ifile", ifile, http.Dir(ifile))
 	page, err := ioutil.ReadFile(ifile)
 	if err != nil {
+		log.Println("netron", err)
 		msg := fmt.Sprintf("unable to load %s", r.URL.Path)
 		responseError(w, msg, err, http.StatusInternalServerError)
 		return
+	}
+	if strings.HasSuffix(ifile, "css") {
+		w.Header().Add("Content-Type", "text/css")
+	} else if strings.HasSuffix(ifile, "js") {
+		w.Header().Add("Content-Type", "text/javascript")
+	} else if strings.HasSuffix(ifile, "png") {
+		w.Header().Add("Content-Type", "image/png")
+	} else if strings.HasSuffix(ifile, "psvg") {
+		w.Header().Add("Content-Type", "image/svg")
 	}
 	w.Write(page)
 }
@@ -594,11 +522,6 @@ func NetronHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteHandler authenticate incoming requests and route them to appropriate handler
 func DeleteHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "DELETE" {
-		msg := "wrong HTTP method"
-		responseError(w, msg, nil, http.StatusMethodNotAllowed)
-		return
-	}
 	model := r.FormValue("model")
 	files, err := ioutil.ReadDir(_config.ModelDir)
 	if err != nil {
