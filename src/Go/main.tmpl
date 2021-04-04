@@ -1,0 +1,557 @@
+<div class="row">
+    <div class="col col-6"></div>
+    <div class="col col-4">
+        <nav class="tabs" data-component="tabs">
+            <ul>
+                <li class="active"><a href="#tab1">Home</a></li>
+                <li><a href="#tab2">Download</a></li>
+                <li><a href="#tab3">Models</a></li>
+                <li><a href="#tab4">FAQ</a></li>
+                <li><a href="https://github.com/vkuznet/TFaaS">GitHub</a></li>
+            </ul>
+        </nav>
+    </div>
+    <div class="col col-2"></div>
+</div>
+
+<p class="vertical-space1"></p>
+
+<div id="tab1">
+
+    <div class="row">
+        <div class="col col-2"></div>
+        <div class="col col-2">
+            <div>
+            <figure>
+                <img src="{{.Base}}/images/tfaas_logo.png" alt="TFaaS" height="200" width="200">
+            </figure>
+            </div>
+        </div>
+
+        <div class="col col-6">
+            <div class="row gutters">
+                <div class="col col-6">
+
+                    <div class="upper strong header-font">
+                        Scalable and efficient 
+                    </div>
+                    <div class="div-font">
+                        TFaaS built using modern technologie
+                        and scale along with your hardware.
+                        It does not lock you into specific
+                        provider. Deploy it at your premises
+                        and control your use-case usage.
+                    </div>
+                    <p>
+                        <button class="button secondary small upper outline" data-component="toggleme" data-target="#benchmark" data-text="Hide Me">Show Me</button>
+                    </p>
+                    <div id="benchmark" class="hide">
+                        <h5>TFaaS benchmarks</h5>
+                        Benchmark results on CentOS, 24 cores, 32GB of RAM
+                        <ul>
+                            <li>400 req/sec for 100 concurrent clients, 1000 requests in total</li>
+                            <li>480 req/sec for 200 concurrent clients, 5000 requests in total</li>
+                        </ul>
+                    </div>
+
+                </div>
+                <div class="col col-6">
+                    <div class="upper strong header-font">
+                    Reach APIs
+                    </div>
+                    <div class="div-font">
+                        TFaaS provides reach and flexible set
+                        of APIs to efficiently manage your TF
+                        models. The TFaaS web server supports
+                        JSON or Protobuffer data-formats to
+                        support your clients.
+                    </div>
+                    <p>
+                        <button class="button secondary small upper outline" data-component="toggleme" data-target="#apis" data-text="Hide Me">Show Me</button>
+                    </p>
+                    <div id="apis" class="hide">
+                        <h5>TFaaS service APIs</h5>
+
+                        <div>
+                        <span class="label success upper">GET</span>
+                        <ul>
+                            <li>/models lists all available models/labels uploaded to TFaaS</li>
+                            <li>/params list model parameters to be used by TFaaS</li>
+                        </ul>
+                        </div>
+                        <div>
+                        <span class="label focus upper">POST</span>
+                        <ul>
+                            <li>/upload pushes your model to TFaaS</li>
+                            <li>/params uploads new set of parameters to TFaaS</li>
+                            <li>/json serves inference for given set of input parameters in JSON data-format</li>
+                            <li>/proto serves inference in ProtoBuffer data-format</li>
+                        </ul>
+                        </div>
+                        <div>
+                        <span class="label error upper">DELETE</span>
+                        <ul>
+                            <li>/delete  deletes given model from TFaaS</li>
+                        </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col col-2"></div>
+    </div>
+
+    <!-- second row -->
+    <p class="vertical-space1"></p>
+
+    <div class="row">
+        <div class="col col-2"></div>
+        <div class="col col-8">
+            <h4 class="upper strong header-font">
+            From deployment to production
+            </h4>
+            <div class="div-font">
+                <div>
+                    <span class="label badge error">1</span>
+                    Deploy docker image:
+                    <div class="tfaas-code">
+            docker run --rm -h `hostname -f` -p 8083:8083 -i -t veknet/tfaas
+                    </div>
+                </div>
+                <div>
+                    <span class="label badge warning">2</span>
+                    Upload your model:
+                    <div class="tfaas-code">
+            curl -X POST http://localhost:8083/upload -F 'name=ImageModel'
+            -F 'params=@/path/params.json'
+            -F 'model=@/path/tf_model.pb' -F 'labels=@/path/labels.txt'
+                    </div>
+                </div>
+                <div>
+                    <span class="label badge success">3</span>
+                    Get predictions:
+                    <div class="tfaas-code">
+            curl https://localhost:8083/image -F 'image=@/path/file.png' -F 'model=ImageModel'
+                    </div>
+                </div>
+
+                    Flexible configuration parameters allows you to adopt
+                    TFaaS deployment to any use case.
+            </div>
+        </div>
+        <div class="col col-2"></div>
+    </div>
+</div>
+
+<div id="tab2">
+    <div class="row">
+        <div class="col col-2"></div>
+        <div class="col col-2">
+            <div>
+            <figure>
+                <img src="{{.Base}}/images/tfaas_logo.png" alt="TFaaS" height="200" width="200">
+            </figure>
+            </div>
+        </div>
+
+        <div class="col col-6">
+            The easiet way to get TFaaS is to download its
+            <a href="https://hub.docker.com/r/veknet/tfaas/">image</a> from Docker Hub.
+            <br/>
+            <br/>
+            TFaaS source code is available on GitHub
+            <div class="tfaas-code">
+                git clone https://github.com/vkuznet/TFaaS
+            </div>
+            You can build TFaaS server as following ...
+            <button class="button secondary small upper outline" data-component="toggleme" data-target="#build" data-text="Hide Me">Show Me</button>
+            <div id="build" class="hide">
+<pre>
+# define your working area, change location appropriate
+WDIR=/tmp/tfaas
+
+# download Go language and install it
+# if you have it on your system you may skip this part
+GOPATH=$WDIR/gopath
+mkdir $WDIR/gopath
+PATH=${GOROOT}/bin:${WDIR}:${PATH}
+
+# install Go dependencies
+go get github.com/dmwm/cmsauth
+go get github.com/vkuznet/x509proxy
+go get github.com/sirupsen/logrus
+go get github.com/shirou/gopsutil
+
+# download and insta TensorFlow libraries, for more info see
+# https://www.tensorflow.org/versions/master/install/install_go
+TF_LIB="libtensorflow-cpu-linux-x86_64-1.6.0.tar.gz"
+curl -k -L -O "https://storage.googleapis.com/tensorflow/libtensorflow/${TF_LIB}"
+tar xfz $TF_LIB
+export LIBRARY_PATH=${LIBRARY_PATH}:${WDIR}/lib
+expot LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${WDIR}/lib
+go get github.com/tensorflow/tensorflow/tensorflow/go
+go get github.com/tensorflow/tensorflow/tensorflow/go/op
+
+# install protobuf codebase
+cd $WDIR
+git clone https://github.com/google/protobuf.git
+cd ${WDIR}/protobuf
+./autogen.sh
+./configure --prefix=${WDIR}
+make
+make install
+go get -u github.com/golang/protobuf/protoc-gen-go
+
+# build tfaas
+cd $WDIR
+git clone https://github.com/vkuznet/TFaaS.git
+cd $WDIR/TFaaS/src/Go
+make
+export PATH=${WDIR}/TFaaS/src/Go:${PATH}
+
+# run the service
+cd ${WDIR}
+mkdir models
+tfaas -confic config.json
+</pre>
+            </div>
+
+            <br/>
+            TFaaS binaries are coming soon ...
+
+            </div>
+    </div>
+</div>
+
+<div id="tab3">
+    <div class="row">
+        <div class="col col-2"></div>
+        <div class="col col-2">
+            <div>
+            <figure>
+                <img src="{{.Base}}/images/tfaas_logo.png" alt="TFaaS" height="200" width="200">
+            </figure>
+            </div>
+        </div>
+
+        <div class="col col-6">
+            <div class="row gutters">
+                <div class="col col-6">
+
+                    <div class="upper strong header-font">
+                        Supported models
+                    </div>
+                    <div class="div-font">
+                        TFaaS built around TensorFlow libraries
+                        and therefore will support any TF model
+                        you'll upload to it. The model should be
+                        uploaded in ProtoBuffer (.pb) data-format
+                        along with model parameters.
+                    </div>
+
+                </div>
+                <div class="col col-6">
+                    <div class="upper strong header-font">
+                    Compatible models
+                    </div>
+                    <div class="div-font">
+                        It is possible to convert Keras based
+                        model to TF one. Please follow these steps
+                        to do that:
+                        <br/>
+                        <span class="label outline badge error">1</span>
+                        Download and install keras to TF
+                        <a href="https://github.com/vkuznet/keras_to_tensorflow">converter</a>
+
+                        <br/>
+                        <span class="label outline badge warning">2</span>
+                        Save your Keras model in h5 format, you may see
+                        plenty of examples on the Internet, e.g.
+                        <a href="https://stackoverflow.com/questions/33759623/tensorflow-how-to-save-restore-a-model#40765759">here</a>
+                        or <a href="https://blog.keras.io/keras-as-a-simplified-interface-to-tensorflow-tutorial.html">here</a>
+
+                        <br/>
+                        <span class="label outline badge success">3</span>
+                        Convert your model via TF
+                        <a href="https://github.com/vkuznet/keras_to_tensorflow">converter</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <br/>
+
+    <div class="row">
+        <div class="col col-2"></div>
+        <div class="col col-8">
+        <hr>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col col-2"></div>
+        <div class="col col-8">
+            <div>
+                <h5>Existing models</h5>
+                {{range $_, $m := .Models}}
+                <ul>
+                    <li>name: {{$m.Name}}</li>
+                    <li>
+                        model: <a href="download/{{$m.Name}}/{{$m.Model}}">{{$m.Model}}</a>,
+                        graph <a href="netron/?url={{$.Base}}%2fdownload%2f{{$m.Name}}%2f{{$m.Model}}">view</a>
+                    </li>
+                    <li>labels: <a href="download/{{$m.Name}}/{{$m.Labels}}">{{$m.Labels}}</a></li>
+                    <li>description: {{$m.Description}}</li>
+                    <!--
+                    <li>input node: {{$m.InputNode}}</li>
+                    <li>output node: {{$m.OutputNode}}</li>
+                    -->
+                    <li>timestamp: {{$m.TimeStamp}}</li>
+                </ul>
+                <hr/>
+                {{end}}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="tab4">
+    <div class="row">
+        <div class="col col-2"></div>
+        <div class="col col-2">
+            <div>
+            <figure>
+                <img src="{{.Base}}/images/tfaas_logo.png" alt="TFaaS" height="200" width="200">
+            </figure>
+            </div>
+        </div>
+
+        <div class="col col-6">
+            <h5>How to use Python API?</h5>
+            You need to download
+            <a href="https://github.com/vkuznet/TFaaS/blob/master/src/python/tfaas_client.py">tfaas_client.py</a>
+            script which provides all Python
+            APIs to communicate with TFaas server. See instructions:
+            <br/>
+            <button class="button secondary small upper outline" data-component="toggleme" data-target="#python-apis" data-text="Hide Me">Show Me</button>
+            <div id="python-apis" class="hide">
+<pre>
+# setup url to point to your TFaaS server
+url=http://localhost:8083
+
+# create upload json file, which should include
+# fully qualified model file name
+# fully qualified labels file name
+# model name you want to assign to your model file
+# fully qualified parameters json file name
+# For example, here is a sample of upload json file
+{
+    "model": "/path/model_0228.pb",
+    "labels": "/path/labels.txt",
+    "name": "model_name",
+    "params":"/path/params.json"
+}
+
+# example of params.json file, it contains
+# name: TF model name you're going to use
+# model: name of model file you upload (only file name, no path is requierd)
+# labels: labels file name you upload and going to use to label your data
+# inputNode: is an input node name of your TF model
+# outputNode: is an output node name of your TF model
+{
+    "name": "model_name",
+    "model": "model_0228.pb",
+    "labels": "labels.txt",
+    "inputNode": "dense_4_input",
+    "outputNode": "output_node0"
+}
+
+# upload given model to the server
+tfaas_client.py --url=$url --upload=upload.json
+
+# list existing models in TFaaS server
+tfaas_client.py --url=$url --models
+
+# delete given model in TFaaS server
+tfaas_client.py --url=$url --delete=model_name
+
+# prepare input json file for querying model predictions
+# here is an example of such file
+{"keys":["attribute1", "attribute2"], values: [1.0, -2.0]}
+
+# get predictions from TFaaS server
+tfaas_client.py --url=$url --predict=input.json
+</pre>
+            </div>
+
+            <br/>
+            <h5>How to write TF model?</h5>
+            There are plenty of example you can find on Internet, but
+            if you can look one example here:
+            <br/>
+            <button class="button secondary small upper outline" data-component="toggleme" data-target="#tf-example" data-text="Hide Me">Show Me</button>
+            <div id="tf-example" class="hide">
+<pre>
+#!/usr/bin/env python
+
+""" Neural Network.
+A 2-Hidden Layers Fully Connected Neural Network (a.k.a Multilayer Perceptron)
+implementation with TensorFlow. This example is using the MNIST database
+of handwritten digits (http://yann.lecun.com/exdb/mnist/).
+This example is using TensorFlow layers, see 'neural_network_raw' example for
+a raw implementation with variables.
+Links:
+    [MNIST Dataset](http://yann.lecun.com/exdb/mnist/).
+Author: Aymeric Damien, small adjustements Valentin Kuznetsov
+Project: https://github.com/aymericdamien/TensorFlow-Examples/
+"""
+
+from __future__ import print_function
+import json
+import argparse
+
+# TensorFlow module
+import tensorflow as tf
+from tensorflow.examples.tutorials.mnist import input_data
+
+class OptionParser():
+    def __init__(self):
+        "User based option parser"
+        self.parser = argparse.ArgumentParser(prog='PROG')
+        self.parser.add_argument("--params", action="store",
+            dest="params", default="model.json", help="Input model parameters (default model.json)")
+        self.parser.add_argument("--verbose", action="store",
+            dest="verbose", default=0, help="verbosity level")
+
+def train(params):
+    "Train function defines our ML/DL model and work with our data"
+    # extact given parameters
+    data_path = params.get('data_path', '/opt/data/mnist')
+    batch_size = params.get('batch_size', 256)
+    fout = params.get('save_path', '')
+    n_input = params.get('n_input', 784)
+    n_classes = params.get('n_classes', 10)
+    n_hidden_1 = params.get('n_hidden_1', 256)
+    n_hidden_2 = params.get('n_hidden_2', 256)
+    learning_rate = params.get('learning_rate', 0.01)
+    display_step = 1
+
+    mnist = input_data.read_data_sets(data_path, one_hot=True)
+    xdf = mnist.train.images
+    labels = mnist.train.labels
+
+    # tf Graph input, use explicit name='input' for GOLANG
+    x = tf.placeholder("float", [None, n_input], name='inputdata')
+    y = tf.placeholder("float", [None, n_classes])
+
+    # Create model
+    def multilayer_perceptron(x, weights, biases):
+        # Hidden layer with RELU activation
+        layer_1 = tf.add(tf.matmul(x, weights['h1']), biases['b1'])
+        layer_1 = tf.nn.relu(layer_1)
+        # Hidden layer with RELU activation
+        layer_2 = tf.add(tf.matmul(layer_1, weights['h2']), biases['b2'])
+        layer_2 = tf.nn.relu(layer_2)
+        # Output layer with linear activation
+        out_layer = tf.matmul(layer_2, weights['out']) + biases['out']
+        return out_layer
+
+    # Store layers weight & bias
+    weights = {
+        'h1': tf.Variable(tf.random_normal([n_input, n_hidden_1])),
+        'h2': tf.Variable(tf.random_normal([n_hidden_1, n_hidden_2])),
+        'out': tf.Variable(tf.random_normal([n_hidden_2, n_classes]))
+    }
+    biases = {
+        'b1': tf.Variable(tf.random_normal([n_hidden_1])),
+        'b2': tf.Variable(tf.random_normal([n_hidden_2])),
+        'out': tf.Variable(tf.random_normal([n_classes]))
+    }
+
+    # Construct model
+    pred = multilayer_perceptron(x, weights, biases)
+
+    # Define loss and optimizer
+    cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels=y))
+    optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+
+    # Initialize the variables (i.e. assign their default value)
+    init = tf.global_variables_initializer()
+
+    # Running first session
+    print("Starting session...")
+    with tf.Session() as sess:
+
+        # Run the initializer
+        sess.run(init)
+
+        # Training cycle
+        for epoch in range(3):
+            avg_cost = 0.
+            total_batch = int(mnist.train.num_examples/batch_size)
+            # Loop over all batches
+            for i in range(total_batch):
+                batch_x, batch_y = mnist.train.next_batch(batch_size)
+                # Run optimization op (backprop) and cost op (to get loss value)
+                _, c = sess.run([optimizer, cost], feed_dict={x: batch_x,
+                                                              y: batch_y})
+                # Compute average loss
+                avg_cost += c / total_batch
+            # Display logs per epoch step
+            if epoch % display_step == 0:
+                print("Epoch:", '%04d' % (epoch+1), "cost=", \
+                    "{:.9f}".format(avg_cost))
+        print("First Optimization Finished!")
+
+        # use expicit name='inference' for GOLANG
+        infer = tf.argmax(pred, 1, name="inference")
+
+        # Test model
+        correct_prediction = tf.equal(infer, tf.argmax(y, 1))
+        # Calculate accuracy
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
+        print("Accuracy:", accuracy.eval({x: mnist.test.images, y: mnist.test.labels}))
+
+        # Save model weights to disk
+        if fout:
+            builder = tf.saved_model.builder.SavedModelBuilder(fout)
+            # GOLANG note that we must tag our model so that we can retrieve it at inference-time
+            # for that purpose we use model tag
+            builder.add_meta_graph_and_variables(sess, ["model"])
+            builder.save()
+
+def main():
+    "Main function"
+    optmgr  = OptionParser()
+    opts = optmgr.parser.parse_args()
+    params = json.load(open(opts.params))
+    train(params)
+
+if __name__ == '__main__':
+    main()
+</pre>
+            </div>
+
+
+            <br/>
+            <h5>How to upload my model which is not in TensorFlow format?</h5>
+            The good news that it is possible. If your model is written in Keras
+            it is very straightforward. You may use
+            <a href="https://github.com/vkuznet/keras_to_tensorflow">keras to tensorflow</a>
+            tool to perform the conversion. Otherwise, if your model is other format,
+            e.g. PyTorch, Caffe, CNTK, Scikit-Learn, etc. you may consider to convert
+            your problem into <a href="https://onnx.ai/">ONNX</a> (Open Neural Network eXchange) format
+            and then convert it from ONNX to TensorFlow. Please see their
+            <a href="https://github.com/onnx/tutorials">tutorial</a> page for more details.
+
+            <br/>
+            <h5>Is it possible to inspect/view my/other models available at TFaaS?</h5>
+            Yes, you can. Just navigate to <a href="#tab3">Models</a> page and use
+            graph view link to inspect your model. The TFaaS integrate
+            <a href="https://github.com/lutzroeder/Netron">netron</a>
+            toolkit for visualization of deep learning and machine learning models.
+
+    </div>
+</div>
