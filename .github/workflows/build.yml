@@ -22,6 +22,14 @@ jobs:
 
     - name: Build
       run: |
+        mkdir -p tensorflow
+        cd tensorflow
+        TFLIB=libtensorflow-cpu-linux-x86_64-2.4.0.tar.gz
+        wget https://storage.googleapis.com/tensorflow/libtensorflow/$TFLIB
+        tar xfz $TFLIB
+        LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PWD/lib
+        LIBRARY_PATH=$PWD/lib
+        cd -
         cd src/Go
         make
 
