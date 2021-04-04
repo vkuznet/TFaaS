@@ -1,62 +1,42 @@
-FROM cmssw/cmsweb
+FROM golang:latest as go-builder
 MAINTAINER Valentin Kuznetsov vkuznet@gmail.com
 
-# add environment
-ENV WDIR=/data
-ENV USER=tfaas
-
-RUN yum update -y && yum clean all
-RUN yum install -y git-core krb5-devel readline-devel openssl autoconf automake libtool make gcc gcc-c++ unzip
-RUN yum clean all
-
-# Create new user account
-RUN useradd ${USER} && install -o ${USER} -d ${WDIR}
-# add user to sudoers file
-RUN echo "%$USER ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-# switch to user
-USER ${USER}
-
-# start the setup
-RUN mkdir -p $WDIR
-WORKDIR ${WDIR}
+RUN curl -ksLO "https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-linux-x86_64-2.4.0.tar.gz" && \
+    tar xfz libtensorflow-cpu-linux-x86_64-2.4.0.tar.gz && \
+    cp -a lib/* /usr/local/lib && cp -a include/* /usr/local/include
+ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/go/lib"
 
 # download golang and install it
-ENV GOPATH=$WDIR/gopath
-RUN mkdir $WDIR/gopath
-ENV PATH="${GOROOT}/bin:${WDIR}:${PATH}"
-
-# install Go dependencies
-RUN go get github.com/dmwm/cmsauth
-RUN go get github.com/vkuznet/x509proxy
-RUN go get github.com/sirupsen/logrus
-RUN go get github.com/shirou/gopsutil
-
-# download and insta TensorFlow libraries
-# https://www.tensorflow.org/versions/master/install/install_go
-ENV TF_LIB="libtensorflow-cpu-linux-x86_64-1.12.0.tar.gz"
-RUN curl -k -L -O "https://storage.googleapis.com/tensorflow/libtensorflow/${TF_LIB}"
-RUN tar xfz $TF_LIB
-ENV LIBRARY_PATH="${LIBRARY_PATH}:${WDIR}/lib"
-ENV LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${WDIR}/lib"
-RUN go get github.com/tensorflow/tensorflow/tensorflow/go
-RUN go get github.com/tensorflow/tensorflow/tensorflow/go/op
-
-# install protobuf
-WORKDIR ${WDIR}
-RUN git clone https://github.com/google/protobuf.git
-WORKDIR ${WDIR}/protobuf
-RUN ./autogen.sh
-RUN ./configure --prefix=${WDIR}
-RUN make
-RUN make install
-RUN go get -u github.com/golang/protobuf/protoc-gen-go
+ENV GOPATH=/go/gopath
+ENV PATH="${GOROOT}/bin:/go/gopath/bin:${PATH}"
 
 # build tfaas
-WORKDIR ${WDIR}
-RUN git clone https://github.com/vkuznet/TFaaS.git
-WORKDIR $WDIR/TFaaS/src/Go
-RUN make
-ENV PATH="${WDIR}/TFaaS/src/Go:${PATH}"
+# we'll use tfgo build instead of offical TF one, see
+# https://github.com/tensorflow/tensorflow/issues/41808
+# https://github.com/tensorflow/tensorflow/issues/48017
+# https://github.com/tensorflow/tensorflow/issues/35133#issuecomment-807404740
+# https://github.com/galeone/tfgo
+RUN go env -w GONOSUMDB="github.com/galeone/tensorflow" && \
+    go get github.com/galeone/tfgo && \
+    go get github.com/dmwm/cmsauth && \
+    go get github.com/vkuznet/x509proxy && \
+    go get github.com/sirupsen/logrus && \
+    go get github.com/shirou/gopsutil
+
+RUN git clone https://github.com/vkuznet/TFaaS.git && \
+    cd TFaaS/src/Go && \
+    make
+
+# final image
+FROM debian:stretch
+RUN mkdir -p /data/lib
+COPY --from=go-builder /go/TFaaS/src/Go /data/
+COPY --from=go-builder /go/lib /data/lib
+RUN mkdir /data/models
+ENV WDIR=/data
+ENV LIBRARY_PATH="${WDIR}/lib"
+ENV LD_LIBRARY_PATH="${WDIR}/lib"
+ENV PATH="${WDIR}:${PATH}"
 
 # run the service
 RUN mkdir models
