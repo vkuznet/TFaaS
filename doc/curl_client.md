@@ -38,3 +38,42 @@ model name to use for inference:
 curl https://localhost:8083/image -F 'image=@/path/file.png' -F 'model=ImageModel'
 ```
 
+```
+# /bundle API can be used to upload ML bundle file to TFaaS
+# let's say we produce ML model using Keras
+import tensorflow as tf
+...
+model = tf.keras.Sequential()
+model.add(tf.keras.layers.Dense(128, input_dim=idim, activation='relu', name="inputs"))
+...
+model.add(tf.keras.layers.Dense(1, activation='sigmoid'))
+
+model.compile(loss='binary_crossentropy',
+              optimizer=tf.keras.optimizers.Adam(lr=1e-3),
+              metrics=[tf.keras.metrics.BinaryAccuracy(name='accuracy'), tf.keras.metrics.AUC(name='auc')])
+
+# train the model
+model.fit(X_train, Y_train, epochs=2, batch_size=128, validation_data=(X_val,Y_val))
+
+# save our model into 'model' dir
+tf.saved_model.save(model, 'model')
+
+# the saved ML model will have the following content:
+ls model
+assets         saved_model.pb variables
+
+# now we can create tar-ball and upload it to TFaaS
+tar cfz model.tar.gz model
+curl -X POST -H "Content-Encoding: gzip" \
+             -H "content-type: application/octet-stream" \
+             --data-binary @/tmp/models.tar.gz http://localhost:8083/bundle
+
+# this model will be available as 'model' such that we can obtain predictions
+# using our input.json file
+cat input.json
+{"keys": [...], "values": [...], "model":"model"}
+
+# here is actual curl call to get predictions from /json end-point
+curl -s -X POST -H "Content-type: application/json" \
+    -d@/path/input.json http://localhost:8083/json
+```
