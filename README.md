@@ -45,7 +45,7 @@ assets         saved_model.pb variables
 tar cfz model.tar.gz model
 curl -X POST -H "Content-Encoding: gzip" \
              -H "content-type: application/octet-stream" \
-             --data-binary @/tmp/models.tar.gz http://localhost:8083/bundle
+             --data-binary @/path/models.tar.gz http://localhost:8083/upload
 ```
 
 #### &#10114; get your predictions
