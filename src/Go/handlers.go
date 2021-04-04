@@ -32,7 +32,7 @@ var TotalPostRequests uint64
 
 // helper function to provide response
 func responseError(w http.ResponseWriter, msg string, err error, code int) {
-	log.Println("message", msg, "error", err)
+	log.Println("ERROR", msg, err)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(map[string]string{"error": msg})
@@ -73,7 +73,7 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 // ImageHandler send prediction from TF ML model
 func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "POST") {
-		responseError(w, fmt.Sprintf("wrong method: %v", r.Method), nil, http.StatusMethodNotAllowed)
+		responseError(w, fmt.Sprintf("wrong HTTP method: %v", r.Method), nil, http.StatusMethodNotAllowed)
 		return
 	}
 	model := r.FormValue("model")
@@ -153,9 +153,7 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 // PredictProtobufHandler send prediction from TF ML model
 func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "POST") {
-		log.Println("call PredictHandler with", r.Method)
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		responseError(w, fmt.Sprintf("wrong method: %v", r.Method), nil, http.StatusMethodNotAllowed)
+		responseError(w, fmt.Sprintf("wrong HTTP method: %v", r.Method), nil, http.StatusMethodNotAllowed)
 		return
 	}
 	defer r.Body.Close()
@@ -214,9 +212,7 @@ func PredictProtobufHandler(w http.ResponseWriter, r *http.Request) {
 // PredictHandler send prediction from TF ML model
 func PredictHandler(w http.ResponseWriter, r *http.Request) {
 	if !(r.Method == "POST") {
-		log.Println("call PredictHandler with", r.Method)
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		responseError(w, fmt.Sprintf("wrong method: %v", r.Method), nil, http.StatusMethodNotAllowed)
+		responseError(w, fmt.Sprintf("wrong HTTP method: %v", r.Method), nil, http.StatusMethodNotAllowed)
 		return
 	}
 	defer r.Body.Close()
@@ -256,10 +252,25 @@ func (gz GzipReader) Close() error {
 	return gz.Closer.Close()
 }
 
+// UploadHandler uploads TF models into the server
+func UploadHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	if r.FormValue("model") == "model" {
+		// we received request for upload via form values
+		UploadFormHandler(w, r)
+		return
+	}
+	UploadBundleHandler(w, r)
+}
+
 // UploadBundleHandler uploads TF models into the server
 func UploadBundleHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		msg := "wrong HTTP method"
+		responseError(w, msg, nil, http.StatusMethodNotAllowed)
 		return
 	}
 	var err error
@@ -269,8 +280,8 @@ func UploadBundleHandler(w http.ResponseWriter, r *http.Request) {
 		r.Header.Del("Content-Length")
 		reader, err := gzip.NewReader(r.Body)
 		if err != nil {
-			log.Println("unable to get gzip reader", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			msg := "unable to get gzip reader"
+			responseError(w, msg, err, http.StatusInternalServerError)
 			return
 		}
 		body := GzipReader{reader, r.Body}
@@ -279,8 +290,8 @@ func UploadBundleHandler(w http.ResponseWriter, r *http.Request) {
 		bundle, err = ioutil.ReadAll(r.Body)
 	}
 	if err != nil {
-		log.Println("unable to read body", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		msg := "unable to read body"
+		responseError(w, msg, err, http.StatusInternalServerError)
 		return
 	}
 	//     fname := fmt.Sprintf("/tmp/bundle.tar")
@@ -288,23 +299,24 @@ func UploadBundleHandler(w http.ResponseWriter, r *http.Request) {
 	defer os.Remove(fname)
 	err = ioutil.WriteFile(fname, bundle, 0600)
 	if err != nil {
-		log.Println("unable to write fname", fname, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		msg := fmt.Sprintf("unable to write %s", fname)
+		responseError(w, msg, err, http.StatusInternalServerError)
 		return
 	}
 	err = Untar(fname, _config.ModelDir)
 	if err != nil {
-		log.Println("unable to untar", fname, err)
-		w.WriteHeader(http.StatusInternalServerError)
+		msg := fmt.Sprintf("unable to untar %s", fname)
+		responseError(w, msg, err, http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
 
-// UploadHandler uploads TF models into the server
-func UploadHandler(w http.ResponseWriter, r *http.Request) {
+// UploadFormHandler uploads TF models into the server via form key-value pairs
+func UploadFormHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		msg := "wrong HTTP method"
+		responseError(w, msg, nil, http.StatusMethodNotAllowed)
 		return
 	}
 	defer r.Body.Close()
@@ -410,8 +422,8 @@ func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		data, err := json.Marshal(_params)
 		if err != nil {
-			log.Println("ParamsHandler unable to marshal", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			msg := "unable to marshal parameters"
+			responseError(w, msg, err, http.StatusInternalServerError)
 			return
 		}
 		w.Write(data)
@@ -421,8 +433,8 @@ func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	var params TFParams
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
-		log.Println("ParamsHandler unable to decode", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		msg := "unable to decode parameters"
+		responseError(w, msg, err, http.StatusInternalServerError)
 		return
 	}
 	log.Println("update TF parameters", params)
@@ -435,7 +447,6 @@ func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	// set current parameters set
 	_params = params
 	w.WriteHeader(http.StatusOK)
-	return
 }
 
 // ModelsHandler returns a list of known models
@@ -468,8 +479,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	if Auth == "true" {
 		status := auth(r)
 		if !status {
-			msg := "You are not allowed to access this resource"
-			http.Error(w, msg, http.StatusForbidden)
+			msg := "not allowed access this resource"
+			responseError(w, msg, nil, http.StatusForbidden)
 			return
 		}
 	}
@@ -489,8 +500,6 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 	switch path {
 	case "upload":
 		UploadHandler(w, r)
-	case "bundle":
-		UploadBundleHandler(w, r)
 	case "delete":
 		DeleteHandler(w, r)
 	case "data":
@@ -517,7 +526,8 @@ func AuthHandler(w http.ResponseWriter, r *http.Request) {
 // StatusHandler handlers Status requests
 func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		msg := "wrong HTTP method"
+		responseError(w, msg, nil, http.StatusMethodNotAllowed)
 		return
 	}
 	// get cpu and mem profiles
@@ -538,7 +548,8 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 	tmplData["postRequests"] = TotalPostRequests
 	data, err := json.Marshal(tmplData)
 	if err != nil {
-		w.Write([]byte(fmt.Sprintf("unable to marshal data, error=%v", err)))
+		msg := "unabel to marshal data"
+		responseError(w, msg, err, http.StatusMethodNotAllowed)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -550,7 +561,8 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 // see https://github.com/lutzroeder/Netron
 func NetronHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		msg := "wrong HTTP method"
+		responseError(w, msg, nil, http.StatusMethodNotAllowed)
 		return
 	}
 	var endPoint string
@@ -571,8 +583,8 @@ func NetronHandler(w http.ResponseWriter, r *http.Request) {
 	//     fmt.Println("ifile", ifile)
 	page, err := ioutil.ReadFile(ifile)
 	if err != nil {
-		log.Println("unable to load", r.URL.Path)
-		w.WriteHeader(http.StatusInternalServerError)
+		msg := fmt.Sprintf("unable to load %s", r.URL.Path)
+		responseError(w, msg, err, http.StatusInternalServerError)
 		return
 	}
 	w.Write(page)
@@ -582,7 +594,8 @@ func NetronHandler(w http.ResponseWriter, r *http.Request) {
 // DeleteHandler authenticate incoming requests and route them to appropriate handler
 func DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "DELETE" {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		msg := "wrong HTTP method"
+		responseError(w, msg, nil, http.StatusMethodNotAllowed)
 		return
 	}
 	model := r.FormValue("model")
