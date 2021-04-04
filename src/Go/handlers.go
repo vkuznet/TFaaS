@@ -248,7 +248,7 @@ type GzipReader struct {
 	io.Closer
 }
 
-// helper function to close gzip reader
+// Close helper function to close gzip reader
 func (gz GzipReader) Close() error {
 	return gz.Closer.Close()
 }

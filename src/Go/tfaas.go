@@ -42,7 +42,7 @@ func (r *Row) String() string {
 	return fmt.Sprintf("%v", r.Values)
 }
 
-// TFModel provides meta-data description of TF model to be used
+// TFParams provides meta-data description of TF model to be used
 type TFParams struct {
 	Name        string   `json:"name"`        // model name
 	Model       string   `json:"model"`       // model file name
@@ -54,6 +54,7 @@ type TFParams struct {
 	TimeStamp   string   `json:"timestamp"`   // model timestamp
 }
 
+// String provides string representation of TFParams
 func (p *TFParams) String() string {
 	return fmt.Sprintf("<TFParams: name=%s model=%s description=%s labels=%s options=%v inputNode=%s outputNode=%s, timestamp=%s>", p.Name, p.Model, p.Description, p.Labels, p.Options, p.InputNode, p.OutputNode, p.TimeStamp)
 }
@@ -374,6 +375,7 @@ func makeTransformImageGraph(imageFormat string) (graph *tf.Graph, input, output
 	return graph, input, output, err
 }
 
+// ByProbability holds label results in terms of probability values
 type ByProbability []LabelResult
 
 func (a ByProbability) Len() int           { return len(a) }

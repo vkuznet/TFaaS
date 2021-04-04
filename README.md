@@ -12,8 +12,8 @@ favorite TF models via HTTP interface. The TFaaS supports JSON and ProtoBuffer
 data-formats.
 
 The following set of APIs is provided:
-- `/upload` to push your favorite TF model to TFaaS server
-- `/bundle` to push your favorite TF model bundle (tar-ball) to TFaaS server
+- `/upload` to push your favorite TF model to TFaaS server either for Form or
+  as tar-ball bundle, see examples below
 - `/delete` to delete your TF model from TFaaS server
 - `/models` to view existing TF models on TFaaS server
 - `/json` to serve TF model predictions in JSON data-format
