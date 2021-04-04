@@ -14,7 +14,6 @@ import (
 	"runtime"
 	"strings"
 	"sync/atomic"
-	"tfaaspb"
 	"time"
 
 	tf "github.com/galeone/tensorflow/tensorflow/go"
@@ -22,6 +21,7 @@ import (
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
+	tfaaspb "github.com/vkuznet/TFaaS/tfaaspb"
 )
 
 // TotalGetRequests counts total number of GET requests received by the server
