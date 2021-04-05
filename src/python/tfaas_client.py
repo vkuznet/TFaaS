@@ -228,10 +228,11 @@ def delete(host, model, verbose=None, ckey=None, cert=None, capath=None):
 
 def bundle(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
     "bundle API uploads given bundle model files to TFaaS server"
-    url = host + '/bundle'
+    url = host + '/upload'
     client = '%s (%s)' % (TFAAS_CLIENT, os.environ.get('USER', ''))
     headers = {"User-Agent": client, "Content-Encoding": "gzip", "Content-Type": "application/octet-stream"}
-    return getdata(url, headers, edata, ckey, cert, capath, verbose)
+    data = open(ifile, 'rb').read()
+    return getdata(url, headers, data, ckey, cert, capath, verbose)
 
 def upload(host, ifile, verbose=None, ckey=None, cert=None, capath=None):
     "upload API uploads given model to TFaaS server"
@@ -334,6 +335,8 @@ def main():
     res = ''
     if opts.upload:
         res = upload(opts.url, opts.upload, opts.verbose, opts.ckey, opts.cert, opts.capath)
+    if opts.bundle:
+        res = bundle(opts.url, opts.bundle, opts.verbose, opts.ckey, opts.cert, opts.capath)
     elif opts.delete:
         res = delete(opts.url, opts.delete, opts.verbose, opts.ckey, opts.cert, opts.capath)
     elif opts.models:
