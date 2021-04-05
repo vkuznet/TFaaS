@@ -1,4 +1,4 @@
-include Makefile.mk
+include Makefile.mk.lxplus
 
 UNAME:=$(shell uname -s)
 ifeq ($(UNAME), Linux)
