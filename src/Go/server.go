@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -39,26 +38,7 @@ type Mem struct {
 	Swap    Memory
 }
 
-// helper function to produce UTC time prefixed output
-func utcMsg(data []byte) string {
-	//     return fmt.Sprintf("[" + time.Now().String() + "] " + string(data))
-	s := string(data)
-	v, e := url.QueryUnescape(s)
-	if e == nil {
-		return v
-	}
-	return s
-}
-
-// custom rotate logger
-type rotateLogWriter struct {
-	RotateLogs *rotatelogs.RotateLogs
-}
-
-func (w rotateLogWriter) Write(data []byte) (int, error) {
-	return w.RotateLogs.Write([]byte(utcMsg(data)))
-}
-
+// helper function to get base path
 func basePath(s string) string {
 	if _config.Base != "" {
 		if strings.HasPrefix(s, "/") {
@@ -72,21 +52,25 @@ func basePath(s string) string {
 	return s
 }
 
+// http handlers
 func handlers() *mux.Router {
 	router := mux.NewRouter()
 
 	// visible routes
-	router.HandleFunc(basePath("/upload"), UploadHandler).Methods("POST")
 	router.HandleFunc(basePath("/delete"), DeleteHandler).Methods("DELETE")
-	router.HandleFunc(basePath("/data"), DataHandler).Methods("GET")
+	router.HandleFunc(basePath("/upload"), UploadHandler).Methods("POST")
+	router.HandleFunc(basePath("/predict/json"), PredictHandler).Methods("POST")
+	router.HandleFunc(basePath("/predict/proto"), PredictProtobufHandler).Methods("POST")
+	router.HandleFunc(basePath("/predict/image"), ImageHandler).Methods("POST")
 	router.HandleFunc(basePath("/json"), PredictHandler).Methods("POST")
 	router.HandleFunc(basePath("/proto"), PredictProtobufHandler).Methods("POST")
 	router.HandleFunc(basePath("/image"), ImageHandler).Methods("POST")
 	router.HandleFunc(basePath("/params"), ParamsHandler).Methods("GET", "POST")
+	router.HandleFunc(basePath("/data"), DataHandler).Methods("GET")
 	router.HandleFunc(basePath("/models"), ModelsHandler).Methods("GET")
 	router.HandleFunc(basePath("/status"), StatusHandler).Methods("GET")
-	router.HandleFunc(basePath("/netron/"), NetronHandler).Methods("GET", "POST")
-	router.HandleFunc(basePath("/netron/{.*}"), NetronHandler).Methods("GET", "POST")
+	router.HandleFunc(basePath("/netron/"), NetronHandler).Methods("GET")
+	router.HandleFunc(basePath("/netron/{.*}"), NetronHandler).Methods("GET")
 	router.HandleFunc(basePath("/"), DefaultHandler).Methods("GET")
 
 	/* for future use
@@ -95,10 +79,12 @@ func handlers() *mux.Router {
 	// validate all input parameters
 	router.Use(validateMiddleware)
 
+	*/
+
+	// log all requests
+	router.Use(loggingMiddleware)
 	// use limiter middleware to slow down clients
 	router.Use(limitMiddleware)
-
-	*/
 
 	return router
 }
@@ -142,6 +128,9 @@ func server(config string) {
 	}
 	_cache = TFCache{Models: make(map[string]TFCacheEntry), Limit: cacheLimit}
 	VERBOSE = _config.Verbose
+
+	// initialize limiter
+	initLimiter(_config.LimiterPeriod)
 
 	// define our handlers
 	sdir := _config.StaticDir

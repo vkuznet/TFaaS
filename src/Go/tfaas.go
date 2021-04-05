@@ -176,7 +176,6 @@ var (
 	_cache          TFCache            // local cache for TFModels
 	_params         TFParams           // current params set
 	_sessionOptions *tf.SessionOptions // TF session options
-	_config         Configuration      // TFaaS configuration
 	_configProto    string             // protobuf configuration
 )
 

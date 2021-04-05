@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"sync/atomic"
+	"time"
 
 	limiter "github.com/ulule/limiter/v3"
 	stdlib "github.com/ulule/limiter/v3/drivers/middleware/stdlib"
@@ -83,4 +85,53 @@ func limitMiddleware(next http.Handler) http.Handler {
 	return limiterMiddleware.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		next.ServeHTTP(w, r)
 	}))
+}
+
+// responseWriter is a minimal wrapper for http.ResponseWriter that allows the
+// written HTTP status code to be captured for logging.
+type responseWriter struct {
+	http.ResponseWriter
+	status      int
+	wroteHeader bool
+}
+
+func wrapResponseWriter(w http.ResponseWriter) *responseWriter {
+	return &responseWriter{ResponseWriter: w}
+}
+
+func (rw *responseWriter) Status() int {
+	return rw.status
+}
+
+func (rw *responseWriter) WriteHeader(code int) {
+	if rw.wroteHeader {
+		return
+	}
+
+	rw.status = code
+	rw.ResponseWriter.WriteHeader(code)
+	rw.wroteHeader = true
+
+	return
+}
+
+// loggingMiddleware logs the incoming HTTP request and its duration.
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if r.Method == "POST" {
+			atomic.AddUint64(&TotalPostRequests, 1)
+		} else if r.Method == "GET" {
+			atomic.AddUint64(&TotalGetRequests, 1)
+		} else if r.Method == "DELETE" {
+			atomic.AddUint64(&TotalDeleteRequests, 1)
+		}
+		start := time.Now()
+		tstamp := int64(start.UnixNano() / 1000000) // use milliseconds for MONIT
+
+		wrapped := wrapResponseWriter(w)
+		next.ServeHTTP(wrapped, r)
+		var dataSize int64
+		logRequest(w, r, start, wrapped.status, tstamp, dataSize)
+	})
 }

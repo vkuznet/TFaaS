@@ -133,22 +133,6 @@ func userDNs() []string {
 	return out
 }
 
-// helper function to parse configuration file
-func parseConfig(configFile string) error {
-	data, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		log.Println("configFile", configFile, err)
-		return err
-	}
-	err = json.Unmarshal(data, &_config)
-	if err != nil {
-		log.Println("configFile", configFile, err)
-		return err
-	}
-	log.Println(_config.String())
-	return nil
-}
-
 // InList helper function to check item in a list
 func InList(a string, list []string) bool {
 	check := 0

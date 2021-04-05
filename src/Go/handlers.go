@@ -29,6 +29,9 @@ var TotalGetRequests uint64
 // TotalPostRequests counts total number of POST requests received by the server
 var TotalPostRequests uint64
 
+// TotalDeleteRequests counts total number of DELET requests received by the server
+var TotalDeleteRequests uint64
+
 // helper function to provide response
 func responseError(w http.ResponseWriter, msg string, err error, code int) {
 	log.Println("ERROR", msg, err)
