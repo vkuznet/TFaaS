@@ -95,6 +95,8 @@ type responseWriter struct {
 	wroteHeader bool
 }
 
+// wrapper for response writer
+// based on https://blog.questionable.services/article/guide-logging-middleware-go/
 func wrapResponseWriter(w http.ResponseWriter) *responseWriter {
 	return &responseWriter{ResponseWriter: w}
 }
