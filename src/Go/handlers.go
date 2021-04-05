@@ -245,7 +245,21 @@ func (gz GzipReader) Close() error {
 
 // UploadHandler uploads TF models into the server
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
-	if r.FormValue("model") == "model" {
+	var uploadForm bool
+	for key, values := range r.Header {
+		if strings.ToLower(key) == "content-type" {
+			for _, v := range values {
+				if strings.Contains(strings.ToLower(v), "form-data") {
+					uploadForm = true
+					break
+				}
+			}
+		}
+		if uploadForm {
+			break
+		}
+	}
+	if uploadForm {
 		// we received request for upload via form values
 		UploadFormHandler(w, r)
 		return
