@@ -58,6 +58,7 @@ func handlers() *mux.Router {
 
 	// visible routes
 	router.HandleFunc(basePath("/delete"), DeleteHandler).Methods("DELETE")
+	router.HandleFunc(basePath("/delete/{model:[a-zA-Z0-9_]+}"), DeleteHandler).Methods("DELETE")
 	router.HandleFunc(basePath("/upload"), UploadHandler).Methods("POST")
 	router.HandleFunc(basePath("/predict/json"), PredictHandler).Methods("POST")
 	router.HandleFunc(basePath("/predict/proto"), PredictProtobufHandler).Methods("POST")

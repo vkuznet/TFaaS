@@ -132,6 +132,10 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		tstamp := int64(start.UnixNano() / 1000000) // use milliseconds for MONIT
 
 		wrapped := wrapResponseWriter(w)
+		status := wrapped.status
+		if status == 0 { // the status code was not set, i.e. everything is fine
+			status = 200
+		}
 		next.ServeHTTP(wrapped, r)
 		var dataSize int64
 		logRequest(w, r, start, wrapped.status, tstamp, dataSize)

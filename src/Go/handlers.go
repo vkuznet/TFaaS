@@ -17,6 +17,7 @@ import (
 
 	tf "github.com/galeone/tensorflow/tensorflow/go"
 	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/mux"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
@@ -42,6 +43,7 @@ func responseError(w http.ResponseWriter, msg string, err error, code int) {
 
 // helper function to provide response in JSON data format
 func responseJSON(w http.ResponseWriter, data interface{}) {
+	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
 }
@@ -243,23 +245,23 @@ func (gz GzipReader) Close() error {
 	return gz.Closer.Close()
 }
 
-// UploadHandler uploads TF models into the server
-func UploadHandler(w http.ResponseWriter, r *http.Request) {
-	var uploadForm bool
+// helper function to check if HTTP request contains form-data
+func formData(r *http.Request) bool {
 	for key, values := range r.Header {
 		if strings.ToLower(key) == "content-type" {
 			for _, v := range values {
 				if strings.Contains(strings.ToLower(v), "form-data") {
-					uploadForm = true
-					break
+					return true
 				}
 			}
 		}
-		if uploadForm {
-			break
-		}
 	}
-	if uploadForm {
+	return false
+}
+
+// UploadHandler uploads TF models into the server
+func UploadHandler(w http.ResponseWriter, r *http.Request) {
+	if formData(r) {
 		// we received request for upload via form values
 		UploadFormHandler(w, r)
 		return
@@ -539,7 +541,17 @@ func NetronHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteHandler authenticate incoming requests and route them to appropriate handler
 func DeleteHandler(w http.ResponseWriter, r *http.Request) {
-	model := r.FormValue("model")
+	var model string
+	if formData(r) {
+		model = r.FormValue("model")
+	} else {
+		vars := mux.Vars(r)
+		model = vars["model"]
+	}
+	if model == "" {
+		responseError(w, "no model name is provided", nil, http.StatusBadRequest)
+		return
+	}
 	files, err := ioutil.ReadDir(_config.ModelDir)
 	if err != nil {
 		responseError(w, fmt.Sprintf("unable to read: %s", _config.ModelDir), err, http.StatusInternalServerError)
