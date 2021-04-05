@@ -207,9 +207,8 @@ def models(host, verbose=None, ckey=None, cert=None, capath=None):
     headers = {"Accept": "application/json", "User-Agent": client}
     if verbose:
         print("URL   : %s" % url)
-        print("model : %s" % model)
     encoded_data = json.dumps({})
-    return getdata(url, headers, encoded_data, ckey, cert, capath, verbose)
+    return getdata(url, headers, encoded_data, ckey, cert, capath, verbose, 'GET')
 
 def delete(host, model, verbose=None, ckey=None, cert=None, capath=None):
     "delete API deletes given model in TFaaS server"
@@ -299,6 +298,8 @@ def getdata(url, headers, encoded_data, ckey, cert, capath, verbose=None, method
     req = urllib2.Request(url=url, headers=headers, data=encoded_data)
     if method == 'DELETE':
         req.get_method = lambda: 'DELETE'
+    elif method == 'GET':
+        req = urllib2.Request(url=url, headers=headers)
     if  ckey and cert:
         ckey = fullpath(ckey)
         cert = fullpath(cert)
