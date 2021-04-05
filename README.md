@@ -16,8 +16,9 @@ The following set of APIs is provided:
   as tar-ball bundle, see examples below
 - `/delete` to delete your TF model from TFaaS server
 - `/models` to view existing TF models on TFaaS server
-- `/json` to serve TF model predictions in JSON data-format
-- `/proto` to serve TF model predictions in ProtoBuffer data-format
+- `/predict/json` to serve TF model predictions in JSON data-format
+- `/predict/proto` to serve TF model predictions in ProtoBuffer data-format
+- `/predict/image` to serve TF model predictions forimages in JPG/PNG formats
 
 ### From deployment to production
 #### &#10112; install docker image (TFaaS port is 8083)

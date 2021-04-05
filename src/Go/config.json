@@ -1,13 +1,10 @@
 {
     "port": 8083,
-    "auth": "false",
     "modelDir": "models",
-    "staticDir": "",
+    "staticDir": "static",
     "configProto": "",
     "base": "",
     "serverKey": "",
     "serverCrt": "",
-    "logFormatter": "text",
-    "updateDNs": 600,
     "verbose": 1
 }

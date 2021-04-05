@@ -129,14 +129,12 @@ Now we have all pieces to run `tfaas` server. We can do it as following:
 cat config.json
 {
     "port": 8083,
-    "auth": "true",
     "modelDir": "models",
+    "staticDir": "static",
     "configProto": "",
     "base": "",
     "serverKey": "/opt/certs/server.key",
     "serverCrt": "/opt/certs/server.crt",
-    "logFormatter": "text",
-    "updateDNs": 600,
     "verbose": 0
 }
 
@@ -159,8 +157,9 @@ The `tfaas` server provides several APIs:
 - POST APIs:
   - `/upload` pushes your model to TFaaS
   - `/params` uploads new set of parameters to TFaaS
-  - `/json` serves inference for given set of input parameters in JSON data-format
-  - `/proto` serves inference in ProtoBuffer data-format
+  - `/predict/json` serves inference for given set of input parameters in JSON data-format
+  - `/predict/proto` serves inference in ProtoBuffer data-format
+  - `/predict/images` serves inference in image data (JPG/PNG formats)
 - DELETE APIs:
   - `/delete` deletes given model from TFaaS server
 
