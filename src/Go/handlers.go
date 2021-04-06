@@ -417,9 +417,17 @@ func UploadFormHandler(w http.ResponseWriter, r *http.Request) {
 // ParamsHandler sets different options for the server
 func ParamsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
-		data, err := json.Marshal(_params)
+		vars := mux.Vars(r)
+		model := vars["model"]
+		fname := fmt.Sprintf("%s/%s/params.json", _config.ModelDir, model)
+		if _, err := os.Stat(fname); err != nil {
+			msg := "unable to read params.json model file"
+			responseError(w, msg, err, http.StatusInternalServerError)
+			return
+		}
+		data, err := ioutil.ReadFile(fname)
 		if err != nil {
-			msg := "unable to marshal parameters"
+			msg := fmt.Sprintf("unable to read %s model file", fname)
 			responseError(w, msg, err, http.StatusInternalServerError)
 			return
 		}
