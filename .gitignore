@@ -7,4 +7,7 @@ files*.txt
 *.msg
 *.proto
 *.pbtxt
+*.o
 log
+models
+tfaas
