@@ -14,5 +14,5 @@ REQUEST=tfaaspb.Row # our protobuf package name dot message name
 RESPONSE=tfaaspb.Predictions
 scurl="curl -L -k --key $HOME/.globus/userkey.pem --cert $HOME/.globus/usercert.pem"
 cat $MSG | protoc -I$pdir --encode $REQUEST $PROTO | \
-    $scurl -sS -X POST --data-binary @- $URL | \
+    $scurl -v -sS -X POST --data-binary @- $URL | \
     protoc -I$pdir --decode $RESPONSE $PROTO
