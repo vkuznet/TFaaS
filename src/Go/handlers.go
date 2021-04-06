@@ -52,6 +52,11 @@ func responseJSON(w http.ResponseWriter, data interface{}) {
 // HTTP handlers, GET methods
 //
 
+// FaviconHandler
+func FaviconHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, fmt.Sprintf("%s/images/favicon.ico", _config.StaticDir))
+}
+
 // DataHandler authenticate incoming requests and route them to appropriate handler
 func DataHandler(w http.ResponseWriter, r *http.Request) {
 	args := r.URL.Query()
@@ -531,6 +536,10 @@ func NetronHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/javascript")
 	} else if strings.HasSuffix(ifile, "json") {
 		w.Header().Add("Content-Type", "application/json")
+	} else if strings.HasSuffix(ifile, "woff") {
+		w.Header().Add("Content-Type", "application/font-woff")
+	} else if strings.HasSuffix(ifile, "woff2") {
+		w.Header().Add("Content-Type", "application/font-woff2")
 	} else if strings.HasSuffix(ifile, "png") {
 		w.Header().Add("Content-Type", "image/png")
 	} else if strings.HasSuffix(ifile, "psvg") {

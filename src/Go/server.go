@@ -72,6 +72,7 @@ func handlers() *mux.Router {
 	router.HandleFunc(basePath("/status"), StatusHandler).Methods("GET")
 	router.HandleFunc(basePath("/netron/"), NetronHandler).Methods("GET")
 	router.HandleFunc(basePath("/netron/{.*}"), NetronHandler).Methods("GET")
+	router.HandleFunc(basePath("/favicon.ico"), FaviconHandler).Methods("GET")
 	router.HandleFunc(basePath("/"), DefaultHandler).Methods("GET")
 
 	/* for future use
