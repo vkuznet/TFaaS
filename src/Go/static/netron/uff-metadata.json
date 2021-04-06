@@ -1,0 +1,140 @@
+[
+  {
+    "name": "_FlattenConcat_TRT",
+    "category": "Tensor",
+    "inputs": [
+      { "name": "inputs", "list": true }
+    ]
+  },
+  {
+    "name": "_GridAnchor_TRT",
+    "inputs": [
+      { "name": "input" }
+    ]
+  },
+  {
+    "name": "_MaxPool",
+    "category": "Pool",
+    "inputs": [
+      { "name": "input" }
+    ]
+  },
+  {
+    "name": "_NMS_TRT",
+    "inputs": [
+      { "name": "input" },
+      { "name": "?" },
+      { "name": "?" }
+    ]
+  },
+  {
+    "name": "Activation",
+    "category": "Activation",
+    "inputs": [
+      { "name": "input" }
+    ]
+  },
+  {
+    "name": "BatchNorm",
+    "category": "Normalization",
+    "inputs": [
+      { "name": "input" },
+      { "name": "gamma" },
+      { "name": "beta" },
+      { "name": "moving_mean" },
+      { "name": "moving_variance" }
+    ]
+  },
+  {
+    "name": "Binary",
+    "inputs": [
+      { "name": "x" },
+      { "name": "y" }
+    ]
+  },
+  {
+    "name": "Concat",
+    "category": "Tensor",
+    "inputs": [
+      { "name": "inputs", "list": true }
+    ]
+  },
+  {
+    "name": "Conv",
+    "category": "Layer",
+    "inputs": [
+      { "name": "input" },
+      { "name": "kernel" }
+    ]
+  },
+  {
+    "name": "Flatten",
+    "category": "Shape"
+  },
+  {
+    "name": "FullyConnected",
+    "category": "Layer",
+    "inputs": [
+      { "name": "input" },
+      { "name": "weights" }
+    ]
+  },
+  {
+    "name": "GatherV2",
+    "category": "Data",
+    "inputs": [
+      { "name": "input" },
+      { "name": "indices" }
+    ]
+  },
+  {
+    "name": "Pool",
+    "category": "Pool",
+    "inputs": [
+      { "name": "input" }
+    ]
+  },
+  {
+    "name": "Reshape",
+    "category": "Shape",
+    "inputs": [
+      { "name": "input" },
+      { "name": "shape" }
+    ]
+  },
+  {
+    "name": "Shape",
+    "inputs": [
+      { "name": "input" }
+    ]
+  },
+  {
+    "name": "Squeeze",
+    "category": "Transform"
+  },
+  {
+    "name": "Stack",
+    "inputs": [
+      { "name": "input" },
+      { "name": "?" },
+      { "name": "?" },
+      { "name": "?" }
+    ]
+  },
+  {
+    "name": "StridedSlice",
+    "category": "Tensor",
+    "inputs": [
+      { "name": "input" },
+      { "name": "begin" },
+      { "name": "end" },
+      { "name": "strides" }
+    ]
+  },
+  {
+    "name": "Unary",
+    "inputs": [
+      { "name": "input" }
+    ]
+  }
+]

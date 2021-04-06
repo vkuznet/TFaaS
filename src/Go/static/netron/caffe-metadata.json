@@ -1,249 +1,449 @@
 [
   {
-    "name": "Convolution",
-    "schema": {
-      "category": "Layer",
-      "inputs": [
-        { "name": "input" },
-        { "name": "filter" },
-        { "name": "bias" }
-      ],
-      "ouptuts": [
-        { "name": "output" }
-      ],
-      "attributes": [
-        { "name": "bias_term", "visible": false },
-        { "name": "weight_filler", "visible": false },
-        { "name": "bias_filler", "visible": false },
-        { "name": "num_output", "visible": false },
-        { "name": "pad", "default": [] },
-        { "name": "kernel_size", "default": [] },
-        { "name": "stride", "default": [] },
-        { "name": "dilation", "default": [] },
-        { "name": "group", "default": 1 }
-      ]
-    }
+    "name": "Accuracy",
+    "inputs": [
+      { "name": "predictions" },
+      { "name": "labels" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
   },
   {
-    "name": "Deconvolution",
-    "schema": {
-      "category": "Layer",
-      "inputs": [
-        { "name": "input" },
-        { "name": "filter" },
-        { "name": "bias" }
-      ],
-      "ouptuts": [
-        { "name": "output" }
-      ],
-      "attributes": [
-        { "name": "bias_term", "visible": false },
-        { "name": "weight_filler", "visible": false },
-        { "name": "bias_filler", "visible": false },
-        { "name": "pad", "default": [] },
-        { "name": "kernel_size", "default": [] },
-        { "name": "stride", "default": [] },
-        { "name": "dilation", "default": [] }
-      ]
-    }
-  },
-  {
-    "name": "InnerProduct",
-    "schema": {
-      "category": "Layer",
-      "inputs": [
-        { "name": "input" },
-        { "name": "weights" },
-        { "name": "bias" }
-      ],
-      "outputs": [
-        { "name": "output" }
-      ],
-      "attributes": [
-        { "name": "bias_term", "visible": false },
-        { "name": "weight_filler", "visible": false },
-        { "name": "bias_filler", "visible": false },
-        { "name": "num_output", "visible": false }
-      ]
-    }
-  },
-  {
-    "name": "Scale",
-    "schema": {
-      "category": "Layer",
-      "inputs": [
-        { "name": "input" },
-        { "name": "scale" },
-        { "name": "bias" }
-      ],
-      "attributes": [
-        { "name": "filler", "visible": false },
-        { "name": "bias_term", "visible": false },
-        { "name": "bias_filler", "visible": false }
-      ]
-    }
-  },
-  {
-    "name": "Dropout",
-    "schema": {
-      "category": "Dropout",
-      "attributes": [
-        { "name": "dropout_ratio", "default": 0.5 }
-      ]
-    }
-  },
-  {
-    "name": "LRN",
-    "schema": {
-      "category": "Normalization",
-      "attributes": [
-        { "name": "local_size", "type": "uint32", "default": 5 },
-        { "name": "alpha", "type": "float", "default": 1 },
-        { "name": "beta", "type": "float", "default": 0.75 }
-      ]
-    }
+    "name": "AnnotatedData",
+    "category": "Data",
+    "outputs": [
+      { "name": "data" }
+    ]
   },
   {
     "name": "BatchNorm",
-    "schema": {
-      "category": "Normalization",
-      "inputs": [
-        { "name": "input" },
-        { "name": "gamma" },
-        { "name": "beta" },
-        { "name": "mean" },
-        { "name": "variance" }
-      ],
-      "outputs": [
-        { "name": "output" }
-      ],
-      "attributes": [
-        { "name": "use_global_stats", "visible": false },
-        { "name": "eps", "default": 1e-5 }
-      ]
-    }
+    "category": "Normalization",
+    "attributes": [
+      { "name": "use_global_stats", "visible": false },
+      { "name": "eps", "default": 0.00001 }
+    ],
+    "inputs": [
+      { "name": "input" },
+      { "name": "gamma" },
+      { "name": "beta" },
+      { "name": "mean" },
+      { "name": "variance" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
   },
   {
-    "name": "Softmax",
-    "schema": {
-      "category": "Activation"
-    }
+    "name": "BN",
+    "category": "Normalization",
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
   },
   {
-    "name": "SoftmaxLoss",
-    "schema": {
-      "category": "Activation",
-      "inputs": [
-        { "name": "input" },
-        { "name": "labels" }
-      ]
-    }
-  },
-  {
-    "name": "SoftmaxWithLoss",
-    "schema": {
-      "category": "Activation",
-      "inputs": [
-        { "name": "input" },
-        { "name": "labels" }
-      ]
-    }
-  },
-  {
-    "name": "ReLU",
-    "schema": {
-      "category": "Activation"
-    }
+    "name": "ColorConv",
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
   },
   {
     "name": "Concat",
-    "schema": {
-      "category": "Tensor",
-      "inputs": [
-        { "name": "inputs", "option": "variadic" }
-      ]
-    }
+    "category": "Tensor",
+    "inputs": [
+      { "name": "inputs", "option": "variadic" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
   },
   {
-    "name": "Split",
-    "schema": {
-      "category": "Tensor",
-      "outputs": [
-        { "name": "outputs", "option": "variadic" }
-      ]  
-    }
+    "name": "ContrastiveLossParameter",
+    "attributes": [
+      { "name": "margin", "default": 1 },
+      { "name": "legacy_version", "default": false }
+    ]
   },
   {
-    "name": "Eltwise",
-    "schema": {
-      "inputs": [
-        { "name": "inputs", "option": "variadic" }
-      ],
-      "attributes": [
-        { "name": "operation", "default": 1 }
-      ]
-    }
+    "name": "Convolution",
+    "category": "Layer",
+    "attributes": [
+      { "name": "bias_term", "visible": false },
+      { "name": "weight_filler", "visible": false },
+      { "name": "bias_filler", "visible": false },
+      { "name": "num_output", "visible": false },
+      { "name": "pad", "default": [   0 ] },
+      { "name": "kernel_size", "default": [] },
+      { "name": "stride", "default": [   1 ] },
+      { "name": "dilation", "default": [] },
+      { "name": "group", "default": 1 }
+    ],
+    "inputs": [
+      { "name": "input" },
+      { "name": "filter" },
+      { "name": "bias" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
   },
   {
-    "name": "Pooling",
-    "schema": {
-      "category": "Pool",
-      "attributes": [
-        { "name": "pool", "default": 0 }
-      ]
-    }
+    "name": "ConvolutionDepthwise",
+    "category": "Layer",
+    "attributes": [
+      { "name": "pad", "default": [   0 ] },
+      { "name": "kernel_size", "default": [] },
+      { "name": "stride", "default": [   1 ] },
+      { "name": "bias_term", "visible": false },
+      { "name": "weight_filler", "visible": false },
+      { "name": "bias_filler", "visible": false },
+      { "name": "num_output", "visible": false }
+    ],
+    "inputs": [
+      { "name": "input" },
+      { "name": "filter" },
+      { "name": "bias" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
   },
   {
     "name": "Crop",
-    "schema": {
-      "category": "Shape"
-    }
+    "category": "Data",
+    "inputs": [
+      { "name": "data" },
+      { "name": "size" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
   },
   {
     "name": "Data",
-    "schema": {
-      "category": "Data",
-      "outputs": [
-        { "name": "data" },
-        { "name": "label" }
-      ]
-    }
+    "category": "Data",
+    "outputs": [
+      { "name": "data" },
+      { "name": "label" }
+    ]
+  },
+  {
+    "name": "Deconvolution",
+    "category": "Layer",
+    "attributes": [
+      { "name": "bias_term", "visible": false },
+      { "name": "weight_filler", "visible": false },
+      { "name": "bias_filler", "visible": false },
+      { "name": "num_output", "visible": false },
+      { "name": "pad", "default": [] },
+      { "name": "kernel_size", "default": [] },
+      { "name": "stride", "default": [] },
+      { "name": "dilation", "default": [] }
+    ],
+    "inputs": [
+      { "name": "input" },
+      { "name": "filter" },
+      { "name": "bias" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "DepthwiseConvolution",
+    "category": "Layer",
+    "attributes": [
+      { "name": "bias_term", "visible": false },
+      { "name": "weight_filler", "visible": false },
+      { "name": "bias_filler", "visible": false },
+      { "name": "num_output", "visible": false }
+    ],
+    "inputs": [
+      { "name": "input" },
+      { "name": "filter" },
+      { "name": "bias" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "Dropout",
+    "category": "Dropout",
+    "attributes": [
+      { "name": "dropout_ratio", "default": 0.5 }
+    ],
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "DummyData",
+    "category": "Data",
+    "outputs": [
+      { "name": "data" }
+    ]
+  },
+  {
+    "name": "Eltwise",
+    "attributes": [
+      { "name": "operation", "default": 1 }
+    ],
+    "inputs": [
+      { "name": "inputs", "option": "variadic" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "EuclideanLoss",
+    "inputs": [
+      { "name": "predictions" },
+      { "name": "targets" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "Flatten",
+    "category": "Shape",
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "HDF5Data",
+    "category": "Data",
+    "outputs": [
+      { "name": "data" }
+    ]
   },
   {
     "name": "ImageData",
-    "schema": {
-      "category": "Data",
-      "outputs": [
-        { "name": "data" },
-        { "name": "label" }
-      ]
-    }
+    "category": "Data",
+    "outputs": [
+      { "name": "data" },
+      { "name": "label" }
+    ]
   },
   {
-    "name": "WindowData",
-    "schema": {
-      "category": "Data",
-      "outputs": [
-        { "name": "data" },
-        { "name": "label" }
-      ]
-    }
+    "name": "InnerProduct",
+    "category": "Layer",
+    "attributes": [
+      { "name": "bias_term", "visible": false },
+      { "name": "weight_filler", "visible": false },
+      { "name": "bias_filler", "visible": false },
+      { "name": "num_output", "visible": false }
+    ],
+    "inputs": [
+      { "name": "input" },
+      { "name": "weights" },
+      { "name": "bias" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "LRN",
+    "category": "Normalization",
+    "attributes": [
+      { "name": "local_size", "type": "uint32", "default": 5 },
+      { "name": "alpha", "type": "float32", "default": 0.0001 },
+      { "name": "beta", "type": "float32", "default": 0.75 }
+    ],
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "LSTM",
+    "category": "Layer",
+    "attributes": [
+      { "name": "weight_filler", "visible": false },
+      { "name": "bias_filler", "visible": false },
+      { "name": "num_output", "visible": false }
+    ],
+    "inputs": [
+      { "name": "input" },
+      { "name": "weights" },
+      { "name": "h_0" },
+      { "name": "c_0" }
+    ],
+    "outputs": [
+      { "name": "output" },
+      { "name": "h_T" },
+      { "name": "c_T" }
+    ]
+  },
+  {
+    "name": "Parameter",
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "Permute",
+    "category": "Shape",
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "Pooling",
+    "category": "Pool",
+    "attributes": [
+      { "name": "pool", "default": 0 }
+    ],
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "PReLU",
+    "category": "Activation",
+    "inputs": [
+      { "name": "input" },
+      { "name": "slope" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "Python"
+  },
+  {
+    "name": "ReLU",
+    "category": "Activation",
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "Reshape",
+    "category": "Shape",
+    "inputs": [
+      { "name": "data" }
+    ],
+    "outputs": [
+      { "name": "reshaped" }
+    ]
+  },
+  {
+    "name": "Scale",
+    "category": "Layer",
+    "attributes": [
+      { "name": "filler", "visible": false },
+      { "name": "bias_term", "visible": false },
+      { "name": "bias_filler", "visible": false }
+    ],
+    "inputs": [
+      { "name": "input" },
+      { "name": "scale" },
+      { "name": "bias" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "Sigmoid",
+    "category": "Activation",
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
   },
   {
     "name": "Slice",
-    "schema": {
-      "category": "Tensor",
-      "attributes": [
-        { "name": "axis", "default": 1 }
-      ]
-    }
+    "category": "Tensor",
+    "attributes": [
+      { "name": "axis", "default": 1 }
+    ],
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "outputs", "option": "variadic" }
+    ]
   },
   {
-    "name": "Python",
-    "schema": {
-      "outputs": [
-        { "name": "outputs", "option": "variadic" }
-      ]
-    }
+    "name": "Softmax",
+    "category": "Activation",
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "SoftmaxLoss",
+    "category": "Activation",
+    "inputs": [
+      { "name": "input" },
+      { "name": "labels" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "SoftmaxWithLoss",
+    "category": "Activation",
+    "inputs": [
+      { "name": "input" },
+      { "name": "labels" }
+    ],
+    "outputs": [
+      { "name": "output" }
+    ]
+  },
+  {
+    "name": "Split",
+    "category": "Tensor",
+    "inputs": [
+      { "name": "input" }
+    ],
+    "outputs": [
+      { "name": "outputs", "option": "variadic" }
+    ]
+  },
+  {
+    "name": "WindowData",
+    "category": "Data",
+    "outputs": [
+      { "name": "data" },
+      { "name": "label" }
+    ]
   }
 ]
