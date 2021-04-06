@@ -529,6 +529,8 @@ func NetronHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "text/css")
 	} else if strings.HasSuffix(ifile, "js") {
 		w.Header().Add("Content-Type", "text/javascript")
+	} else if strings.HasSuffix(ifile, "json") {
+		w.Header().Add("Content-Type", "application/json")
 	} else if strings.HasSuffix(ifile, "png") {
 		w.Header().Add("Content-Type", "image/png")
 	} else if strings.HasSuffix(ifile, "psvg") {
