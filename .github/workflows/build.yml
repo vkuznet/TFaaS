@@ -65,6 +65,23 @@ jobs:
     - name: Build image
       run: |
         docker build . --tag docker.pkg.github.com/veknet/tfaas
+        docker tag docker.pkg.github.com/veknet/tfaas/tfaas registry.cern.ch/cmsweb/tfaas
+
+    - name: Login to registry.cern.ch
+      uses: docker/login-action@v1.6.0
+      with:
+        registry: registry.cern.ch
+        username: ${{ secrets.CERN_LOGIN }}
+        password: ${{ secrets.CERN_TOKEN }}
+
+    - name: Publish image to registry.cern.ch
+      uses: docker/build-push-action@v1
+      with:
+        username: ${{ secrets.CERN_LOGIN }}
+        password: ${{ secrets.CERN_TOKEN }}
+        registry: registry.cern.ch
+        repository: cmsweb/tfaas
+        tag_with_ref: true
       
     - name: Login to DockerHub
       uses: docker/login-action@v1
