@@ -15,7 +15,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: ^1.16
+        go-version: ^1.20
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
@@ -24,7 +24,7 @@ jobs:
       run: |
         mkdir -p tensorflow
         cd tensorflow
-        TFLIB=libtensorflow-cpu-linux-x86_64-2.4.0.tar.gz
+        TFLIB=libtensorflow-cpu-linux-x86_64-2.11.0.tar.gz
         curl -ksLO https://storage.googleapis.com/tensorflow/libtensorflow/$TFLIB
         tar xfz $TFLIB
         export LD_LIBRARY_PATH=$PWD/lib
