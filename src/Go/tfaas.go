@@ -250,6 +250,38 @@ func makePredictions(row *Row) ([]float32, error) {
 
 // helper function to generate predictions based on given row values
 // based on tfgo
+func makePredictionsTensor(name string, tensor *tf.Tensor) ([]float32, error) {
+	// our input is a tf Tensor
+
+	// load TF model, saved as keras with the following dir structure
+	// assets saved_model.pb variables
+
+	// look-up model from out cache
+	if tfCache == nil {
+		tfCache = make(map[string]*tg.Model)
+	}
+	var model *tg.Model
+	var ok bool
+	model, ok = tfCache[name]
+	if !ok {
+		path := fmt.Sprintf("%s/%s", _config.ModelDir, name)
+		model = tg.LoadModel(path, []string{"serve"}, nil)
+		tfCache[name] = model
+	}
+
+	results := model.Exec([]tf.Output{
+		model.Op("StatefulPartitionedCall", 0),
+	}, map[tf.Output]*tf.Tensor{
+		model.Op("serving_default_inputs_input", 0): tensor,
+	})
+	probs := results[0]
+	value := probs.Value() // returns [][]float32 vector
+	vals := value.([][]float32)
+	return vals[0], nil
+}
+
+// helper function to generate predictions based on given row values
+// based on tfgo
 func makePredictions2(row *Row) ([]float32, error) {
 	// our input is a vector, we wrap it into matrix ([ [1,1,...], [], ...])
 	matrix := [][]float32{row.Values}

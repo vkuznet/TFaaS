@@ -79,6 +79,61 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusBadRequest)
 }
 
+// ImageTensorHandler send prediction from TF ML model
+func ImageTensorHandler(w http.ResponseWriter, r *http.Request) {
+	model := r.FormValue("model")
+	if model == "" {
+		msg := fmt.Sprintf("unable to read %s model", model)
+		responseError(w, msg, nil, http.StatusInternalServerError)
+		return
+	}
+
+	// Read image
+	imageFile, header, err := r.FormFile("image")
+	fileName := header.Filename
+	imageName := strings.Split(fileName, ".")
+	if err != nil {
+		responseError(w, "unable to read image", err, http.StatusInternalServerError)
+		return
+	}
+	defer imageFile.Close()
+	var imageBuffer bytes.Buffer
+	// Copy image data to a buffer
+	io.Copy(&imageBuffer, imageFile)
+
+	// Make tensor
+	tensor, err := makeTensorFromImage(&imageBuffer, imageName[:1][0])
+	if err != nil {
+		responseError(w, "Invalid image", err, http.StatusBadRequest)
+		return
+	}
+
+	// Run inference
+	probs, err := makePredictionsTensor(model, tensor)
+	if err != nil {
+		responseError(w, "unable to make predictions", err, http.StatusInternalServerError)
+		return
+	}
+
+	if VERBOSE > 0 {
+		log.Println("image tensor", tensor, "probs", probs)
+	}
+
+	// wrap our probabilities into Predictions class
+	var objects []*tfaaspb.Class
+	for _, p := range probs {
+		objects = append(objects, &tfaaspb.Class{Probability: float32(p)})
+	}
+	pobj := &tfaaspb.Predictions{Prediction: objects}
+	out, err := proto.Marshal(pobj)
+	if err != nil {
+		responseError(w, "unable to marshal data", err, http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
+}
+
 // ImageHandler send prediction from TF ML model
 func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	model := r.FormValue("model")

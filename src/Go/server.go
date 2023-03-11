@@ -63,6 +63,7 @@ func handlers() *mux.Router {
 	router.HandleFunc(basePath("/predict/json"), PredictHandler).Methods("POST")
 	router.HandleFunc(basePath("/predict/proto"), PredictProtobufHandler).Methods("POST")
 	router.HandleFunc(basePath("/predict/image"), ImageHandler).Methods("POST")
+	router.HandleFunc(basePath("/predict/imagetensor"), ImageTensorHandler).Methods("POST")
 	router.HandleFunc(basePath("/json"), PredictHandler).Methods("POST")
 	router.HandleFunc(basePath("/proto"), PredictProtobufHandler).Methods("POST")
 	router.HandleFunc(basePath("/image"), ImageHandler).Methods("POST")
