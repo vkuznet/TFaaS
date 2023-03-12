@@ -85,5 +85,6 @@ page.
 
 ### More information
 - [Install instructions](https://github.com/vkuznet/TFaaS/blob/master/doc/INSTALL.md) to build TFaaS from source code
+- [End-to-end example for MNIST dataset](https://github.com/vkuznet/TFaaS/blob/master/doc/MNIST.md)
 - [End-to-end example of serving TF model in Go-server](https://github.com/vkuznet/TFaaS/blob/master/doc/workflow.md)
 - [Demo](https://github.com/vkuznet/TFaaS/blob/master/doc/DEMO.md)
