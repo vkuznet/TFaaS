@@ -229,6 +229,25 @@ func loadModel(fname, flabels string) (*tf.Graph, []string, error) {
 	return graph, labels, nil
 }
 
+// helper function to determine which model in our repository for given model name
+func tfVersion(name string) (string, error) {
+	// if model area has assets, variables and saved_model.pb
+	// we will use TF 2.X approach based on tfgo
+	path := fmt.Sprintf("%s/%s", _config.ModelDir, name)
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return "", err
+	}
+	var fnames []string
+	for _, file := range files {
+		fnames = append(fnames, file.Name())
+	}
+	if InList("assets", fnames) && InList("variables", fnames) && InList("saved_model.pb", fnames) {
+		return "tf2", nil
+	}
+	return "tf1", nil
+}
+
 // helper function to generate predictions based on given row values
 // either TF 2.X models via tfgo or TF 1.X models via graph loading
 func makePredictions(row *Row) ([]float32, error) {
@@ -236,18 +255,11 @@ func makePredictions(row *Row) ([]float32, error) {
 	if row.Model != "" {
 		name = row.Model
 	}
-	// if model area has assets, variables and saved_model.pb
-	// we will use TF 2.X approach based on tfgo
-	path := fmt.Sprintf("%s/%s", _config.ModelDir, name)
-	files, err := ioutil.ReadDir(path)
+	tfModel, err := tfVersion(name)
 	if err != nil {
 		return []float32{}, err
 	}
-	var fnames []string
-	for _, file := range files {
-		fnames = append(fnames, file.Name())
-	}
-	if InList("assets", fnames) && InList("variables", fnames) && InList("saved_model.pb", fnames) {
+	if tfModel == "tf2" {
 		return makePredictions2(row)
 	}
 	return makePredictions1(row)

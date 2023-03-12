@@ -80,8 +80,31 @@ func DataHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusBadRequest)
 }
 
-// ImageTensorHandler send prediction from TF ML model
-func ImageTensorHandler(w http.ResponseWriter, r *http.Request) {
+// ImageHandler send prediction from TF ML model
+func ImageHandler(w http.ResponseWriter, r *http.Request) {
+	model := r.FormValue("model")
+	if model == "" {
+		msg := fmt.Sprintf("unable to read %s model", model)
+		responseError(w, msg, nil, http.StatusInternalServerError)
+		return
+	}
+	tfModel, err := tfVersion(model)
+	if err != nil {
+		msg := fmt.Sprintf("unable to read %s model", model)
+		responseError(w, msg, nil, http.StatusInternalServerError)
+		return
+	}
+	if tfModel == "tf1" {
+		log.Println("use ImageTF1Handler")
+		ImageTF1Handler(w, r)
+		return
+	}
+	log.Println("use ImageTF2Handler")
+	ImageTF2Handler(w, r)
+}
+
+// ImageTF2Handler send prediction from TF2 ML model
+func ImageTF2Handler(w http.ResponseWriter, r *http.Request) {
 	model := r.FormValue("model")
 	if model == "" {
 		msg := fmt.Sprintf("unable to read %s model", model)
@@ -136,8 +159,8 @@ func ImageTensorHandler(w http.ResponseWriter, r *http.Request) {
 	responseJSON(w, probs)
 }
 
-// ImageHandler send prediction from TF ML model
-func ImageHandler(w http.ResponseWriter, r *http.Request) {
+// ImageTF1Handler send prediction from TF ML model
+func ImageTF1Handler(w http.ResponseWriter, r *http.Request) {
 	model := r.FormValue("model")
 	if model == "" {
 		msg := fmt.Sprintf("unable to read %s model", model)
