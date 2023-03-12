@@ -321,6 +321,7 @@ where `config.json` has the following form (please refer for more details):
 }
 ```
 
+### Serving predictions with TFaaS inference server
 Finally, we are ready for the inference part.
 - upload your ML model to TFaaS server
 ```
