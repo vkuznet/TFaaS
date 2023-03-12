@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -101,8 +102,22 @@ func ImageTensorHandler(w http.ResponseWriter, r *http.Request) {
 	// Copy image data to a buffer
 	io.Copy(&imageBuffer, imageFile)
 
+	// should comes from params.json
+	params, err := getModelParams(model)
+	if err != nil {
+		msg := fmt.Sprintf("unable to read image, unknown number of image channels")
+		responseError(w, msg, err, http.StatusInternalServerError)
+		return
+	}
+	imgChannels := params.ImgChannels
+	if imgChannels == 0 {
+		msg := fmt.Sprintf("unable to read image, unknown number of image channels")
+		responseError(w, msg, errors.New(msg), http.StatusInternalServerError)
+		return
+	}
 	// Make tensor
-	tensor, err := makeTensorFromImage(&imageBuffer, imageName[:1][0])
+	imgFormat := imageName[len(imageName)-1]
+	tensor, err := makeTensorFromImage(&imageBuffer, imgFormat, imgChannels)
 	if err != nil {
 		responseError(w, "Invalid image", err, http.StatusBadRequest)
 		return
@@ -118,20 +133,7 @@ func ImageTensorHandler(w http.ResponseWriter, r *http.Request) {
 	if VERBOSE > 0 {
 		log.Println("image tensor", tensor, "probs", probs)
 	}
-
-	// wrap our probabilities into Predictions class
-	var objects []*tfaaspb.Class
-	for _, p := range probs {
-		objects = append(objects, &tfaaspb.Class{Probability: float32(p)})
-	}
-	pobj := &tfaaspb.Predictions{Prediction: objects}
-	out, err := proto.Marshal(pobj)
-	if err != nil {
-		responseError(w, "unable to marshal data", err, http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(out)
+	responseJSON(w, probs)
 }
 
 // ImageHandler send prediction from TF ML model
@@ -162,8 +164,22 @@ func ImageHandler(w http.ResponseWriter, r *http.Request) {
 	// Copy image data to a buffer
 	io.Copy(&imageBuffer, imageFile)
 
+	// should comes from params.json
+	params, err := getModelParams(model)
+	if err != nil {
+		msg := fmt.Sprintf("unable to read image, unknown number of image channels")
+		responseError(w, msg, err, http.StatusInternalServerError)
+		return
+	}
+	imgChannels := params.ImgChannels
+	if imgChannels == 0 {
+		msg := fmt.Sprintf("unable to read image, unknown number of image channels")
+		responseError(w, msg, errors.New(msg), http.StatusInternalServerError)
+		return
+	}
 	// Make tensor
-	tensor, err := makeTensorFromImage(&imageBuffer, imageName[:1][0])
+	imgFormat := imageName[len(imageName)-1]
+	tensor, err := makeTensorFromImage(&imageBuffer, imgFormat, imgChannels)
 	if err != nil {
 		responseError(w, "Invalid image", err, http.StatusBadRequest)
 		return
@@ -379,7 +395,7 @@ func UploadFormHandler(w http.ResponseWriter, r *http.Request) {
 	ctype := r.Header.Get("Content-Encoding")
 	var mkey, path string
 	var params TFParams
-	for _, name := range []string{"name", "params", "model", "labels"} {
+	for _, name := range []string{"name", "params", "model", "labels", "op"} {
 		emsg := fmt.Sprintf("request does not provide %s", name)
 		if name == "name" {
 			mkey = r.FormValue(name)

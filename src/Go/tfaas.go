@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -18,6 +20,7 @@ import (
 
 // tfCache represent cache for TF 2.X models
 var tfCache map[string]*tg.Model
+var tfCacheParams map[string]TFParams
 
 // ClassifyResult structure represents result of our TF model classification
 type ClassifyResult struct {
@@ -47,6 +50,8 @@ type TFParams struct {
 	Name        string   `json:"name"`        // model name
 	Model       string   `json:"model"`       // model file name
 	Labels      string   `json:"labels"`      // model labels file name
+	Op          string   `json:"op"`          // model operation
+	ImgChannels int64    `json:imgChannels`   // for img models number of img channels, color 3, black-white 1
 	Options     []string `json:"options"`     // model options
 	InputNode   string   `json:"inputNode"`   // model input node name
 	OutputNode  string   `json:"outputNode"`  // model output node name
@@ -248,15 +253,8 @@ func makePredictions(row *Row) ([]float32, error) {
 	return makePredictions1(row)
 }
 
-// helper function to generate predictions based on given row values
-// based on tfgo
-func makePredictionsTensor(name string, tensor *tf.Tensor) ([]float32, error) {
-	// our input is a tf Tensor
-
-	// load TF model, saved as keras with the following dir structure
-	// assets saved_model.pb variables
-
-	// look-up model from out cache
+// helper function to read tg.Model and its parameters
+func getModel(name string) (*tg.Model, error) {
 	if tfCache == nil {
 		tfCache = make(map[string]*tg.Model)
 	}
@@ -268,11 +266,69 @@ func makePredictionsTensor(name string, tensor *tf.Tensor) ([]float32, error) {
 		model = tg.LoadModel(path, []string{"serve"}, nil)
 		tfCache[name] = model
 	}
+	return model, nil
+}
+
+// helper function to read model parameters
+func getModelParams(name string) (TFParams, error) {
+	if tfCacheParams == nil {
+		tfCacheParams = make(map[string]TFParams)
+	}
+	params, ok := tfCacheParams[name]
+	if !ok {
+		fname := fmt.Sprintf("%s/%s/params.json", _config.ModelDir, name)
+		file, err := os.Open(fname)
+		if err != nil {
+			return params, err
+		}
+		defer file.Close()
+		data, err := io.ReadAll(file)
+		if err != nil {
+			return params, err
+		}
+
+		err = json.Unmarshal(data, &params)
+		if err != nil {
+			return params, err
+		}
+		tfCacheParams[name] = params
+	}
+	return params, nil
+}
+
+// helper function to generate predictions based on given row values
+// based on tfgo
+func makePredictionsTensor(name string, tensor *tf.Tensor) ([]float32, error) {
+	// our input is a tf Tensor
+
+	// load TF model, saved as keras with the following dir structure
+	// assets saved_model.pb variables
+
+	// look-up model from out cache
+	if tfCache == nil {
+		tfCache = make(map[string]*tg.Model)
+		tfCacheParams = make(map[string]TFParams)
+	}
+
+	// load model parameters
+	model, err := getModel(name)
+	if err != nil {
+		return []float32{}, err
+	}
+	params, err := getModelParams(name)
+	if err != nil {
+		return []float32{}, err
+	}
+	if params.Op == "" {
+		msg := fmt.Sprintf("Model params does not contain proper op parameter")
+		return []float32{}, errors.New(msg)
+	}
+	log.Println("model op", params.Op, "tensor", tensor)
 
 	results := model.Exec([]tf.Output{
 		model.Op("StatefulPartitionedCall", 0),
 	}, map[tf.Output]*tf.Tensor{
-		model.Op("serving_default_inputs_input", 0): tensor,
+		model.Op(params.Op, 0): tensor,
 	})
 	probs := results[0]
 	value := probs.Value() // returns [][]float32 vector
@@ -366,12 +422,12 @@ func makePredictions1(row *Row) ([]float32, error) {
 }
 
 // helper function to create Tensor image repreresentation
-func makeTensorFromImage(imageBuffer *bytes.Buffer, imageFormat string) (*tf.Tensor, error) {
+func makeTensorFromImage(imageBuffer *bytes.Buffer, imageFormat string, nChannels int64) (*tf.Tensor, error) {
 	tensor, err := tf.NewTensor(imageBuffer.String())
 	if err != nil {
 		return nil, err
 	}
-	graph, input, output, err := makeTransformImageGraph(imageFormat)
+	graph, input, output, err := makeTransformImageGraph(imageFormat, nChannels)
 	if err != nil {
 		return nil, err
 	}
@@ -391,15 +447,15 @@ func makeTensorFromImage(imageBuffer *bytes.Buffer, imageFormat string) (*tf.Ten
 }
 
 // Creates a graph to decode an image
-func makeTransformImageGraph(imageFormat string) (graph *tf.Graph, input, output tf.Output, err error) {
+func makeTransformImageGraph(imageFormat string, nChannels int64) (graph *tf.Graph, input, output tf.Output, err error) {
 	s := op.NewScope()
 	input = op.Placeholder(s, tf.String)
 	// Decode PNG or JPEG
 	var decode tf.Output
 	if imageFormat == "png" {
-		decode = op.DecodePng(s, input, op.DecodePngChannels(3))
+		decode = op.DecodePng(s, input, op.DecodePngChannels(nChannels))
 	} else {
-		decode = op.DecodeJpeg(s, input, op.DecodeJpegChannels(3))
+		decode = op.DecodeJpeg(s, input, op.DecodeJpegChannels(nChannels))
 	}
 	output = op.ExpandDims(s, op.Cast(s, decode, tf.Float), op.Const(s.SubScope("make_batch"), int32(0)))
 	graph, err = s.Finalize()
