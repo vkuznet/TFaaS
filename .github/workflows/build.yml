@@ -29,6 +29,8 @@ jobs:
         tar xfz $TFLIB
         export LD_LIBRARY_PATH=$PWD/lib
         export LIBRARY_PATH=$PWD/lib
+        export CGO_CPPFLAGS="-I$PWD/include"
+        export CGO_CFLAGS="-I$PWD/include"
         cd -
         cd src/Go
         make
