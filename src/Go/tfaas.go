@@ -47,16 +47,18 @@ func (r *Row) String() string {
 
 // TFParams provides meta-data description of TF model to be used
 type TFParams struct {
-	Name        string   `json:"name"`        // model name
-	Model       string   `json:"model"`       // model file name
-	Labels      string   `json:"labels"`      // model labels file name
-	Op          string   `json:"op"`          // model operation
-	ImgChannels int64    `json:imgChannels`   // for img models number of img channels, color 3, black-white 1
-	Options     []string `json:"options"`     // model options
-	InputNode   string   `json:"inputNode"`   // model input node name
-	OutputNode  string   `json:"outputNode"`  // model output node name
-	Description string   `json:"description"` // model description
-	TimeStamp   string   `json:"timestamp"`   // model timestamp
+	Name        string   `json:"name"`         // model name
+	Model       string   `json:"model"`        // model file name
+	Labels      string   `json:"labels"`       // model labels file name
+	Op          string   `json:"op"`           // model operation
+	InputName   string   `json:"input_name"`   // model input TF layer name
+	OutputName  string   `json:"output_name"`  // model output TF layer name
+	ImgChannels int64    `json:"img_channels"` // for img models number of img channels, color 3, black-white 1
+	Options     []string `json:"options"`      // model options
+	InputNode   string   `json:"input_node"`   // model input node name
+	OutputNode  string   `json:"output_node"`  // model output node name
+	Description string   `json:"description"`  // model description
+	TimeStamp   string   `json:"timestamp"`    // model timestamp
 }
 
 // String provides string representation of TFParams
@@ -331,16 +333,20 @@ func makePredictionsTensor(name string, tensor *tf.Tensor) ([]float32, error) {
 	if err != nil {
 		return []float32{}, err
 	}
-	if params.Op == "" {
-		msg := fmt.Sprintf("Model params does not contain proper op parameter")
+	if params.InputName == "" {
+		msg := fmt.Sprintf("Model params does not contain model input name")
 		return []float32{}, errors.New(msg)
 	}
-	log.Println("model op", params.Op, "tensor", tensor)
+	if params.OutputName == "" {
+		msg := fmt.Sprintf("Model params does not contain model output name")
+		return []float32{}, errors.New(msg)
+	}
+	log.Println("model input %s output %s tensor %v", params.InputName, params.OutputName, tensor)
 
 	results := model.Exec([]tf.Output{
-		model.Op("StatefulPartitionedCall", 0),
+		model.Op(params.OutputName, 0),
 	}, map[tf.Output]*tf.Tensor{
-		model.Op(params.Op, 0): tensor,
+		model.Op(params.InputName, 0): tensor,
 	})
 	probs := results[0]
 	value := probs.Value() // returns [][]float32 vector
