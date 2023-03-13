@@ -51,12 +51,14 @@ from tensorflow.python.tools import saved_model_utils
 
 
 def modelGraph(model_dir):
+    """
+    Provide input/output names used by TF Graph along with graph itself
+    The code is based on TF saved_model_cli.py script.
+    """
     input_names = []
     output_names = []
     tag_sets = saved_model_utils.get_saved_model_tag_sets(model_dir)
-#     print('The given SavedModel contains the following tag-sets:')
     for tag_set in sorted(tag_sets):
-#         print("### tag_set", tag_set)
         print('%r' % ', '.join(sorted(tag_set)))
         meta_graph_def = saved_model_utils.get_meta_graph_def(model_dir, tag_set[0])
         for key in meta_graph_def.signature_def.keys():
@@ -64,8 +66,6 @@ def modelGraph(model_dir):
             if hasattr(meta, 'inputs') and hasattr(meta, 'outputs'):
                 inputs = meta.inputs
                 outputs = meta.outputs
-#                 print("### input", inputs, type(inputs), inputs.get('name'))
-#                 print("### output", outputs, type(outputs), outputs.get('name'))
                 input_signatures = list(meta.inputs.values())
                 input_names = [signature.name for signature in input_signatures]
                 if len(input_names) > 0:
@@ -73,17 +73,13 @@ def modelGraph(model_dir):
                     output_names = [signature.name for signature in output_signatures]
     return input_names, output_names, meta_graph_def
 
-def train(fin, fout=None, model_name=None, epoch=1, batch_size=128):
+def readData(fin, num_classes):
     """
-    train function for MNIST
+    Helper function to read MNIST data and provide it to
+    upstream code, e.g. to the training layer
     """
-    # Model / data parameters
-    num_classes = 10
-    input_shape = (28, 28, 1)
-
     # Load the data and split it between train and test sets
-    # (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
-    # or use input file
+#     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
     f = gzip.open(fin, 'rb')
     if sys.version_info < (3,):
         mnist_data = pickle.load(f)
@@ -106,8 +102,18 @@ def train(fin, fout=None, model_name=None, epoch=1, batch_size=128):
     # convert class vectors to binary class matrices
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test = keras.utils.to_categorical(y_test, num_classes)
+    return x_train, y_train, x_test, y_test
 
-    # build model
+
+def train(fin, fout=None, model_name=None, epochs=1, batch_size=128, h5=False):
+    """
+    train function for MNIST
+    """
+    # Model / data parameters
+    num_classes = 10
+    input_shape = (28, 28, 1)
+
+    # create ML model
     model = keras.Sequential(
         [
             keras.Input(shape=input_shape),
@@ -124,12 +130,10 @@ def train(fin, fout=None, model_name=None, epoch=1, batch_size=128):
     model.summary()
     print("model input", model.input, type(model.input), model.input.__dict__)
     print("model output", model.output, type(model.output), model.output.__dict__)
+    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
 
     # train model
-    batch_size = batch_size
-    epochs = epoch
-
-    model.compile(loss="categorical_crossentropy", optimizer="adam", metrics=["accuracy"])
+    x_train, y_train, x_test, y_test = readData(fin, num_classes)
     model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, validation_split=0.1)
 
     # evaluate trained model
@@ -137,39 +141,51 @@ def train(fin, fout=None, model_name=None, epoch=1, batch_size=128):
     print("Test loss:", score[0])
     print("Test accuracy:", score[1])
     print("save model to", fout)
-    if fout:
-        model.save(fout)
-        pbModel = '{}/saved_model.pb'.format(fout)
-        pbtxtModel = '{}/saved_model.pbtxt'.format(fout)
-        convert(pbModel, pbtxtModel)
+    writer(fout, model_name, model, input_shape, h5)
 
-        # get meta-data information about our ML model
-        input_names, output_names, model_graph = modelGraph(model_name)
-        print("### input", input_names)
-        print("### output", output_names)
-        # ML uses (28,28,1) shape, i.e. 28x28 black-white images
-        # if we'll use color images we'll use shape (28, 28, 3)
-        img_channels = input_shape[2]  # last item represent number of colors
-        meta = {'name': model_name,
-                'model': 'saved_model.pb',
-                'labels': 'labels.txt',
-                'img_channels': img_channels,
-                'input_name': input_names[0].split(':')[0],
-                'output_name': output_names[0].split(':')[0],
-                'input_node': model.input.name,
-                'output_node': model.output.name
-        }
-        with open(fout+'/params.json', 'w') as ostream:
-            ostream.write(json.dumps(meta))
-        with open(fout+'/labels.txt', 'w') as ostream:
-            for i in range(0, 10):
-                ostream.write(str(i)+'\n')
-        with open(fout + '/model.graph', 'wb') as ostream:
-            ostream.write(model_graph.SerializeToString())
+def writer(fout, model_name, model, input_shape, h5=False):
+    """
+    Writer provide write function for given model
+    """
+    if not fout:
+        return
+    model.save(fout)
+    if h5:
+        model.save('{}/{}'.format(fout, h5), save_format='h5')
+    pbModel = '{}/saved_model.pb'.format(fout)
+    pbtxtModel = '{}/saved_model.pbtxt'.format(fout)
+    convert(pbModel, pbtxtModel)
+
+    # get meta-data information about our ML model
+    input_names, output_names, model_graph = modelGraph(model_name)
+    print("### input", input_names)
+    print("### output", output_names)
+    # ML uses (28,28,1) shape, i.e. 28x28 black-white images
+    # if we'll use color images we'll use shape (28, 28, 3)
+    img_channels = input_shape[2]  # last item represent number of colors
+    meta = {'name': model_name,
+            'model': 'saved_model.pb',
+            'labels': 'labels.txt',
+            'img_channels': img_channels,
+            'input_name': input_names[0].split(':')[0],
+            'output_name': output_names[0].split(':')[0],
+            'input_node': model.input.name,
+            'output_node': model.output.name
+    }
+    with open(fout+'/params.json', 'w') as ostream:
+        ostream.write(json.dumps(meta))
+    with open(fout+'/labels.txt', 'w') as ostream:
+        for i in range(0, 10):
+            ostream.write(str(i)+'\n')
+    with open(fout + '/model.graph', 'wb') as ostream:
+        ostream.write(model_graph.SerializeToString())
 
 def convert(fin, fout):
     """
     convert input model.pb into output model.pbtxt
+    Based on internet search:
+    - https://www.tensorflow.org/guide/saved_model
+    - https://www.programcreek.com/python/example/123317/tensorflow.core.protobuf.saved_model_pb2.SavedModel
     """
     import google.protobuf
     from tensorflow.core.protobuf import saved_model_pb2
@@ -179,7 +195,7 @@ def convert(fin, fout):
 
     with open(fin, 'rb') as f:
         saved_model.ParseFromString(f.read())
-
+        
     with open(fout, 'w') as f:
         f.write(google.protobuf.text_format.MessageToString(saved_model))
 
@@ -194,10 +210,12 @@ class OptionParser():
             dest="fout", default="", help="Output models area")
         self.parser.add_argument("--model", action="store",
             dest="model", default="mnist", help="model name")
-        self.parser.add_argument("--epoch", action="store",
-            dest="epoch", default=1, help="number of epoch to train")
+        self.parser.add_argument("--epochs", action="store",
+            dest="epochs", default=1, help="number of epochs to use in ML training")
         self.parser.add_argument("--batch_size", action="store",
             dest="batch_size", default=128, help="batch size to use in training")
+        self.parser.add_argument("--h5", action="store",
+            dest="h5", default="mnist", help="h5 model file name")
 
 def main():
     "Main function"
@@ -205,8 +223,9 @@ def main():
     opts = optmgr.parser.parse_args()
     train(opts.fin, opts.fout,
           model_name=opts.model,
-          epoch=opts.epoch,
-          batch_size=opts.batch_size)
+          epochs=opts.epochs,
+          batch_size=opts.batch_size,
+          h5=opts.h5)
 
 if __name__ == '__main__':
     main()
