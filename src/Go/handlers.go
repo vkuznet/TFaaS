@@ -128,13 +128,13 @@ func ImageTF2Handler(w http.ResponseWriter, r *http.Request) {
 	// should comes from params.json
 	params, err := getModelParams(model)
 	if err != nil {
-		msg := fmt.Sprintf("unable to read image, unknown number of image channels")
+		msg := fmt.Sprintf("unable to read model params")
 		responseError(w, msg, err, http.StatusInternalServerError)
 		return
 	}
 	imgChannels := params.ImgChannels
 	if imgChannels == 0 {
-		msg := fmt.Sprintf("unable to read image, unknown number of image channels")
+		msg := fmt.Sprintf("model params image channels is zero")
 		responseError(w, msg, errors.New(msg), http.StatusInternalServerError)
 		return
 	}
@@ -190,13 +190,13 @@ func ImageTF1Handler(w http.ResponseWriter, r *http.Request) {
 	// should comes from params.json
 	params, err := getModelParams(model)
 	if err != nil {
-		msg := fmt.Sprintf("unable to read image, unknown number of image channels")
+		msg := fmt.Sprintf("unable to read model params")
 		responseError(w, msg, err, http.StatusInternalServerError)
 		return
 	}
 	imgChannels := params.ImgChannels
 	if imgChannels == 0 {
-		msg := fmt.Sprintf("unable to read image, unknown number of image channels")
+		msg := fmt.Sprintf("model params image channels is zero")
 		responseError(w, msg, errors.New(msg), http.StatusInternalServerError)
 		return
 	}
