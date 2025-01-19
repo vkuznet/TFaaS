@@ -341,7 +341,7 @@ func makePredictionsTensor(name string, tensor *tf.Tensor) ([]float32, error) {
 		msg := fmt.Sprintf("Model params does not contain model output name")
 		return []float32{}, errors.New(msg)
 	}
-	log.Println("model input %s output %s tensor %v", params.InputName, params.OutputName, tensor)
+	log.Printf("model input %s output %s tensor %v", params.InputName, params.OutputName, tensor)
 
 	results := model.Exec([]tf.Output{
 		model.Op(params.OutputName, 0),
